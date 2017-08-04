@@ -1,15 +1,16 @@
 import os
 import re
 from glob import glob
-from config import config
+from config import Config
 from ops import tf_fun
+from ops import putils
 
 
 class data_processing(object):
     def __init__(self):
         self.name = 'mnist'
         self.extension = '.png'
-        self.config = config()
+        self.config = Config()
         self.folds = {
             'train': 'training',
             'test': 'testing'}
@@ -33,12 +34,12 @@ class data_processing(object):
                     self.config.data_root,
                     self.name,
                     fold,
-                    '*%s' % self.extension))
+                    '*'))
             for d in dirs:
                 it_files += [glob(
                     os.path.join(
                         d,
-                        '*%s' % self.extension)
+                        '*%s' % self.extension))]
             files[k] = putils.flatten_list(it_files)
         return files
 
