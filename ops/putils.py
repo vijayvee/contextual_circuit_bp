@@ -1,3 +1,5 @@
+import os
+
 
 def flatten_list(l):
     [item for sublist in l for item in sublist]

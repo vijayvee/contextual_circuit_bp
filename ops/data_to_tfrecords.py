@@ -8,13 +8,14 @@ import tensorflow as tf
 from scipy import misc
 from glob import glob
 from tqdm import tqdm
+from skimage import transform
 
 
 def load_image(f, im_size):
-    image = misc.imread(f, mode='F').astype(np.float32)
+    image = misc.imread(f).astype(np.float32)
     it_im_size = image.shape
     if im_size != it_im_size:
-        image = misc.imresize(image, im_size[:2], mode='F')
+        image = transform.resize(image, im_size[:2], preserve_range=True)
     if len(image.shape) < 3:
         image = np.repeat(image[:, :, None], im_size[-1], axis=-1)
     return image
@@ -43,12 +44,12 @@ def data_to_tfrecords(
             files.iteritems(),
             labels.iteritems())):
         it_ds_name = '%s_%s.tfrecords' % (ds_name, fk)
-        with tf.python_io.TFRecordWriter(ds_name) as tfrecord_writer:
+        with tf.python_io.TFRecordWriter(it_ds_name) as tfrecord_writer:
             for it_f, it_l in tqdm(zip(fv, lv), total=len(fv), desc='Building %s' % fk): 
                 image = load_image(it_f, im_size).astype(np.float32)
                 data_dict = {
                     'image': targets['image'](image.tostring()),
-                    'label': targets['label'](lv)
+                    'label': targets['label'](it_l)
                 }
                 example = create_example(data_dict)
                 if example is not None:

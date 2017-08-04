@@ -12,10 +12,10 @@ class data_processing(object):
         self.config = config()
         self.folds = {
             'train': 'training',
-            'test': 'testing']
+            'test': 'testing'}
         self.targets = {
             'image': tf_fun.bytes_feature,
-            'label': tf_fun:int64_feature
+            'label': tf_fun.int64_feature
         }
         self.im_size = [28, 28, 1]
 
@@ -31,14 +31,13 @@ class data_processing(object):
             dirs = glob(
                 os.path.join(
                     self.config.data_root,
+                    self.name,
                     fold,
                     '*%s' % self.extension))
             for d in dirs:
                 it_files += [glob(
                     os.path.join(
-                        self.config.data_root,
                         d,
-                        fold,
                         '*%s' % self.extension)
             files[k] = putils.flatten_list(it_files)
         return files

@@ -1,5 +1,5 @@
 import os
-import putils
+from ops import putils
 
 
 class Config:
@@ -8,8 +8,6 @@ class Config:
         self.project_directory = '/media/data_cifs/contextual_circuit/'
         self.tf_records = os.path.join(self.project_directory, 'tf_records')
 
-
-    def __enter__(self):
         check_dirs = [
             self.tf_records,
         ]
