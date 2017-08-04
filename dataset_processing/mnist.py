@@ -2,22 +2,22 @@ import os
 import re
 from glob import glob
 from config import config
-from ops import tf_fun 
+from ops import tf_fun
 
 
 class data_processing(object):
     def __init__(self):
-        self.name = 'cifar'
+        self.name = 'mnist'
         self.extension = '.png'
         self.config = config()
         self.folds = {
-            'train': 'train',
-            'test': 'test']
+            'train': 'training',
+            'test': 'testing']
         self.targets = {
             'image': tf_fun.bytes_feature,
             'label': tf_fun:int64_feature
         }
-        self.im_size = [32, 32, 3]
+        self.im_size = [28, 28, 1]
 
     def get_data(self):
         files = self.get_files()
@@ -27,11 +27,20 @@ class data_processing(object):
     def get_files(self):
         files = {}
         for k, fold in self.folds.iteritems():
-            files[k] = glob(
+            it_files = []
+            dirs = glob(
                 os.path.join(
                     self.config.data_root,
                     fold,
                     '*%s' % self.extension))
+            for d in dirs:
+                it_files += [glob(
+                    os.path.join(
+                        self.config.data_root,
+                        d,
+                        fold,
+                        '*%s' % self.extension)
+            files[k] = putils.flatten_list(it_files)
         return files
 
     def get_labels(self, files):
@@ -39,7 +48,7 @@ class data_processing(object):
         for k, v in files.iteritems():
             it_labels = []
             for f in v:
-                it_labels += [int(re.split('\.', f.split('_')[-1])[0])]
+                it_labels += [int(f.split('/')[-2])]
             labels[k] = it_labels
         return labels
 
