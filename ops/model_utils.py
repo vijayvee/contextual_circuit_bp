@@ -7,19 +7,31 @@ from models.layers.normalizations import normalizations
 
 class model_class(object):
     """Default model class that is generated with a layer_structure dict."""
-    def __init__(self, mean, training, **kwargs):
+    def __init__(self, mean, training, output_size, **kwargs):
         """Set model to trainable/not and pass the mean values."""
         self.var_dict = {}
+        self.data_dict = None
+        self.regularizations = {}
         self.training = training
         self.mean = mean
-        self.data_dict = None
-        self.share_vars = ['training']
+        self.output_size = output_size
+        self.share_vars = ['training', 'output_size']
         self.layer_vars = {k: self[k] for k in self.share_vars}
 
-    def model(self, data, layer_structure, tower_name):
+    def model(self, data, output_size, layer_structure, tower_name):
         """Main model creation method."""
         data -= self.mean[None, :, :, :]  # Assuming H/W/C mean
-        create_conv_tower(self, data, layer_structure, tower_name)
+        features = create_conv_tower(self, data, layer_structure, tower_name)
+        if output_layer_structure is None:
+            output_layer_structure = self.default_output_layer()
+        create_conv_tower(self, features, output_layer_structure, 'output')
+
+    def default_output_layer(self):
+        return {
+            'layers': 'fc',
+            'names': 'output',
+            'filter_size': self.output_size
+        }
 
     def save_npy(self, sess, npy_path="./saved_weights.npy"):
         """Default method: Save your model's weights to a numpy."""
@@ -58,15 +70,19 @@ def create_conv_tower(self, act, layer_structure, tower_name):
     print 'Creating tower: %s' % tower_name
     activ_mod = activations(self.layer_vars**)
     norm_mod = normalizations(self.layer_vars**)
+    reg_mod = regularizations(self.layer_vars**)
     with tf.variable_scope(tower_name):
         for layer in layer_structure:
             keys = layer.keys()
             for vals in zip(*(d[k] for k in keys)):
                 it_dict = dict(zip(keys, vals))
+                if 'wd_target' in it_dict.keys() and it_dict['wd_target'] == 'pre':
+                    self.regularizations['%s_%s' % (
+                        it_dict['names'], it_dict['wd_target'])] = reg_mod[it_dict['wd_type']](act)
                 if 'dropout_target' in it_dict.keys() and it_dict['dropout_target'] == 'pre':
-                    act = tf.nn.dropout(act, keep_prob=it_dict['dropout'])
+                    act = reg_mod.dropout(act, keep_prob=it_dict['dropout'])
                 if 'activation_target' in it_dict.keys() and it_dict['activation_target'] == 'pre':
-                    act = activ_mod.dropout(act, keep_prob=it_dict['dropout'])
+                    act = activ_mod[it_dict['activation']](act)
                 if 'normalization_target' in it_dict.keys() and it_dict['normalization_target'] == 'pre':
                     act = norm_mod[it_dict['normalization']](act) 
                 if it_dict['layers'] == 'pool':
@@ -96,8 +112,11 @@ def create_conv_tower(self, act, layer_structure, tower_name):
                         bottom=act,
                         layer_weights=it_dict['weights'],
                         name=it_dict['names'])
+                if 'wd_target' in it_dict.keys() and it_dict['wd_target'] == 'post':
+                    self.regularizations['%s_%s' % (
+                        it_dict['names'], it_dict['wd_target'])] = reg_mod[it_dict['wd_type']](act)
                 if 'dropout_target' in it_dict.keys() and it_dict['dropout_target'] == 'post':
-                    act = activ_mod.dropout(act, keep_prob=it_dict['dropout'])
+                    act = reg_mod.dropout(act, keep_prob=it_dict['dropout'])
                 if 'activation_target' in it_dict.keys() and it_dict['activation_target'] == 'post':
                     act = activ_mod[it_dict['activation']](act)
                 if 'normalization_target' in it_dict.keys() and it_dict['normalization_target'] == 'post':
@@ -105,5 +124,4 @@ def create_conv_tower(self, act, layer_structure, tower_name):
                 setattr(self, it_dict['names'], act)
                 print 'Added layer: %s' % na
     return act
-
 

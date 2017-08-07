@@ -34,10 +34,6 @@ class activations(object):
         """Concatenated +/- relu."""
         return tf.nn.crelu(x)
 
-    def dropout(self, x, keep_prob, kwargs**):
-        """Dropout."""
-        return tf.nn.dropout(x, keep_prob=keep_prob)
-
     def __getitem__(self, name):
         return getattr(self, name)
 

@@ -2,10 +2,10 @@ DROP TABLE IF EXISTS experiments
 DROP TABLE IF EXISTS performance
 DROP TABLE IF EXISTS in_process
 
-CREATE TABLE experiments (_id bigserial primary key, model_struct varchar, loss_function varchar, wd_layers varchar, wd_penalty float, optimizer varchar, lr varchar, dataset varchar)
+CREATE TABLE experiments (_id bigserial primary key, model_struct varchar, loss_function varchar, wd_type varchar, wd_penalty float, optimizer varchar, lr varchar, dataset varchar)
 
 CREATE TABLE performance (_id bigserial primary key, experiment_id int, summary_dir varchar, ckpt_file varchar, time_elapsed float, training_step int, validation_loss float, training_loss float)
 
 CREATE TABLE in_process (experiment_id int)
 
-ALTER TABLE  experiment ADD CONSTRAINT unique_exp UNIQUE (model_struct, loss_function, wd_layers, wd_penalty, optimizer, lr, dataset)
+ALTER TABLE  experiment ADD CONSTRAINT unique_exp UNIQUE (model_struct, loss_function, wd_type, wd_penalty, optimizer, lr, dataset)

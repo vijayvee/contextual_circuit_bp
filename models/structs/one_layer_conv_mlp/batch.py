@@ -6,8 +6,9 @@ layer_structure = [
         'weights': [64],
         'names': ['conv1_1'],
         'filter_size': [9],
-        'normalization': ['batchnorm'],
-        'normalization_target': ['post']
+        'normalization': ['batch'],
+        'normalization_target': ['post'],
+        'wd_target': 'pre'
     },
     {
         'layers': ['pool'],

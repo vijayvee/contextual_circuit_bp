@@ -9,8 +9,8 @@ class experiments():
             'lr': [1e-3],  # np.logspace(-5, -2, 4, base=10),
             'loss_function': ['cce'],
             'optimizer': ['adam'],
-            'wd_layers': [None],
-            'wd_penalty': [None],
+            'wd_type': [None, 'l1', 'l2'],
+            'wd_penalty': [0.005],
             'model_struct': [
                 os.path.join(model_foler, 'divisive'),
                 os.path.join(model_foler, 'batch'),

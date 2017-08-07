@@ -6,7 +6,7 @@ layer_structure = [
         'weights': [64],
         'names': ['conv1_1'],
         'filter_size': [9],
-        'normalization': ['batchnorm'],
+        'normalization': ['divisive_2d'],
         'normalization_target': ['post']
     },
     {
