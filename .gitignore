@@ -2,4 +2,4 @@
 db/credentials.py
 build/
 dist/
-*.info
+*egg-info
