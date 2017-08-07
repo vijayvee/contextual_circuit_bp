@@ -67,6 +67,15 @@ class normalizations(object):
             center=self.bias_CRF,
             training=self.training)
 
+    def batch_renorm(self, x, kwargs**):
+        """Batch re-normalization."""
+        return tf.layers.batch_normalization(
+            x,
+            scale=self.scale_CRF,
+            center=self.bias_CRF,
+            training=self.training,
+            renorm=True)
+
     def layer(self, x, kwargs**):
         """Layer normalization."""
         return nf.layer_norm.layer_norm(

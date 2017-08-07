@@ -1,21 +1,11 @@
+import os
 import argparse
 import numpy as np
 import itertools as it
 from db import db
 from db import credentials
 from utils import logger as log
-
-
-"""Each key in experiment_dict must be manually added to the schema."""
-experiment_dict = {
-    'lr': [1e-3],  # np.logspace(-5, -2, 4, base=10),
-    'loss_function': ['cce'],
-    'optimizer': ['adam'],
-    'wd_layers': [None],
-    'wd_penalty': [None],
-    'model_struct': ['one_layer_conv_mlp'],
-    'dataset': ['mnist', 'cifar']
-}
+from models import experiments
 
 
 def package_parameters(parameter_dict):
@@ -27,7 +17,7 @@ def package_parameters(parameter_dict):
     return combos
 
 
-def main(reset_process, initialize_db):
+def main(reset_process, initialize_db, experiment_name):
     """Populate db with experiments to run."""
     if reset_process:
         db.reset_in_process()
@@ -37,6 +27,7 @@ def main(reset_process, initialize_db):
         db.initialize_database()
         log.info('Adding new experiments.')
         config = credentials.postgresql_connection()
+        experiment_dict = experiments[experiment_name]
         exp_combos = package_parameters(experiment_dict)
         with db(config) as db_conn:
             db_conn.populate_db(exp_combos)
@@ -54,6 +45,12 @@ if __name__ == '__main__':
         "--initialize",
         dest="initialize_db",
         action='store_true',
+        help='Recreate your database of experiments.')
+    parser.add_argument(
+        "--experiment_name",
+        dest="experiment_name",
+        default='one_layer_conv_mlp',
+        type=str,
         help='Recreate your database of experiments.')
     args = parser.parse_args()
     main(**vars(args))
