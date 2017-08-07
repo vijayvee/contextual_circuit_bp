@@ -1,5 +1,5 @@
 import os
-from ops import putils
+from utils import py_utils
 
 
 class Config:
@@ -11,4 +11,4 @@ class Config:
         check_dirs = [
             self.tf_records,
         ]
-        [putils.make_dir(x) for x in check_dirs]
+        [py_utils.make_dir(x) for x in check_dirs]

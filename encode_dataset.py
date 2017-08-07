@@ -1,14 +1,13 @@
 import os
 import dataset_processing
 from config import Config
-from ops import putils
-from ops import data_to_tfrecords
+from utils import py_utils
 from argparse import ArgumentParser
 from ops.data_to_tfrecords import data_to_tfrecords
 
 def encode_dataset(dataset):
     config = Config()
-    data_class = putils.import_module(dataset)
+    data_class = py_utils.import_module(dataset)
     data_proc = data_class.data_processing()
     files, labels = data_proc.get_data()
     targets = data_proc.targets

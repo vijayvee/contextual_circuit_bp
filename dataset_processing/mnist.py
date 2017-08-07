@@ -3,7 +3,7 @@ import re
 from glob import glob
 from config import Config
 from ops import tf_fun
-from ops import putils
+from utils import py_utils
 
 
 class data_processing(object):
@@ -40,7 +40,7 @@ class data_processing(object):
                     os.path.join(
                         d,
                         '*%s' % self.extension))]
-            files[k] = putils.flatten_list(it_files)
+            files[k] = py_utils.flatten_list(it_files)
         return files
 
     def get_labels(self, files):

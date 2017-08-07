@@ -7,12 +7,14 @@ from models.layers.normalizations import normalizations
 
 class model_class(object):
     """Default model class that is generated with a layer_structure dict."""
-    def __init__(self, **kwargs):
+    def __init__(self, mean, training, **kwargs):
         """Set model to trainable/not and pass the mean values."""
         self.var_dict = {}
-        self.trainable = trainable
+        self.training = training
         self.mean = mean
         self.data_dict = None
+        self.share_vars = ['training']
+        self.layer_vars = {k: self[k] for k in self.share_vars}
 
     def model(self, data, layer_structure, tower_name):
         """Main model creation method."""
@@ -44,7 +46,6 @@ class model_class(object):
         return count
 
 
-
 def create_conv_tower(self, act, layer_structure, tower_name):
     """
     Construct a feedforward neural model tower.
@@ -55,6 +56,8 @@ def create_conv_tower(self, act, layer_structure, tower_name):
     tower_name: name of the tower's variable scope.
     """
     print 'Creating tower: %s' % tower_name
+    activ_mod = activations(self.layer_vars**)
+    norm_mod = normalizations(self.layer_vars**)
     with tf.variable_scope(tower_name):
         for layer in layer_structure:
             keys = layer.keys()
@@ -63,9 +66,9 @@ def create_conv_tower(self, act, layer_structure, tower_name):
                 if 'dropout_target' in it_dict.keys() and it_dict['dropout_target'] == 'pre':
                     act = tf.nn.dropout(act, keep_prob=it_dict['dropout'])
                 if 'activation_target' in it_dict.keys() and it_dict['activation_target'] == 'pre':
-                    act = activations()[it_dict['activation']](act)
+                    act = activ_mod[it_dict['activation']](act)
                 if 'normalization_target' in it_dict.keys() and it_dict['normalization_target'] == 'pre':
-                    act = normalizations()[it_dict['normalization']](act) 
+                    act = norm_mod[it_dict['normalization']](act) 
                 if it_dict['layers'] == 'pool':
                     act = lmod.pool.max_pool(
                         bottom=act,
@@ -96,9 +99,9 @@ def create_conv_tower(self, act, layer_structure, tower_name):
                 if 'dropout_target' in it_dict.keys() and it_dict['dropout_target'] == 'post':
                     act = tf.nn.dropout(act, keep_prob=it_dict['dropout'])
                 if 'activation_target' in it_dict.keys() and it_dict['activation_target'] == 'post':
-                    act = activations()[it_dict['activation']](act)
+                    act = activ_mod[it_dict['activation']](act)
                 if 'normalization_target' in it_dict.keys() and it_dict['normalization_target'] == 'post':
-                    act = normalizations()[it_dict['normalization']](act)
+                    act = norm_mod[it_dict['normalization']](act)
                 setattr(self, it_dict['names'], act)
                 print 'Added layer: %s' % na
     return act

@@ -5,6 +5,9 @@ See paper Normalizing the Normalizers: Comparing and Extending Network
 Normalization Schemes. Mengye Ren*, Renjie Liao*, Raquel Urtasun, Fabian H.
 Sinz, Richard S. Zemel. 2016. https://arxiv.org/abs/1611.04520
 """
+from __future__ import (absolute_import, division, print_function,
+                        unicode_literals)
+
 import numpy as np
 import tensorflow as tf
 
