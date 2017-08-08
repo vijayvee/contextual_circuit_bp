@@ -8,6 +8,7 @@ class Config:
         self.data_root = '/media/data_cifs/image_datasets/'
         self.project_directory = '/media/data_cifs/contextual_circuit/'
         self.tf_records = os.path.join(self.project_directory, 'tf_records')
+        self.log_dir = os.path.join(self.project_directory, 'logs')
 
         # DB
         self.db_ssh_forward = False
@@ -15,5 +16,12 @@ class Config:
         # Create directories if they do not exist
         check_dirs = [
             self.tf_records,
+            self.log_dir
         ]
         [py_utils.make_dir(x) for x in check_dirs]
+
+    def __getitem__(self, name):
+        return getattr(self, name)
+
+    def __contains__(self, name):
+        return hasattr(self, name)

@@ -2,7 +2,14 @@ import os
 
 
 class experiments():
-    def one_layer_conv_mlp():
+
+    def __getitem__(self, name):
+        return getattr(self, name)
+
+    def __contains__(self, name):
+        return hasattr(self, name)
+
+    def one_layer_conv_mlp(self):
         """Each key in experiment_dict must be manually added to the schema."""
         model_foler = 'one_layer_conv_mlp'
         return {
@@ -17,14 +24,6 @@ class experiments():
                 os.path.join(model_foler, 'layer'),
                 os.path.join(model_foler, 'lrn'),
                 os.path.join(model_foler, 'contextual'),
-            ]
+            ],
             'dataset': ['mnist', 'cifar']
         }
-
-    def __getitem__(self, name):
-        return getattr(self, name)
-
-    def __contains__(self, name):
-        return hasattr(self, name)
-
-

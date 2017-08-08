@@ -1,9 +1,9 @@
 import os
-import dataset_processing
 from config import Config
 from utils import py_utils
 from argparse import ArgumentParser
 from ops.data_to_tfrecords import data_to_tfrecords
+
 
 def encode_dataset(dataset):
     config = Config()
@@ -19,7 +19,7 @@ def encode_dataset(dataset):
         targets=targets,
         ds_name=ds_name,
         im_size=im_size)
-            
+
 
 if __name__ == '__main__':
     parser = ArgumentParser()

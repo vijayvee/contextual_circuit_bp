@@ -7,6 +7,7 @@ import psycopg2.extensions
 import credentials
 from config import Config
 sshtunnel.DAEMON = True  # Prevent hanging process due to forward thread
+main_config = Config()
 
 
 class db(object):
@@ -14,23 +15,23 @@ class db(object):
         self.status_message = False
         self.db_schema_file = 'db/db_schema.txt'
         # Pass config -> this class
-        for k, v in Config.items():
+        for k, v in config.items():
             setattr(self, k, v)
 
     def __enter__(self):
-        if self.db_ssh_forward:
+        if main_config.db_ssh_forward:
             forward = sshtunnel.SSHTunnelForwarder(
                 credentials.machine_credentials()['ssh_address'],
                 ssh_username=credentials.machine_credentials()['username'],
                 ssh_password=credentials.machine_credentials()['password'],
                 remote_bind_address=('127.0.0.1', 5432))
             forward.start()
-            pgsql_port = forward.local_bind_port
-            pgsql_string = credentials.postgresql_connection(str(pgsql_port))
             self.forward = forward
+            self.pgsql_port = forward.local_bind_port
         else:
             self.forward = None
-        self.pgsql_port = pgsql_port
+            self.pgsql_port = ''
+        pgsql_string = credentials.postgresql_connection(str(self.pgsql_port))
         self.pgsql_string = pgsql_string
         self.conn = psycopg2.connect(**pgsql_string)
         self.conn.set_isolation_level(
@@ -45,7 +46,7 @@ class db(object):
             self.close_db(commit=False)
         else:
             self.close_db()
-        if self.db_ssh_forward:
+        if main_config.db_ssh_forward:
             self.forward.close()
         return self
 

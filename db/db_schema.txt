@@ -8,4 +8,4 @@ CREATE TABLE performance (_id bigserial primary key, experiment_id int, summary_
 
 CREATE TABLE in_process (experiment_id int)
 
-ALTER TABLE  experiment ADD CONSTRAINT unique_exp UNIQUE (model_struct, loss_function, wd_type, wd_penalty, optimizer, lr, dataset)
+ALTER TABLE  experiments ADD CONSTRAINT unique_exp UNIQUE (model_struct, loss_function, wd_type, wd_penalty, optimizer, lr, dataset)
