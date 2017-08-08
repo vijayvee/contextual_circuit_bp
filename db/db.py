@@ -95,9 +95,9 @@ class db(object):
         self.cur.executemany(
             """
             INSERT INTO experiments
-            (model_struct, loss_function, wd_type, wd_penalty, optimizer, lr, dataset)
+            (experiment_name, model_struct, loss_function, wd_type, wd_penalty, optimizer, lr, dataset)
             VALUES
-            (%(model_struct)s, %(loss_function)s, %(wd_type)s, %(wd_penalty)s, %(optimizer)s, %(lr)s, %(dataset)s)
+            (%(experiment_name)s, %(model_struct)s, %(loss_function)s, %(wd_type)s, %(wd_penalty)s, %(optimizer)s, %(lr)s, %(dataset)s)
             """,
             namedict)
         if self.status_message:
@@ -131,14 +131,17 @@ class db(object):
             self.return_status('SELECT')
         return self.cur.fetchone()
 
-    def update_in_process(self, experiment_id):
+    def update_in_process(self, experiment_id, experiment_name):
         self.cur.execute(
             """
              INSERT INTO in_process
              VALUES
-             (%(experiment_id)s)
+             (%(experiment_id)s, %(experiment_name)s)
             """,
-            {'experiment_id': experiment_id}
+            {
+                'experiment_id': experiment_id,
+                'experiment_name': experiment_name
+            }
         )
         if self.status_message:
             self.return_status('INSERT')
@@ -156,8 +159,8 @@ class db(object):
         self.cur.execute(
             """
             INSERT INTO performance
-            (experiment_id, summary_dir, ckpt_file, training_loss, validation_loss, time_elapsed, training_step)
-            VALUES (%(experiment_id)s, %(summary_dir)s, %(ckpt_file)s, %(training_loss)s, %(validation_loss)s, %(time_elapsed)s, %(training_step)s)
+            (experiment_id, experiment_name, summary_dir, ckpt_file, training_loss, validation_loss, time_elapsed, training_step)
+            VALUES (%(experiment_id)s, %(experiment_name)s, %(summary_dir)s, %(ckpt_file)s, %(training_loss)s, %(validation_loss)s, %(time_elapsed)s, %(training_step)s)
             RETURNING _id""",
             namedict
             )
@@ -216,4 +219,3 @@ if __name__ == '__main__':
         help='Recreate your database.')
     args = parser.parse_args()
     main(**vars(args))
-

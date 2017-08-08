@@ -1,4 +1,3 @@
-import numpy as np
 import tensorflow as tf
 
 
@@ -11,3 +10,9 @@ def int64_feature(values):
         values = [values]
     return tf.train.Feature(int64_list=tf.train.Int64List(value=values))
 
+
+def fixed_len_feature(len=[], dtype='int64'):
+    if dtype == 'int64':
+        return tf.FixedLenFeature([], tf.int64)
+    elif dtype == 'string':
+        return tf.FixedLenFeature([], tf.string)

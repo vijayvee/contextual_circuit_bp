@@ -13,4 +13,3 @@ def import_module(dataset, model_dir='dataset_processing'):
 def make_dir(d):
     if not os.path.exists(d):
         os.makedirs(d)
-

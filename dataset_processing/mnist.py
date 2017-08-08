@@ -1,5 +1,4 @@
 import os
-import re
 from glob import glob
 from config import Config
 from ops import tf_fun
@@ -17,6 +16,10 @@ class data_processing(object):
         self.targets = {
             'image': tf_fun.bytes_feature,
             'label': tf_fun.int64_feature
+        }
+        self.tf_dict = {
+            'image': tf_fun.fixed_len_feature(dtype='string'),
+            'label': tf_fun.fixed_len_feature(dtype='int64')
         }
         self.im_size = [28, 28, 1]
 
@@ -51,4 +54,3 @@ class data_processing(object):
                 it_labels += [int(f.split('/')[-2])]
             labels[k] = it_labels
         return labels
-
