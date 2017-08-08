@@ -7,7 +7,7 @@ from ops import tf_fun
 
 class data_processing(object):
     def __init__(self):
-        self.name = 'cifar'
+        self.name = 'cifar_10'
         self.extension = '.png'
         self.config = Config()
         self.folds = {

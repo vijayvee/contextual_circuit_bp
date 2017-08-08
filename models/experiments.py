@@ -12,10 +12,14 @@ class experiments():
     def globals(self):
         """Globals."""
         return {
-            'batch_size': 32,
-            'data_augmentations': [None],
+            'batch_size': 32,  # Train/val batch size.
+            'data_augmentations': [None],  # Random_crop, etc.
             'epochs': 100,
-            'shuffle': True
+            'shuffle': True,  # Shuffle data.
+            'validation_iters': 1000,  # How often to evaluate validation.
+            'num_validation_evals': 100,  # How many validation batches.
+            'top_n_validation': 0,  # Set to 0 to save all checkpoints.
+            'early_stop': False  # Stop training if the loss stops improving.
         }
 
     def add_globals(self, exp):

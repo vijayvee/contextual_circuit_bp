@@ -195,6 +195,29 @@ def reset_in_process():
     print 'Cleared the in_process table.'
 
 
+def update_performance(
+        experiment_id,
+        experiment_name,
+        summary_dir,
+        ckpt_file,
+        training_loss,
+        validation_loss,
+        time_elapsed,
+        training_step):
+    config = credentials.postgresql_connection()
+    perf_dict = {
+        'experiment_id': experiment_id,
+        'experiment_name': experiment_name,
+        'summary_dir': summary_dir,
+        'ckpt_file': ckpt_file,
+        'training_loss': training_loss,
+        'validation_loss': validation_loss,
+        'time_elapsed': time_elapsed,
+        'training_step': training_step,
+    }
+    with db(config) as db_conn:
+        db_conn.update_performance(perf_dict)
+
 def main(
         initialize_db,
         reset_process=False):

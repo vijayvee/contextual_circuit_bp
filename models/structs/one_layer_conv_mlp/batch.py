@@ -8,12 +8,13 @@ layer_structure = [
         'filter_size': [9],
         'normalization': ['batch'],
         'normalization_target': ['post'],
-        'wd_target': 'pre'
+        'wd_target': 'pre',
+        'wd_type': None,
     },
     {
         'layers': ['pool'],
         'weights': [None],
         'names': ['pool1'],
         'filter_size': [None]
-    }]
-
+    }
+]

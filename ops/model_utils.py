@@ -3,6 +3,7 @@ import tensorflow as tf
 from models import layers as lmod
 from models.layers.activations import activations
 from models.layers.normalizations import normalizations
+from models.layers.regularizations import regularizations
 
 
 class model_class(object):
@@ -18,13 +19,27 @@ class model_class(object):
         self.share_vars = ['training', 'output_size']
         self.layer_vars = {k: self[k] for k in self.share_vars}
 
-    def model(self, data, output_size, layer_structure, tower_name):
+    def build(
+            self,
+            data,
+            layer_structure,
+            output_layer_structure=None,
+            tower_name='cnn'):
         """Main model creation method."""
         data -= self.mean[None, :, :, :]  # Assuming H/W/C mean
-        features = create_conv_tower(self, data, layer_structure, tower_name)
+        features = create_conv_tower(
+            self,
+            data,
+            layer_structure,
+            tower_name)
         if output_layer_structure is None:
             output_layer_structure = self.default_output_layer()
-        create_conv_tower(self, features, output_layer_structure, 'output')
+        output = create_conv_tower(
+            self,
+            features,
+            output_layer_structure,
+            'output')
+        return output
 
     def default_output_layer(self):
         return {
@@ -63,65 +78,61 @@ def create_conv_tower(self, act, layer_structure, tower_name):
     Construct a feedforward neural model tower.
     Inputs:::
     act: a tensor to be fed into the model.
-    layer_structure: a list of dictionaries that specify model layers. Note that
-    not all operations are commutative (e.g. act fun -> dropout -> normalization).
+    layer_structure: a list of dictionaries that
+    specify model layers. Note that not all operations are commutative
+    (e.g. act fun -> dropout -> normalization).
     tower_name: name of the tower's variable scope.
     """
     print 'Creating tower: %s' % tower_name
-    activ_mod = activations(self.layer_vars**)
-    norm_mod = normalizations(self.layer_vars**)
-    reg_mod = regularizations(self.layer_vars**)
+    activ_mod = activations(self.layer_vars)
+    norm_mod = normalizations(self.layer_vars)
+    reg_mod = regularizations(self.layer_vars)
     with tf.variable_scope(tower_name):
-        for layer in layer_structure:
-            keys = layer.keys()
-            for vals in zip(*(d[k] for k in keys)):
-                it_dict = dict(zip(keys, vals))
-                if 'wd_target' in it_dict.keys() and it_dict['wd_target'] == 'pre':
-                    self.regularizations['%s_%s' % (
-                        it_dict['names'], it_dict['wd_target'])] = reg_mod[it_dict['wd_type']](act)
-                if 'dropout_target' in it_dict.keys() and it_dict['dropout_target'] == 'pre':
-                    act = reg_mod.dropout(act, keep_prob=it_dict['dropout'])
-                if 'activation_target' in it_dict.keys() and it_dict['activation_target'] == 'pre':
-                    act = activ_mod[it_dict['activation']](act)
-                if 'normalization_target' in it_dict.keys() and it_dict['normalization_target'] == 'pre':
-                    act = norm_mod[it_dict['normalization']](act) 
-                if it_dict['layers'] == 'pool':
-                    act = lmod.pool.max_pool(
-                        bottom=act,
-                        name=it_dict['names'])
-                elif it_dict['layers'] == 'conv':
-                    act = lmod.ff.conv_layer(
-                        self=self,
-                        bottom=act,
-                        in_channels=int(act.get_shape()[-1]),
-                        out_channels=it_dict['weights'],
-                        name=it_dict['names'],
-                        filter_size=it_dict['filter_size']
-                    )
-                elif it_dict['layers'] == 'fc':
-                    act = lmod.ff.fc_layer(
-                        self=self,
-                        bottom=act,
-                        in_channels=int(act.get_shape()[-1]),
-                        out_channels=it_dict['weights'],
-                        name=it_dict['names'])
-                    )
-                elif it_dict['layers'] == 'res':
-                    act = lmod.ff.resnet_layer(
-                        self=self,
-                        bottom=act,
-                        layer_weights=it_dict['weights'],
-                        name=it_dict['names'])
-                if 'wd_target' in it_dict.keys() and it_dict['wd_target'] == 'post':
-                    self.regularizations['%s_%s' % (
-                        it_dict['names'], it_dict['wd_target'])] = reg_mod[it_dict['wd_type']](act)
-                if 'dropout_target' in it_dict.keys() and it_dict['dropout_target'] == 'post':
-                    act = reg_mod.dropout(act, keep_prob=it_dict['dropout'])
-                if 'activation_target' in it_dict.keys() and it_dict['activation_target'] == 'post':
-                    act = activ_mod[it_dict['activation']](act)
-                if 'normalization_target' in it_dict.keys() and it_dict['normalization_target'] == 'post':
-                    act = norm_mod[it_dict['normalization']](act)
-                setattr(self, it_dict['names'], act)
-                print 'Added layer: %s' % na
+        for it_dict in layer_structure:
+            if 'wd_target' in it_dict.keys() and it_dict['wd_target'] == 'pre':
+                self.regularizations['%s_%s' % (
+                    it_dict['names'], it_dict['wd_target'])] = reg_mod[it_dict['wd_type']](act)
+            if 'dropout_target' in it_dict.keys() and it_dict['dropout_target'] == 'pre':
+                act = reg_mod.dropout(act, keep_prob=it_dict['dropout'])
+            if 'activation_target' in it_dict.keys() and it_dict['activation_target'] == 'pre':
+                act = activ_mod[it_dict['activation']](act)
+            if 'normalization_target' in it_dict.keys() and it_dict['normalization_target'] == 'pre':
+                act = norm_mod[it_dict['normalization']](act) 
+            if it_dict['layers'] == 'pool':
+                act = lmod.pool.max_pool(
+                    bottom=act,
+                    name=it_dict['names'])
+            elif it_dict['layers'] == 'conv':
+                act = lmod.ff.conv_layer(
+                    self=self,
+                    bottom=act,
+                    in_channels=int(act.get_shape()[-1]),
+                    out_channels=it_dict['weights'],
+                    name=it_dict['names'],
+                    filter_size=it_dict['filter_size']
+                )
+            elif it_dict['layers'] == 'fc':
+                act = lmod.ff.fc_layer(
+                    self=self,
+                    bottom=act,
+                    in_channels=int(act.get_shape()[-1]),
+                    out_channels=it_dict['weights'],
+                    name=it_dict['names'])
+            elif it_dict['layers'] == 'res':
+                act = lmod.ff.resnet_layer(
+                    self=self,
+                    bottom=act,
+                    layer_weights=it_dict['weights'],
+                    name=it_dict['names'])
+            if 'wd_target' in it_dict.keys() and it_dict['wd_target'] == 'post':
+                self.regularizations['%s_%s' % (
+                    it_dict['names'], it_dict['wd_target'])] = reg_mod[it_dict['wd_type']](act)
+            if 'dropout_target' in it_dict.keys() and it_dict['dropout_target'] == 'post':
+                act = reg_mod.dropout(act, keep_prob=it_dict['dropout'])
+            if 'activation_target' in it_dict.keys() and it_dict['activation_target'] == 'post':
+                act = activ_mod[it_dict['activation']](act)
+            if 'normalization_target' in it_dict.keys() and it_dict['normalization_target'] == 'post':
+                act = norm_mod[it_dict['normalization']](act)
+            setattr(self, it_dict['names'], act)
+            print 'Added layer: %s' % it_dict['names']
     return act
-

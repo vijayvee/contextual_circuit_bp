@@ -7,7 +7,7 @@ from ops import tf_fun
 
 class data_processing(object):
     def __init__(self):
-        self.name = 'cifar'
+        self.name = 'cifar_100'
         self.extension = '.png'
         self.config = Config()
         self.folds = {
@@ -22,7 +22,7 @@ class data_processing(object):
             'image': tf_fun.fixed_len_feature(dtype='string'),
             'label': tf_fun.fixed_len_feature(dtype='int64')
         }
-        self.output_size = 10
+        self.output_size = [100, 1]
         self.im_size = [32, 32, 3]
 
     def get_data(self):

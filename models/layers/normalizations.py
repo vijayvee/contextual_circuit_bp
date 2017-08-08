@@ -1,12 +1,11 @@
 import numpy as np
 import tensorflow as tf
 from models.layers import normalization_functions as nf
-from utils import logger as log
 
 
 class normalizations(object):
     """Wrapper class for activation functions."""
-    def __init__(self, kwargs**):
+    def __init__(self, **kwargs):
         """Globals for normalization functions."""
         self.timesteps = 1
         self.CRF_excitation = 1
@@ -16,24 +15,24 @@ class normalizations(object):
         self.scale_CRF = True
         self.bias_CRF = True
         self.training = True
-        self.update_params(kwargs**)
+        self.update_params(kwargs)
 
-    def update_params(self, d):
-        for k, v in d.iteritems():
+    def update_params(self, **kwargs):
+        for k, v in kwargs.iteritems():
             update = self.get(k)
             if update is not None:
                 self[k] = v
 
-    def contextual(self, x, kwargs**):   
+    def contextual(self, x, **kwargs):
         """Contextual model 2D."""
-        contextual_layer = ContextualCircuit()
+        contextual_layer = nf.ContextualCircuit()
         if self.CRF_excitation != self.CRF_inhibition:
             CRF_size = np.max([self.CRF_excitation, self.CRF_inhibition])
-            log.warning('CRF inhibition/excitation RFs are uneven.' + 
+            print 'CRF inhibition/excitation RFs are uneven.' + \
                 'Using the max extent for the contextual model CRF.'
         else:
             CRF_size = self.CRF_inhibition
-        return nf.contextual_layer(
+        return contextual_layer(
             x,
             timesteps=self.timesteps,
             lesions=None,
@@ -41,16 +40,16 @@ class normalizations(object):
             SSN=self.eCRF_excitation,
             SSF=self.eCRF_inhibition)
 
-    def divisive(self, x, kwargs**):   
+    def divisive(self, x, **kwargs):
         """Divisive normalization 2D."""
         return nf.div_norm.div_norm_2d(
             x,
             sum_window=self.CRF_excitation,
             sup_window=self.CRF_inhibition,
             gamma=self.scale_CRF,
-            beta=self.bias_CRF) 
+            beta=self.bias_CRF)
 
-    def divisive_1d(self, x, kwargs**):
+    def divisive_1d(self, x, **kwargs):
         """Divisive normalization 2D."""
         return nf.div_norm.div_norm_1d(
             x,
@@ -59,7 +58,7 @@ class normalizations(object):
             gamma=self.scale_CRF,
             beta=self.bias_CRF)
 
-    def batch(self, x, kwargs**):
+    def batch(self, x, **kwargs):
         """Batch normalization."""
         return tf.layers.batch_normalization(
             x,
@@ -67,7 +66,7 @@ class normalizations(object):
             center=self.bias_CRF,
             training=self.training)
 
-    def batch_renorm(self, x, kwargs**):
+    def batch_renorm(self, x, **kwargs):
         """Batch re-normalization."""
         return tf.layers.batch_normalization(
             x,
@@ -76,14 +75,14 @@ class normalizations(object):
             training=self.training,
             renorm=True)
 
-    def layer(self, x, kwargs**):
+    def layer(self, x, **kwargs):
         """Layer normalization."""
         return nf.layer_norm.layer_norm(
             x,
             gamma=self.scale_CRF,
-            beta=self.bias_CRF) 
+            beta=self.bias_CRF)
 
-    def lrn(self, x, kwargs**):
+    def lrn(self, x, **kwargs):
         """Local response normalization."""
         return tf.nn.local_response_normalization(
             x,
@@ -96,4 +95,3 @@ class normalizations(object):
 
     def __contains__(self, name):
         return hasattr(self, name)
-
