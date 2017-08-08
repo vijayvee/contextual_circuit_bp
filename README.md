@@ -1,7 +1,6 @@
 
 TODO
 
-1) Training script. Don't forget to tf.add_n([lambda * v for k, v in model.regularizations.iteritems()]).
 2) Evaluation script: Visualizations w/ LRP + plotting loss curves + plotting accuracy curves across multiple models.
 3) DEBUG
 4) Fix the contextual model implementation. A) Think about optimal bio CRF/eCRF sizes. B) Add the ability to automatically learn these from the data
@@ -32,9 +31,5 @@ TODO
 	c. I manually access the db with `psql contextual_DCN -h 127.0.0.1 -d contextual_DCN`.
 
 7. Run models.
-
-
-Main execution script
-Training script
-data loader
-Evaluation
+	a. Run a worker with `CUDA_VISIBLE_DEVICES=0 python main.py`. The worker will continue until there are no more experiments to run in the DB.
+	b. Every worker will save tensorflow model checkpoints, tensorflow summaries that can be viewed in tensorboard, update the DB with its progress, and after finishing, will produce plots of the training performance.
