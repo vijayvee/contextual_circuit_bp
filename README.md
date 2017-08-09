@@ -6,7 +6,25 @@ TODO
 4) Fix the contextual model implementation. A) Think about optimal bio CRF/eCRF sizes. B) Add the ability to automatically learn these from the data
 
 
-## Preparing and executing experiments
+## Project overview:
+
+- configuration
+	+ `config.py`
+	+ `setup.py`
+	+ `db/credentials.py`
+- experiments (stored in db)
+	+ `models/experiments.py`
+		- parameters
+			-datasets
+				+ `encode_dataset.py`
+			-model structures (different types of normalizations, etc)
+				+ e.g., `models/structs/one_layer_conv_mlp/`
+			-hyper parameters
+- training and evaluation
+	+ `main.py --experiment={experiment_name}`
+
+
+## Preparing and executing experiments:
 
 1. Adjust the file `config.py` to point to directories containing your images and where you intend to save data.
 	a. Each image dataset should be in its own folder in the root directory `self.data_root` contained in the config.
@@ -24,6 +42,7 @@ TODO
 5. Create models.
 	a. Add a folder with the kind of model you are creating. Follow the template of `models/structs/one_layer_conv_mlp/`.
 	b. Coordinate the models you create with `models/experiments`. This script will allow you to build workers that run through any number of hyperparameter/model/dataset combinations of your experiment. For instance, if you want to measure the performance of models containing different kinds of normalization. Each model (same architecture but different normalizations) has a structure documented in `models/structs/one_layer_conv_mlp/`. The name of each model is added to the `one_layer_conv_mlp` method in `models/experiments.py` in the field "model_struct". Adding multiple entries in other fields, such as "dataset", will have the workers run through those combinations.
+	c. See section XXX below for details on model construction
 
 6. Populate database with experiments.
 	a. Running with the example laid out in (3), populate your postgres DB with all possible experiment combinations: `python prepare_experiments.py --initialize --experiment_name=one_layer_conv_mlp`.
@@ -31,5 +50,56 @@ TODO
 	c. I manually access the db with `psql contextual_DCN -h 127.0.0.1 -d contextual_DCN`.
 
 7. Run models.
-	a. Run a worker with `CUDA_VISIBLE_DEVICES=0 python main.py`. The worker will continue until there are no more experiments to run in the DB.
-	b. Every worker will save tensorflow model checkpoints, tensorflow summaries that can be viewed in tensorboard, update the DB with its progress, and after finishing, will produce plots of the training performance.
+	a. Run a worker with `CUDA_VISIBLE_DEVICES=0 python main.py --experiment={experiment_name}`. The worker will continue until there are no more experiments to run in the DB.
+	b. If you forgot what experiments you've created use `python main.py --list_experiments` to list all in the DB.
+	c. Every worker will save tensorflow model checkpoints, tensorflow summaries that can be viewed in tensorboard, update the DB with its progress, and after finishing, will produce plots of the training performance.
+
+## Model construction:
+
+- Models are constructed similarly to caffe, as lists of layers.
+	conv_tower = [
+		{  # Note that each attribute is in a list. This is because for the case of resnet you must specify multiple attributes per layer (see below for example).
+	        'layers': ['conv'],  # Matrix/conv operation. Can be {conv/fc/resnet}.
+	        'weights': [64],  # Number of weights in layer.
+	        'names': ['conv1_1'],  # Name of the layer.
+	        'filter_size': [9],  # Filter size in the case of conv/resnet layer.
+	        'normalization': ['contextual'],  # Type of normalization to use. See `models/layers/normalizations.py` for details.
+	        'normalization_target': ['post'], # Normalization pre- or post-conv/matrix operation.
+	        'activation': ['relu'],  # Type of activation to use. See `models/layers/activations.py` for details.
+	        'activation_target': ['post'], # Activation decay pre- or post-conv/matrix operation.
+	        'wd_type': [None],  # Type of weight decay to use.  See `models/layers/regularizations.py` for details.
+	        'wd_target': ['pre'],  # Weight decay pre- or post-conv/matrix operation.
+		}
+	]
+
+	fc_tower = [
+		{  # Note that each attribute is in a list. This is because for the case of resnet you must specify multiple attributes per layer (see below for example).
+	        'layers': ['fc'],  # Matrix/conv operation. Can be {conv/fc/resnet}.
+	        'weights': [64],  # Number of weights in layer.
+	        'names': ['fc_1'],  # Name of the layer.
+	        'filter_size': [9],  # Filter size in the case of conv/resnet layer.
+	        'normalization': ['contextual'],  # Type of normalization to use. See `models/layers/normalizations.py` for details.
+	        'normalization_target': ['post'], # Normalization pre- or post-conv/matrix operation.
+	        'activation': ['relu'],  # Type of activation to use. See `models/layers/activations.py` for details.
+	        'activation_target': ['post'], # Activation decay pre- or post-conv/matrix operation.
+	        'wd_type': [None],  # Type of weight decay to use.  See `models/layers/regularizations.py` for details.
+	        'wd_target': ['pre'],  # Weight decay pre- or post-conv/matrix operation.
+		}
+	]
+
+	resnet_tower = [
+		{  # Note that each attribute is in a list. This is because for the case of resnet you must specify multiple attributes per layer (see below for example).
+	        'layers': ['res'],  # Matrix/conv operation. Can be {conv/fc/resnet}.
+	        'weights': [[64, 64]],  # Number of weights in layer.
+	        'names': ['resnet_1'],  # Name of the layer.
+	        'filter_size': [9],  # Filter size in the case of conv/resnet layer.
+	        'normalization': ['contextual'],  # Type of normalization to use. See `models/layers/normalizations.py` for details.
+	        'normalization_target': ['post'], # Normalization pre- or post-conv/matrix operation.
+	        'activation': ['relu'],  # Type of activation to use. See `models/layers/activations.py` for details.
+	        'activation_target': ['post'], # Activation decay pre- or post-conv/matrix operation.
+	        'wd_type': [None],  # Type of weight decay to use.  See `models/layers/regularizations.py` for details.
+	        'wd_target': ['pre'],  # Weight decay pre- or post-conv/matrix operation.
+		}
+	]
+
+	- You can manually specify an "output" layer (HOW?). Otherwise a FC layer will automatically be added that maps your final tower activities to a layer with O computational units, where O = the number of categories in your dataset (this will fail on regression tasks).

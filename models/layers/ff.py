@@ -125,7 +125,6 @@ def get_fc_var(
         name=name,
         idx=0,
         var_name=name + "_weights")
-    import ipdb;ipdb.set_trace
     biases = get_var(
         self=self,
         initial_value=bias_init,
@@ -148,7 +147,7 @@ def get_var(
     else:
         value = initial_value
 
-    if self.trainable:
+    if self.training:
         # get_variable, change the boolian to numpy
         if type(value) is list:
             var = tf.get_variable(

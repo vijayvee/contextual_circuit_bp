@@ -5,7 +5,13 @@ from models.layers import normalization_functions as nf
 
 class normalizations(object):
     """Wrapper class for activation functions."""
-    def __init__(self, **kwargs):
+    def __getitem__(self, name):
+        return getattr(self, name)
+
+    def __contains__(self, name):
+        return hasattr(self, name)
+
+    def __init__(self, kwargs=None):
         """Globals for normalization functions."""
         self.timesteps = 1
         self.CRF_excitation = 1
@@ -14,14 +20,13 @@ class normalizations(object):
         self.eCRF_inhibition = 9
         self.scale_CRF = True
         self.bias_CRF = True
-        self.training = True
-        self.update_params(kwargs)
+        self.training = None
+        if kwargs is not None:
+            self.update_params(**kwargs)
 
     def update_params(self, **kwargs):
         for k, v in kwargs.iteritems():
-            update = self.get(k)
-            if update is not None:
-                self[k] = v
+            setattr(self, k, v)
 
     def contextual(self, x, **kwargs):
         """Contextual model 2D."""
@@ -89,9 +94,3 @@ class normalizations(object):
             depth_radius=self.CRF_inhibition,
             alpha=self.scale_CRF,
             beta=self.bias_CRF)
-
-    def __getitem__(self, name):
-        return getattr(self, name)
-
-    def __contains__(self, name):
-        return hasattr(self, name)

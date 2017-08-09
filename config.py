@@ -16,13 +16,17 @@ class Config:
         self.summaries = os.path.join(
             self.project_directory,
             'summaries')
-        self.evaluations = os.path.join(
+        self.experiment_evaluations = os.path.join(
             self.project_directory,
-            'evaluations')
+            'experiment_evaluations')
+        self.condition_evaluations = os.path.join(
+            self.project_directory,
+            'condition_evaluations')
         self.visualizations = os.path.join(
             self.project_directory,
             'visualizations')
         self.log_dir = os.path.join(self.project_directory, 'logs')
+        self.dataset_info = 'dataset_processing'  # local dataset classes
 
         # DB
         self.db_ssh_forward = False
@@ -31,9 +35,11 @@ class Config:
         check_dirs = [
             self.tf_records,
             self.checkpoints,
-            self.evaluations,
+            self.experiment_evaluations,
+            self.condition_evaluations,
             self.visualizations,
-            self.log_dir
+            self.log_dir,
+            self.dataset_info
         ]
         [py_utils.make_dir(x) for x in check_dirs]
 

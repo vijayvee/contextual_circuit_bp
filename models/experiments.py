@@ -1,4 +1,5 @@
 import os
+import numpy as np
 
 
 class experiments():
@@ -23,28 +24,78 @@ class experiments():
         }
 
     def add_globals(self, exp):
-        for k, v in self.globals():
+        for k, v in self.globals().iteritems():
             exp[k] = v
         return exp
 
     def one_layer_conv_mlp(self):
         """Each key in experiment_dict must be manually added to the schema."""
-        model_foler = 'one_layer_conv_mlp'
+        model_folder = 'one_layer_conv_mlp'
         exp = {
-            'experiment_name': [model_foler],
-            'lr': [1e-3],  # np.logspace(-5, -2, 4, base=10),
+            'experiment_name': [model_folder],
+            'lr': [1e-3],
             'loss_function': ['cce'],
             'optimizer': ['adam'],
             'wd_type': [None, 'l1', 'l2'],
             'wd_penalty': [0.005],
             'model_struct': [
-                os.path.join(model_foler, 'divisive'),
-                os.path.join(model_foler, 'batch'),
-                os.path.join(model_foler, 'layer'),
-                os.path.join(model_foler, 'lrn'),
-                os.path.join(model_foler, 'contextual'),
+                os.path.join(model_folder, 'divisive'),
+                os.path.join(model_folder, 'batch'),
+                os.path.join(model_folder, 'layer'),
+                os.path.join(model_folder, 'lrn'),
+                os.path.join(model_folder, 'contextual'),
             ],
             'dataset': ['mnist', 'cifar']
         }
-        exp = self.add_globals(exp)
-        return exp
+        return self.add_globals(exp)  # Add globals to the experiment
+
+    def test_conv(self):
+        """Each key in experiment_dict must be manually added to the schema."""
+        model_folder = 'test_conv'
+        exp = {
+            'experiment_name': [model_folder],
+            'lr': list(np.logspace(-5, -1, 5, base=10)),
+            'loss_function': ['cce'],
+            'optimizer': ['adam'],
+            'wd_type': [None],
+            'wd_penalty': [None],
+            'model_struct': [
+                os.path.join(model_folder, 'test'),
+            ],
+            'dataset': ['mnist', 'cifar']
+        }
+        return self.add_globals(exp)  # Add globals to the experiment
+
+    def test_fc(self):
+        """Each key in experiment_dict must be manually added to the schema."""
+        model_folder = 'test_fc'
+        exp = {
+            'experiment_name': [model_folder],
+            'lr': list(np.logspace(-5, -1, 5, base=10)),
+            'loss_function': ['cce'],
+            'optimizer': ['sgd'],
+            'wd_type': [None],
+            'wd_penalty': [None],
+            'model_struct': [
+                os.path.join(model_folder, 'test'),
+            ],
+            'dataset': ['mnist', 'cifar_10']
+        }
+        return self.add_globals(exp)  # Add globals to the experiment
+
+    def test_res(self):
+        """Each key in experiment_dict must be manually added to the schema."""
+        model_folder = 'test_res'
+        exp = {
+            'experiment_name': [model_folder],
+            'lr': list(np.logspace(-5, -1, 5, base=10)),
+            'loss_function': ['cce'],
+            'optimizer': ['adam'],
+            'wd_type': [None],
+            'wd_penalty': [None],
+            'model_struct': [
+                os.path.join(model_folder, 'test'),
+            ],
+            'dataset': ['mnist', 'cifar_10']
+        }
+        return self.add_globals(exp)  # Add globals to the experiment

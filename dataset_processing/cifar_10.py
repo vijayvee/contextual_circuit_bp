@@ -22,7 +22,7 @@ class data_processing(object):
             'image': tf_fun.fixed_len_feature(dtype='string'),
             'label': tf_fun.fixed_len_feature(dtype='int64')
         }
-        self.output_size = 10
+        self.output_size = [10, 1]
         self.im_size = [32, 32, 3]
 
     def get_data(self):

@@ -131,6 +131,16 @@ class db(object):
             self.return_status('SELECT')
         return self.cur.fetchone()
 
+    def list_experiments(self):
+        self.cur.execute(
+            """
+            SELECT distinct(experiment_name) from experiments
+            """
+        )
+        if self.status_message:
+            self.return_status('SELECT')
+        return self.cur.fetchall()
+
     def update_in_process(self, experiment_id, experiment_name):
         self.cur.execute(
             """
@@ -168,17 +178,19 @@ class db(object):
             self.return_status('SELECT')
 
 
-def get_parameters(random=False):
+def get_parameters(experiment_name, log, random=False):
     config = credentials.postgresql_connection()
     with db(config) as db_conn:
         param_dict = db_conn.get_parameters(random=random)
-        print param_dict
+        log.info('Using parameters: %s' % param_dict)
         if param_dict is not None:
-            hp_combo_id = param_dict['_id']
-            db_conn.update_in_process(hp_combo_id)
+            experiment_id = param_dict['_id']
+            db_conn.update_in_process(
+                experiment_id=experiment_id,
+                experiment_name=experiment_name)
         else:
-            hp_combo_id = None
-    return param_dict, hp_combo_id
+            experiment_id = None
+    return param_dict, experiment_id
 
 
 def initialize_database():
@@ -193,6 +205,13 @@ def reset_in_process():
     with db(config) as db_conn:
         db_conn.reset_in_process()
     print 'Cleared the in_process table.'
+
+
+def list_experiments():
+    config = credentials.postgresql_connection()
+    with db(config) as db_conn:
+        experiments = db_conn.list_experiments()
+    return experiments
 
 
 def update_performance(
@@ -217,6 +236,7 @@ def update_performance(
     }
     with db(config) as db_conn:
         db_conn.update_performance(perf_dict)
+
 
 def main(
         initialize_db,

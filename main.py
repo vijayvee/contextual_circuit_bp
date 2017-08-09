@@ -1,6 +1,5 @@
 import os
 import re
-import sys
 import numpy as np
 import tensorflow as tf
 from db import db
@@ -16,6 +15,16 @@ from ops import loss_utils
 from ops import eval_metrics
 from ops import training
 from ops import plotting
+from tensorflow.python import debug as tf_debug
+
+
+def print_model_architecture(model_summary):
+    print '_' * 20
+    print 'Model architecture:'
+    print '_' * 20
+    for s in model_summary:
+        print s
+    print '_' * 20
 
 
 def add_to_config(d, config):
@@ -24,11 +33,15 @@ def add_to_config(d, config):
     return config
 
 
-def process_DB_exps(config):
-    exp_params, exp_id = db.get_parameters()
+def process_DB_exps(experiment_name, log, config):
+    exp_params, exp_id = db.get_parameters(
+        experiment_name=experiment_name,
+        log=log)
     if exp_id is None:
-        print 'No empty experiments found. Exiting.'
-        sys.exit(1)
+        err = 'No empty experiments found.' + \
+            'Did you select the correct experiment name?'
+        log.fatal(err)
+        raise RuntimeError(err)
     for k, v in exp_params.iteritems():
         if isinstance(v, basestring) and '{' in v and '}' in v:
             v = v.strip('{').strip('}').split(',')
@@ -39,12 +52,14 @@ def process_DB_exps(config):
 def get_data_pointers(dataset, base_dir, cv, log):
     data_pointer = os.path.join(base_dir, '%s_%s.tfrecords' % (dataset, cv))
     data_means = os.path.join(base_dir, '%s_%s_means.npy' % (dataset, cv))
-    data_means = np.load(data_means)
     log.info(
         'Using %s tfrecords: %s' % (
             cv,
             data_pointer)
         )
+    py_utils.check_path(data_pointer, log, '%s not found.' % data_pointer)
+    py_utils.check_path(data_means, log, '%s not found.' % data_means)
+    data_means = np.load(data_means)
     return data_pointer, data_means
 
 
@@ -59,39 +74,55 @@ def get_dt_stamp():
         '_')
 
 
-def main(reset_process, initialize_db, experiment_name):
+def main(experiment_name, list_experiments=False):
     """Create a tensorflow worker to run experiments in your DB."""
+    if list_experiments:
+        exps = db.list_experiments()
+        print '_' * 30
+        print 'Initialized experiments:'
+        print '_' * 30
+        for l in exps:
+            print l.values()[0]
+        print '_' * 30
+        return
     # Prepare to run the model
     config = Config()
-    model_label = '%s_%s' % (experiment_name, get_dt_stamp())
-    log = logger.get(os.path.join(config.log_dir, model_label))
-    try:
-        experiment_dict = experiments[experiment_name]()
-        config = add_to_config(d=experiment_dict, config=config)  # Globals
-        config = process_DB_exps(config)  # Update config w/ DB params
-    except:
-        err = 'Cannot understand the experiment name you selected.'
-        log.fatal(err)
-        raise RuntimeError(err)
-    dataset_module = py_utils.import_module(config.dataset)
-    dataset_module = dataset_module()
+    condition_label = '%s_%s' % (experiment_name, get_dt_stamp())
+    experiment_label = '%s' % (experiment_name)
+    log = logger.get(os.path.join(config.log_dir, condition_label))
+    experiment_dict = experiments.experiments()[experiment_name]()
+    config = add_to_config(d=experiment_dict, config=config)  # Globals
+    config = process_DB_exps(
+        experiment_name=experiment_name,
+        log=log,
+        config=config)  # Update config w/ DB params
+    dataset_module = py_utils.import_module(
+        model_dir=config.dataset_info,
+        dataset=config.dataset)
+    dataset_module = dataset_module.data_processing()  # hardcoded class name
     train_data, train_means = get_data_pointers(
         dataset=config.dataset,
         base_dir=config.tf_records,
-        cv=dataset_module['folds'].keys()[1],  # TODO: SEARCH FOR INDEX.
+        cv=dataset_module.folds.keys()[1],  # TODO: SEARCH FOR INDEX.
         log=log
     )
     val_data, val_means = get_data_pointers(
         dataset=config.dataset,
         base_dir=config.tf_records,
-        cv=dataset_module['folds'].keys()[0],
+        cv=dataset_module.folds.keys()[0],
         log=log
     )
     dir_list = {
-        'checkpoints': os.path.join(config.checkpoints, model_label),
-        'summaries': os.path.join(config.summaries, model_label),
-        'evaluations': os.path.join(config.evaluations, model_label),
-        'visualization': os.path.join(config.visualizations, model_label)
+        'checkpoints': os.path.join(
+            config.checkpoints, condition_label),
+        'summaries': os.path.join(
+            config.summaries, condition_label),
+        'condition_evaluations': os.path.join(
+            config.condition_evaluations, condition_label),
+        'experiment_evaluations': os.path.join(
+            config.experiment_evaluations, experiment_label),
+        'visualization': os.path.join(
+            config.visualizations, condition_label)
     }
     [py_utils.make_dir(v) for v in dir_list.values()]
 
@@ -120,21 +151,35 @@ def main(reset_process, initialize_db, experiment_name):
     log.info('Created tfrecord dataloader tensors.')
 
     # Prepare model on GPU
+    struct_name = config.model_struct.split(os.path.sep)[-1]
     model_dict = py_utils.import_module(
-        dataset=config.model_struct,
-        model_dir='models/structs/')
+        dataset=struct_name,
+        model_dir=os.path.join(
+            'models',
+            'structs',
+            experiment_name).replace(os.path.sep, '.')
+        )
     with tf.device('/gpu:0'):
         with tf.variable_scope('cnn') as scope:
+
             # Training model
+            if len(dataset_module.output_size) > 1:
+                log.warning(
+                    'Found > 1 dimension for your output size.'
+                    'Converting to a scalar.')
+                dataset_module.output_size = np.prod(
+                    dataset_module.output_size)
             model = model_utils.model_class(
                 mean=train_means,
-                training=tf.constant(True),
+                training=True,
                 output_size=dataset_module.output_size)
-            output_scores = model.build(
+            output_scores, model_summary = model.build(
                 data=train_images,
-                layer_structure=model_dict,
+                layer_structure=model_dict.layer_structure,
                 tower_name='cnn')
             log.info('Built training model.')
+            log.debug(model_summary, verbose=0)
+            print_model_architecture(model_summary)
 
             # Prepare the loss function
             train_loss, train_scores = loss_utils.loss_interpreter(
@@ -149,7 +194,7 @@ def main(reset_process, initialize_db, experiment_name):
                     loss=train_loss,
                     wd_penalty=config.wd_penalty)
             train_op = loss_utils.optimizer_interpreter(
-                loss=loss,
+                loss=train_loss,
                 lr=config.lr,
                 optimizer=config.optimizer)
             log.info('Built training loss function.')
@@ -166,11 +211,11 @@ def main(reset_process, initialize_db, experiment_name):
             scope.reuse_variables()
             val_model = model_utils.model_class(
                 mean=val_means,
-                training=tf.constant(True),
+                training=True,
                 output_size=dataset_module.output_size)
-            val_output_scores = val_model.build(
+            val_output_scores, _ = val_model.build(  # Ignore summary
                 data=val_images,
-                layer_structure=model_dict,
+                layer_structure=model_dict.layer_structure,
                 tower_name='cnn')
             log.info('Built validation model.')
 
@@ -187,12 +232,12 @@ def main(reset_process, initialize_db, experiment_name):
             log.info('Added validation summaries.')
 
     # Set up summaries and saver
-    saver = tf.train.Saver(
-        tf.global_variables(), max_to_keep=config.keep_checkpoints)
+    saver = tf.train.Saver(tf.global_variables())
     summary_op = tf.summary.merge_all()
 
     # Initialize the graph
     sess = tf.Session(config=tf.ConfigProto(allow_soft_placement=True))
+
     # Need to initialize both of these if supplying num_epochs to inputs
     sess.run(
         tf.group(
@@ -207,7 +252,8 @@ def main(reset_process, initialize_db, experiment_name):
 
     # Start training loop
     np.save(
-        os.path.join(dir_list['evaluations'], 'training_config_file'),
+        os.path.join(
+            dir_list['condition_evaluations'], 'training_config_file'),
         config)
     log.info('Starting training')
     tr_loss, val_loss, tr_accs, val_accs, timesteps = training.training_loop(
@@ -223,34 +269,62 @@ def main(reset_process, initialize_db, experiment_name):
         saver=saver,
         threads=threads,
         summary_dir=dir_list['summaries'],
+        checkpoint_dir=dir_list['checkpoints'],
         val_accuracy=val_accuracy,
         train_accuracy=train_accuracy)
     log.info('Finished training.')
 
-    plotting.plot_losses(
+    files_to_save = {
+        'training_loss': tr_loss,
+        'validation_loss': val_loss,
+        'training_acc': tr_accs,
+        'validation_acc': val_accs,
+        'timesteps': timesteps
+    }
+
+    model_name = config.model_struct.replace('/', '_')
+    py_utils.save_npys(
+        data=files_to_save,
+        model_name=model_name,
+        output_string=dir_list['experiment_evaluations']
+        )
+
+    # Compare this condition w/ all others.
+    plotting.plot_data(
         train_loss=tr_loss,
         val_loss=val_loss,
+        model_name=model_name,
         timesteps=timesteps,
         config=config,
         output=os.path.join(
-            dir_list['evaluations'], 'losses'),
-        output_ext='.pdf')
-    plotting.plot_accuracies(
+            dir_list['condition_evaluations'], 'loss'),
+        output_ext='.pdf',
+        data_type='loss')
+    plotting.plot_data(
         tr_accs=tr_accs,
         val_accs=val_accs,
+        model_name=model_name,
         timesteps=timesteps,
         config=config,
         output=os.path.join(
-            dir_list['evaluations'], 'accuracies'),
-        output_ext='.pdf')
+            dir_list['condition_evaluations'], 'acc'),
+        output_ext='.pdf',
+        data_type='acc')
     log.info('Completed plots.')
 
 
 if __name__ == '__main__':
     parser = ArgumentParser()
     parser.add_argument(
-        '--dataset',
-        dest='dataset',
-        help='Name of the dataset.')
+        '--experiment',
+        dest='experiment_name',
+        type=str,
+        default=None,
+        help='Name of the experiment.')
+    parser.add_argument(
+        '--list_experiments',
+        dest='list_experiments',
+        action='store_true',
+        help='Name of the experiment.')
     args = parser.parse_args()
     main(**vars(args))

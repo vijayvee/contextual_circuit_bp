@@ -8,8 +8,10 @@ layer_structure = [
         'filter_size': [9],
         'normalization': ['batch'],
         'normalization_target': ['post'],
-        'wd_target': 'pre',
-        'wd_type': None,
+        'activation': ['relu'],
+        'activation_target': ['post'],
+        'wd_target': ['pre'],
+        'wd_type': [None],
     },
     {
         'layers': ['pool'],

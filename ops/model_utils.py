@@ -1,6 +1,7 @@
 import numpy as np
 import tensorflow as tf
-from models import layers as lmod
+from models.layers import ff
+from models.layers import pool
 from models.layers.activations import activations
 from models.layers.normalizations import normalizations
 from models.layers.regularizations import regularizations
@@ -8,6 +9,12 @@ from models.layers.regularizations import regularizations
 
 class model_class(object):
     """Default model class that is generated with a layer_structure dict."""
+    def __getitem__(self, name):
+        return getattr(self, name)
+
+    def __contains__(self, name):
+        return hasattr(self, name)
+
     def __init__(self, mean, training, output_size, **kwargs):
         """Set model to trainable/not and pass the mean values."""
         self.var_dict = {}
@@ -24,29 +31,40 @@ class model_class(object):
             data,
             layer_structure,
             output_layer_structure=None,
+            output_size=None,
             tower_name='cnn'):
         """Main model creation method."""
-        data -= self.mean[None, :, :, :]  # Assuming H/W/C mean
-        features = create_conv_tower(
-            self,
-            data,
-            layer_structure,
-            tower_name)
+        # data -= (self.mean[None, :, :, :]).astype(np.float32)  # H/W/C mean
+        input_data = tf.identity(data, name="lrp_input")
+        features, layer_summary = create_conv_tower(
+            self=self,
+            act=input_data,
+            layer_structure=layer_structure,
+            tower_name=tower_name,
+            layer_summary=None)
         if output_layer_structure is None:
+            assert self.output_size is not None, 'Give model an output shape.'
             output_layer_structure = self.default_output_layer()
-        output = create_conv_tower(
-            self,
-            features,
-            output_layer_structure,
-            'output')
-        return output
+        output, layer_summary = create_conv_tower(
+            self=self,
+            act=features,
+            layer_structure=output_layer_structure,
+            tower_name='output',
+            layer_summary=layer_summary)
+        self.output = tf.identity(output, name='lrp_output')
+        self.data_dict = None
+        return output, layer_summary
 
     def default_output_layer(self):
-        return {
-            'layers': 'fc',
-            'names': 'output',
-            'filter_size': self.output_size
-        }
+        return [
+            {
+                'layers': ['fc'],
+                'names': ['output'],
+                'flatten': [True],
+                'flatten_target': ['pre'],
+                'weights': [self.output_size]
+            }
+        ]
 
     def save_npy(self, sess, npy_path="./saved_weights.npy"):
         """Default method: Save your model's weights to a numpy."""
@@ -73,7 +91,86 @@ class model_class(object):
         return count
 
 
-def create_conv_tower(self, act, layer_structure, tower_name):
+def update_summary(layer_summary, op_name):
+    if layer_summary is None:
+        bottom_name = 'Input'
+        layer_summary = []
+    else:
+        bottom_name = layer_summary[len(layer_summary) - 1].split(
+            'Operation: ')[-1].strip('\n')
+    layer_summary += ['Bottom: %s | Operation: %s\n' % (
+        bottom_name, op_name[0])]
+    return layer_summary
+
+
+def flatten_op(self, it_dict, act, layer_summary, target):
+    tshape = [int(x) for x in act.get_shape()]
+    if 'flatten_target' in it_dict.keys() and \
+            it_dict['flatten_target'][0] == target and \
+            len(tshape) >= 4:
+        rows = tshape[0]
+        cols = np.prod(tshape[1:])
+        act = tf.reshape(act, [rows, cols])
+        layer_summary = update_summary(
+            layer_summary=layer_summary,
+            op_name=['flattened'])
+    return act, layer_summary
+
+
+def wd_op(self, it_dict, act, layer_summary, reg_mod, target):
+    it_name = it_dict['names'][0]
+    if 'wd_target' in it_dict.keys() and \
+            it_dict['wd_type'][0] is not None and \
+            it_dict['wd_target'][0] == target:
+        wd_type = it_dict['wd_type'][0]
+        self.regularizations['%s_%s' % (
+            it_name, target)] = reg_mod[
+                wd_type](act)
+        layer_summary = update_summary(
+            layer_summary=layer_summary,
+            op_name=wd_type)
+    return act, layer_summary
+
+
+def dropout_op(self, it_dict, act, layer_summary, reg_mod, target):
+    if 'dropout_target' in it_dict.keys() and \
+            it_dict['dropout_target'][0] == 'pre':
+        dropout_prop = it_dict['dropout'][0]
+        act = reg_mod.dropout(act, keep_prob=dropout_prop)
+        layer_summary = update_summary(
+            layer_summary=layer_summary,
+            op_name=['dropout_%s' % dropout_prop])
+    return act, layer_summary
+
+
+def activ_op(self, it_dict, act, layer_summary, activ_mod, target):
+    if 'activation_target' in it_dict.keys() and \
+            it_dict['activation_target'][0] == 'pre':
+        activation = it_dict['activation'][0]
+        act = activ_mod[activation](act)
+        layer_summary = update_summary(
+            layer_summary=layer_summary,
+            op_name=activation)
+    return act, layer_summary
+
+
+def norm_op(self, it_dict, act, layer_summary, norm_mod, target):
+    if 'normalization_target' in it_dict.keys() and \
+            it_dict['normalization_target'][0] == 'pre':
+        normalization = it_dict['normalization'][0]
+        act = norm_mod[normalization](act)
+        layer_summary = update_summary(
+            layer_summary=layer_summary,
+            op_name=normalization)
+    return act, layer_summary
+
+
+def create_conv_tower(
+        self,
+        act,
+        layer_structure,
+        tower_name,
+        layer_summary=None):
     """
     Construct a feedforward neural model tower.
     Inputs:::
@@ -83,56 +180,62 @@ def create_conv_tower(self, act, layer_structure, tower_name):
     (e.g. act fun -> dropout -> normalization).
     tower_name: name of the tower's variable scope.
     """
-    print 'Creating tower: %s' % tower_name
     activ_mod = activations(self.layer_vars)
     norm_mod = normalizations(self.layer_vars)
     reg_mod = regularizations(self.layer_vars)
     with tf.variable_scope(tower_name):
         for it_dict in layer_structure:
-            if 'wd_target' in it_dict.keys() and it_dict['wd_target'] == 'pre':
-                self.regularizations['%s_%s' % (
-                    it_dict['names'], it_dict['wd_target'])] = reg_mod[it_dict['wd_type']](act)
-            if 'dropout_target' in it_dict.keys() and it_dict['dropout_target'] == 'pre':
-                act = reg_mod.dropout(act, keep_prob=it_dict['dropout'])
-            if 'activation_target' in it_dict.keys() and it_dict['activation_target'] == 'pre':
-                act = activ_mod[it_dict['activation']](act)
-            if 'normalization_target' in it_dict.keys() and it_dict['normalization_target'] == 'pre':
-                act = norm_mod[it_dict['normalization']](act) 
+            it_name = it_dict['names'][0]
+            it_neuron_op = it_dict['layers'][0]
+            act, layer_summary = flatten_op(
+                self, it_dict, act, layer_summary, target='pre')
+            act, layer_summary = wd_op(
+                self, it_dict, act, layer_summary, reg_mod, target='pre')
+            act, layer_summary = dropout_op(
+                self, it_dict, act, layer_summary, reg_mod, target='pre')
+            act, layer_summary = activ_op(
+                self, it_dict, act, layer_summary, activ_mod, target='pre')
+            act, layer_summary = norm_op(
+                self, it_dict, act, layer_summary, norm_mod, target='pre')
             if it_dict['layers'] == 'pool':
-                act = lmod.pool.max_pool(
+                act = pool.max_pool(
                     bottom=act,
-                    name=it_dict['names'])
-            elif it_dict['layers'] == 'conv':
-                act = lmod.ff.conv_layer(
+                    name=it_name)
+            elif it_neuron_op == 'conv':
+                act = ff.conv_layer(
                     self=self,
                     bottom=act,
                     in_channels=int(act.get_shape()[-1]),
-                    out_channels=it_dict['weights'],
-                    name=it_dict['names'],
-                    filter_size=it_dict['filter_size']
+                    out_channels=it_dict['weights'][0],
+                    name=it_name,
+                    filter_size=it_dict['filter_size'][0]
                 )
-            elif it_dict['layers'] == 'fc':
-                act = lmod.ff.fc_layer(
+            elif it_neuron_op == 'fc':
+                act = ff.fc_layer(
                     self=self,
                     bottom=act,
                     in_channels=int(act.get_shape()[-1]),
-                    out_channels=it_dict['weights'],
-                    name=it_dict['names'])
-            elif it_dict['layers'] == 'res':
-                act = lmod.ff.resnet_layer(
+                    out_channels=it_dict['weights'][0],
+                    name=it_name)
+            elif it_neuron_op == 'res':
+                act = ff.resnet_layer(
                     self=self,
                     bottom=act,
                     layer_weights=it_dict['weights'],
-                    name=it_dict['names'])
-            if 'wd_target' in it_dict.keys() and it_dict['wd_target'] == 'post':
-                self.regularizations['%s_%s' % (
-                    it_dict['names'], it_dict['wd_target'])] = reg_mod[it_dict['wd_type']](act)
-            if 'dropout_target' in it_dict.keys() and it_dict['dropout_target'] == 'post':
-                act = reg_mod.dropout(act, keep_prob=it_dict['dropout'])
-            if 'activation_target' in it_dict.keys() and it_dict['activation_target'] == 'post':
-                act = activ_mod[it_dict['activation']](act)
-            if 'normalization_target' in it_dict.keys() and it_dict['normalization_target'] == 'post':
-                act = norm_mod[it_dict['normalization']](act)
-            setattr(self, it_dict['names'], act)
-            print 'Added layer: %s' % it_dict['names']
-    return act
+                    name=it_name)
+            layer_summary = update_summary(
+                layer_summary=layer_summary,
+                op_name=it_dict['layers'])
+            act, layer_summary = norm_op(
+                self, it_dict, act, layer_summary, norm_mod, target='post')
+            act, layer_summary = activ_op(
+                self, it_dict, act, layer_summary, activ_mod, target='post')
+            act, layer_summary = dropout_op(
+                self, it_dict, act, layer_summary, reg_mod, target='post')
+            act, layer_summary = wd_op(
+                self, it_dict, act, layer_summary, reg_mod, target='post')
+            act, layer_summary = flatten_op(
+                self, it_dict, act, layer_summary, target='post')
+            setattr(self, it_name, act)
+            print 'Added layer: %s' % it_name
+    return act, layer_summary

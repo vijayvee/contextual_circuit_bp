@@ -48,15 +48,15 @@ def training_loop(
         saver,
         threads,
         summary_dir,
+        checkpoint_dir,
         val_accuracy,
         train_accuracy):
-    step, train_losses, time_elapsed = 0, 0
-    train_accs, val_losses, val_accs, timesteps = {}, {}, {}, {}, {}
-    val_accs = np.zeros((config.top_n_validation))
+    step, time_elapsed = 0, 0
+    train_losses, train_accs, val_losses, val_accs, timesteps = {}, {}, {}, {}, {}
     try:
         while not coord.should_stop():
             start_time = time.time()
-            _, loss_value, train_acc = sess.run(
+            loss_value, train_acc = sess.run(
                 [
                     train_op,
                     train_loss,
@@ -93,7 +93,7 @@ def training_loop(
                     'Validation accuracy = %s | logdir = %s')
                 print (format_str % (
                     datetime.now(), step, loss_value,
-                    config.train_batch / duration, float(duration),
+                    config.batch_size / duration, float(duration),
                     train_acc, val_acc, summary_dir))
 
                 # Save the model checkpoint if it's the best yet
@@ -107,19 +107,19 @@ def training_loop(
 
                 if force_save:
                     ckpt_path = os.path.join(
-                            config.train_checkpoint,
-                            'model_' + str(step) + '.ckpt')
+                        checkpoint_dir,
+                        'model_' + str(step) + '.ckpt')
                     saver.save(
                         sess, ckpt_path, global_step=step)
                     print 'Saved checkpoint to: %s' % ckpt_path
                     force_save = False
 
                     time_elapsed += float(duration)
-                    db.update_parameters(
+                    db.update_performance(
                         experiment_id=config._id,
                         experiment_name=config.experiment_name,
                         summary_dir=summary_dir,
-                        ckpt_path=ckpt_path,
+                        ckpt_file=ckpt_path,
                         training_loss=float(loss_value),
                         validation_loss=float(val_acc),
                         time_elapsed=time_elapsed,
@@ -135,7 +135,7 @@ def training_loop(
                 format_str = ('%s: step %d, loss = %.2f (%.1f examples/sec; '
                               '%.3f sec/batch) | Training accuracy = %s')
                 print (format_str % (datetime.now(), step, loss_value,
-                                     config.train_batch / duration,
+                                     config.batch_size / duration,
                                      float(duration), train_acc))
 
             # End iteration
