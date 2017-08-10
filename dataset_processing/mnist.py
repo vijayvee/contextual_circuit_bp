@@ -23,6 +23,7 @@ class data_processing(object):
         }
         self.output_size = [10, 1]
         self.im_size = [28, 28, 1]
+        self.shuffle = False  # Preshuffle data?
 
     def get_data(self):
         files = self.get_files()
@@ -44,7 +45,10 @@ class data_processing(object):
                     os.path.join(
                         d,
                         '*%s' % self.extension))]
-            files[k] = py_utils.flatten_list(it_files)
+            it_files = py_utils.flatten_list(it_files)
+            if self.shuffle:
+                it_files = random.shuffle(it_files)
+            files[k] = it_files
         return files
 
     def get_labels(self, files):

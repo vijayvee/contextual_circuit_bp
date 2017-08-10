@@ -2,7 +2,7 @@
 TODO
 
 2) Evaluation script: Visualizations w/ LRP + plotting loss curves + plotting accuracy curves across multiple models.
-3) DEBUG
+3) Fix tests
 4) Fix the contextual model implementation. A) Think about optimal bio CRF/eCRF sizes. B) Add the ability to automatically learn these from the data
 
 
@@ -42,7 +42,7 @@ TODO
 5. Create models.
 	a. Add a folder with the kind of model you are creating. Follow the template of `models/structs/one_layer_conv_mlp/`.
 	b. Coordinate the models you create with `models/experiments`. This script will allow you to build workers that run through any number of hyperparameter/model/dataset combinations of your experiment. For instance, if you want to measure the performance of models containing different kinds of normalization. Each model (same architecture but different normalizations) has a structure documented in `models/structs/one_layer_conv_mlp/`. The name of each model is added to the `one_layer_conv_mlp` method in `models/experiments.py` in the field "model_struct". Adding multiple entries in other fields, such as "dataset", will have the workers run through those combinations.
-	c. See section XXX below for details on model construction
+	c. See "Model construction" below for details on model construction
 
 6. Populate database with experiments.
 	a. Running with the example laid out in (3), populate your postgres DB with all possible experiment combinations: `python prepare_experiments.py --initialize --experiment_name=one_layer_conv_mlp`.

@@ -3,6 +3,7 @@ import re
 from glob import glob
 from config import Config
 from ops import tf_fun
+import random
 
 
 class data_processing(object):
@@ -24,6 +25,7 @@ class data_processing(object):
         }
         self.output_size = [10, 1]
         self.im_size = [32, 32, 3]
+        self.shuffle = False  # Preshuffle data?
 
     def get_data(self):
         files = self.get_files()
@@ -33,12 +35,15 @@ class data_processing(object):
     def get_files(self):
         files = {}
         for k, fold in self.folds.iteritems():
-            files[k] = glob(
+            it_files = glob(
                 os.path.join(
                     self.config.data_root,
                     self.name,
                     fold,
                     '*%s' % self.extension))
+            if self.shuffle:
+                it_files = random.shuffle(it_files)
+            files[k] = it_files
         return files
 
     def get_labels(self, files):

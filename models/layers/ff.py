@@ -153,11 +153,13 @@ def get_var(
             var = tf.get_variable(
                 name=var_name,
                 shape=value[0],
-                initializer=value[1])
+                initializer=value[1],
+                trainable=True)
         else:
             var = tf.get_variable(
                 name=var_name,
-                initializer=value)
+                initializer=value,
+                trainable=True)
     else:
         var = tf.constant(
             value,
