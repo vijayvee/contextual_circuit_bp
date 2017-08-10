@@ -100,6 +100,7 @@ TODO
 	        'wd_type': [None],  # Type of weight decay to use.  See `models/layers/regularizations.py` for details.
 	        'wd_target': ['pre'],  # Weight decay pre- or post-conv/matrix operation.
 		}
-	]```
+	]
+```
 
 	- You can manually specify an "output" layer (HOW?). Otherwise a FC layer will automatically be added that maps your final tower activities to a layer with O computational units, where O = the number of categories in your dataset (this will fail on regression tasks).
