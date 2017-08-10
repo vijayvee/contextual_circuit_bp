@@ -57,7 +57,7 @@ TODO
 ## Model construction:
 
 - Models are constructed similarly to caffe, as lists of layers.
-	conv_tower = [
+	```conv_tower = [
 		{  # Note that each attribute is in a list. This is because for the case of resnet you must specify multiple attributes per layer (see below for example).
 	        'layers': ['conv'],  # Matrix/conv operation. Can be {conv/fc/resnet}.
 	        'weights': [64],  # Number of weights in layer.
@@ -100,6 +100,6 @@ TODO
 	        'wd_type': [None],  # Type of weight decay to use.  See `models/layers/regularizations.py` for details.
 	        'wd_target': ['pre'],  # Weight decay pre- or post-conv/matrix operation.
 		}
-	]
+	]```
 
 	- You can manually specify an "output" layer (HOW?). Otherwise a FC layer will automatically be added that maps your final tower activities to a layer with O computational units, where O = the number of categories in your dataset (this will fail on regression tasks).
