@@ -57,7 +57,8 @@ TODO
 ## Model construction:
 
 - Models are constructed similarly to caffe, as lists of layers.
-	```
+
+```
 conv_tower = [
 		{  # Note that each attribute is in a list. This is because for the case of resnet you must specify multiple attributes per layer (see below for example).
 	        'layers': ['conv'],  # Matrix/conv operation. Can be {conv/fc/resnet}.
@@ -73,6 +74,7 @@ conv_tower = [
 		}
 	]
 ```
+
 ```
 	fc_tower = [
 		{  # Note that each attribute is in a list. This is because for the case of resnet you must specify multiple attributes per layer (see below for example).
@@ -89,6 +91,7 @@ conv_tower = [
 		}
 	]
 ```
+
 ```
 	resnet_tower = [
 		{  # Note that each attribute is in a list. This is because for the case of resnet you must specify multiple attributes per layer (see below for example).
