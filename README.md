@@ -57,7 +57,8 @@ TODO
 ## Model construction:
 
 - Models are constructed similarly to caffe, as lists of layers.
-	```conv_tower = [
+	```
+conv_tower = [
 		{  # Note that each attribute is in a list. This is because for the case of resnet you must specify multiple attributes per layer (see below for example).
 	        'layers': ['conv'],  # Matrix/conv operation. Can be {conv/fc/resnet}.
 	        'weights': [64],  # Number of weights in layer.
@@ -71,7 +72,8 @@ TODO
 	        'wd_target': ['pre'],  # Weight decay pre- or post-conv/matrix operation.
 		}
 	]
-
+```
+```
 	fc_tower = [
 		{  # Note that each attribute is in a list. This is because for the case of resnet you must specify multiple attributes per layer (see below for example).
 	        'layers': ['fc'],  # Matrix/conv operation. Can be {conv/fc/resnet}.
@@ -86,7 +88,8 @@ TODO
 	        'wd_target': ['pre'],  # Weight decay pre- or post-conv/matrix operation.
 		}
 	]
-
+```
+```
 	resnet_tower = [
 		{  # Note that each attribute is in a list. This is because for the case of resnet you must specify multiple attributes per layer (see below for example).
 	        'layers': ['res'],  # Matrix/conv operation. Can be {conv/fc/resnet}.
