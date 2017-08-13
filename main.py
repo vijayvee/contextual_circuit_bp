@@ -15,7 +15,6 @@ from ops import loss_utils
 from ops import eval_metrics
 from ops import training
 from ops import plotting
-from tensorflow.python import debug as tf_debug
 
 
 def print_model_architecture(model_summary):
@@ -288,29 +287,6 @@ def main(experiment_name, list_experiments=False):
         model_name=model_name,
         output_string=dir_list['experiment_evaluations']
         )
-
-    # Compare this condition w/ all others.
-    plotting.plot_data(
-        train_loss=tr_loss,
-        val_loss=val_loss,
-        model_name=model_name,
-        timesteps=timesteps,
-        config=config,
-        output=os.path.join(
-            dir_list['condition_evaluations'], 'loss'),
-        output_ext='.pdf',
-        data_type='loss')
-    plotting.plot_data(
-        tr_accs=tr_accs,
-        val_accs=val_accs,
-        model_name=model_name,
-        timesteps=timesteps,
-        config=config,
-        output=os.path.join(
-            dir_list['condition_evaluations'], 'acc'),
-        output_ext='.pdf',
-        data_type='acc')
-    log.info('Completed plots.')
 
 
 if __name__ == '__main__':

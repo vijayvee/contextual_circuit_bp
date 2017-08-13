@@ -156,6 +156,22 @@ class db(object):
         if self.status_message:
             self.return_status('INSERT')
 
+    def get_performance(self, experiment_name):
+        self.cur.execute(
+            """
+            SELECT * FROM PERFORMANCE AS P
+            INNER JOIN experiments ON experiments._id = P.experiment_id
+            WHERE P.experiment_name='one_layer_conv_mlp'
+            """,
+            {
+                'experiment_name': experiment_name
+            }
+        )
+        if self.status_message:
+            self.return_status('SELECT')
+        return self.cur.fetchall()
+
+
     def reset_in_process(self):
         self.cur.execute(
             """
@@ -236,6 +252,13 @@ def update_performance(
     }
     with db(config) as db_conn:
         db_conn.update_performance(perf_dict)
+
+
+def get_performance(experiment_name):
+    config = credentials.postgresql_connection()
+    with db(config) as db_conn:
+        perf = db_conn.get_performance(experiment_name=experiment_name)
+    return perf
 
 
 def main(

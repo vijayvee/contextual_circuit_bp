@@ -25,6 +25,9 @@ class Config:
         self.visualizations = os.path.join(
             self.project_directory,
             'visualizations')
+        self.plots = os.path.join(
+            self.project_directory,
+            'plots')
         self.log_dir = os.path.join(self.project_directory, 'logs')
         self.dataset_info = 'dataset_processing'  # local dataset classes
 
@@ -38,6 +41,7 @@ class Config:
             self.experiment_evaluations,
             self.condition_evaluations,
             self.visualizations,
+            self.plots,
             self.log_dir,
             self.dataset_info
         ]
@@ -48,3 +52,4 @@ class Config:
 
     def __contains__(self, name):
         return hasattr(self, name)
+
