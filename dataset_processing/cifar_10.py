@@ -42,7 +42,7 @@ class data_processing(object):
                     fold,
                     '*%s' % self.extension))
             if self.shuffle:
-                it_files = random.shuffle(it_files)
+                random.shuffle(it_files)
             files[k] = it_files
         return files
 

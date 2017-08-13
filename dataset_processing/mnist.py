@@ -3,6 +3,7 @@ from glob import glob
 from config import Config
 from ops import tf_fun
 from utils import py_utils
+import random
 
 
 class data_processing(object):
@@ -23,7 +24,7 @@ class data_processing(object):
         }
         self.output_size = [10, 1]
         self.im_size = [28, 28, 1]
-        self.shuffle = False  # Preshuffle data?
+        self.shuffle = True  # Preshuffle data?
 
     def get_data(self):
         files = self.get_files()
@@ -47,7 +48,7 @@ class data_processing(object):
                         '*%s' % self.extension))]
             it_files = py_utils.flatten_list(it_files)
             if self.shuffle:
-                it_files = random.shuffle(it_files)
+                random.shuffle(it_files)
             files[k] = it_files
         return files
 
