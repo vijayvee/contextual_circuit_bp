@@ -1,17 +1,12 @@
-import re
-import os
-import sys
-import traceback
-import shutil
 import numpy as np
 import tensorflow as tf
 from scipy import misc
-from glob import glob
 from tqdm import tqdm
 from skimage import transform
 
 
 def load_image(f, im_size):
+    """Load image and convert it to a 4D tensor."""
     image = misc.imread(f).astype(np.float32)
     it_im_size = image.shape
     if im_size != it_im_size:
@@ -22,6 +17,7 @@ def load_image(f, im_size):
 
 
 def create_example(data_dict):
+    """Create entry in tfrecords."""
     return tf.train.Example(
         # Example contains a Features proto object
         features=tf.train.Features(
@@ -37,6 +33,7 @@ def data_to_tfrecords(
         targets,
         ds_name,
         im_size):
+    """Convert dataset to tfrecords."""
     print 'Building dataset: %s' % ds_name
     for idx, ((fk, fv), (lk, lv)) in enumerate(
         zip(
@@ -46,7 +43,8 @@ def data_to_tfrecords(
         with tf.python_io.TFRecordWriter(it_ds_name) as tfrecord_writer:
             image_count = 0
             means = np.zeros((im_size))
-            for it_f, it_l in tqdm(zip(fv, lv), total=len(fv), desc='Building %s' % fk): 
+            for it_f, it_l in tqdm(
+                    zip(fv, lv), total=len(fv), desc='Building %s' % fk):
                 image = load_image(it_f, im_size).astype(np.float32)
                 means += image
                 data_dict = {
@@ -65,4 +63,3 @@ def data_to_tfrecords(
             np.save('%s_%s_means' % (ds_name, fk), means / float(image_count))
             print 'Finished %s with %s images (dropped %s)' % (
                 it_ds_name, image_count, len(fv) - image_count)
-

@@ -19,6 +19,7 @@ def optimizer_interpreter(
 
 
 def momentum(loss, lr, momentum=0.9):
+    """Wrapper for SGD with momentum."""
     tf.train.MomentumOptimizer(lr, momentum=momentum).minimize(loss)
 
 
@@ -54,6 +55,7 @@ def wd_loss(
         model,
         loss,
         wd_penalty):
+    """Calculate weight decay loss and add it to the main loss."""
     regs = [model[v] for k, v in model.regularizations.iteritems()]
     return loss + (wd_penalty * tf.add_n(regs))
 

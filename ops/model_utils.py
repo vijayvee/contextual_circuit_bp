@@ -92,6 +92,7 @@ class model_class(object):
 
 
 def update_summary(layer_summary, op_name):
+    """Produce a summary of the structure of a CNN used in an experiment."""
     if layer_summary is None:
         bottom_name = 'Input'
         layer_summary = []
@@ -104,6 +105,7 @@ def update_summary(layer_summary, op_name):
 
 
 def flatten_op(self, it_dict, act, layer_summary, target):
+    """Wrapper for a flatten operation in a graph."""
     tshape = [int(x) for x in act.get_shape()]
     if 'flatten_target' in it_dict.keys() and \
             it_dict['flatten_target'][0] == target and \
@@ -118,6 +120,7 @@ def flatten_op(self, it_dict, act, layer_summary, target):
 
 
 def wd_op(self, it_dict, act, layer_summary, reg_mod, target):
+    """Wrapper for a weight decay operation in a graph."""
     it_name = it_dict['names'][0]
     if 'wd_target' in it_dict.keys() and \
             it_dict['wd_type'][0] is not None and \
@@ -133,6 +136,7 @@ def wd_op(self, it_dict, act, layer_summary, reg_mod, target):
 
 
 def dropout_op(self, it_dict, act, layer_summary, reg_mod, target):
+    """Wrapper for a dropout operation in a graph."""
     if 'dropout_target' in it_dict.keys() and \
             it_dict['dropout_target'][0] == 'pre':
         dropout_prop = it_dict['dropout'][0]
@@ -144,6 +148,7 @@ def dropout_op(self, it_dict, act, layer_summary, reg_mod, target):
 
 
 def activ_op(self, it_dict, act, layer_summary, activ_mod, target):
+    """Wrapper for an activation operation in a graph."""
     if 'activation_target' in it_dict.keys() and \
             it_dict['activation_target'][0] == 'pre':
         activation = it_dict['activation'][0]
@@ -155,6 +160,7 @@ def activ_op(self, it_dict, act, layer_summary, activ_mod, target):
 
 
 def norm_op(self, it_dict, act, layer_summary, norm_mod, target):
+    """Wrapper for a normalization operation in a graph."""
     if 'normalization_target' in it_dict.keys() and \
             it_dict['normalization_target'][0] == 'pre':
         normalization = it_dict['normalization'][0]
@@ -197,7 +203,7 @@ def create_conv_tower(
                 self, it_dict, act, layer_summary, activ_mod, target='pre')
             act, layer_summary = norm_op(
                 self, it_dict, act, layer_summary, norm_mod, target='pre')
-            if it_dict['layers'] == 'pool':
+            if it_dict['layers'] == 'pool':  # TODO create wrapper for FF ops.
                 act = pool.max_pool(
                     bottom=act,
                     name=it_name)

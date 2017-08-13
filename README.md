@@ -1,6 +1,7 @@
 
 TODO
 
+1) Pull from DB for visualizations
 2) Evaluation script: Visualizations w/ LRP + plotting loss curves + plotting accuracy curves across multiple models.
 3) Fix tests
 4) Fix the contextual model implementation. A) Think about optimal bio CRF/eCRF sizes. B) Add the ability to automatically learn these from the data
