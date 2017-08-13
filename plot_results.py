@@ -58,21 +58,25 @@ def main(experiment_name, im_ext='.pdf'):
         y='training loss',
         hue='model parameters',
         ci=None,
+        estimator=np.sum,
         data=df,
-        ax=axs[0])
+        ax=axs[0],
+        scale=.25)
     ax.set_title('Training')
-    import ipdb;ipdb.set_trace()
     ax = sns.pointplot(
         x='training iteration',
         y='validation loss',
         hue='model parameters',
+        ci=None,
+        estimator=np.sum,
         data=df,
-        ax=axs[1])
+        ax=axs[1],
+        scale=.25)
     ax.set_title('Validation')
     out_name = os.path.join(
         config.plots,
-        '%s_%s%s',
-        (experiment_name, get_dt_stamp(), im_ext))
+        '%s_%s%s' % (
+            experiment_name, get_dt_stamp(), im_ext))
     plt.savefig(out_name)
     plt.show()
 
