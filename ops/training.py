@@ -143,7 +143,7 @@ def training_loop(
 
     except tf.errors.OutOfRangeError:
         print 'Done training for %d epochs, %d steps.' % (config.epochs, step)
-        print 'Saved to: %s' % config.train_checkpoint
+        print 'Saved to: %s' % checkpoint_dir
     finally:
         coord.request_stop()
     coord.join(threads)

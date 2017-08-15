@@ -22,7 +22,7 @@ def main(experiment_name, im_ext='.pdf'):
     # Get experiment data
     perf = db.get_performance(experiment_name=experiment_name)
     structure_names = [x['model_struct'].split('/')[-1] for x in perf]
-    optimizers = [x['optimizer'] for x in perf]    
+    optimizers = [x['optimizer'] for x in perf]
     lrs = [x['lr'] for x in perf]
     loss_funs = [x['loss_function'] for x in perf]
     optimizers = [x['optimizer'] for x in perf]
@@ -32,8 +32,20 @@ def main(experiment_name, im_ext='.pdf'):
     training_loss = [float(x['training_loss']) for x in perf]
     validation_loss = [float(x['validation_loss']) for x in perf]
     model_params = ['%s | %s | %s | %s | %s | %s | %s' % (
-        ipa, ipb, ipc, ipd, ipe, ipf, ipg) for ipa, ipb, ipc, ipd, ipe, ipf, ipg in zip(
-            structure_names, optimizers, lrs, loss_funs, optimizers, wd_types, wd_penalties)]
+        ipa,
+        ipb,
+        ipc,
+        ipd,
+        ipe,
+        ipf,
+        ipg) for ipa, ipb, ipc, ipd, ipe, ipf, ipg in zip(
+            structure_names,
+            optimizers,
+            lrs,
+            loss_funs,
+            optimizers,
+            wd_types,
+            wd_penalties)]
 
     # DF and plot
     df = pd.DataFrame(
@@ -52,13 +64,16 @@ def main(experiment_name, im_ext='.pdf'):
             'validation loss'
             ]
         )
+    df['training iteration'] = pd.to_numeric(df['training iteration'])
+    df['training loss'] = pd.to_numeric(df['training loss'])
+    df['validation loss'] = pd.to_numeric(df['validation loss'])
+
     f, axs = plt.subplots(2)
     ax = sns.pointplot(
         x='training iteration',
         y='training loss',
         hue='model parameters',
         ci=None,
-        estimator=np.sum,
         data=df,
         ax=axs[0],
         scale=.25)
@@ -68,7 +83,6 @@ def main(experiment_name, im_ext='.pdf'):
         y='validation loss',
         hue='model parameters',
         ci=None,
-        estimator=np.sum,
         data=df,
         ax=axs[1],
         scale=.25)
@@ -91,5 +105,3 @@ if __name__ == '__main__':
         help='Name of the experiment.')
     args = parser.parse_args()
     main(**vars(args))
-
-
