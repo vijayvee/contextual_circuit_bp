@@ -40,43 +40,44 @@ def training_loop(
         db,
         coord,
         sess,
-        train_op,
         summary_op,
         summary_writer,
-        train_loss,
-        val_loss,
         saver,
         threads,
         summary_dir,
         checkpoint_dir,
-        val_accuracy,
-        train_accuracy):
+        train_dict,
+        val_dict):
     step, time_elapsed = 0, 0
-    train_losses, train_accs, val_losses, val_accs, timesteps = {}, {}, {}, {}, {}
+    train_losses, train_accs, timesteps = {}, {}, {}
+    val_losses, val_accs = {}, {}
     try:
         while not coord.should_stop():
             start_time = time.time()
-            _, loss_value, train_acc = sess.run(
-                [
-                    train_op,
-                    train_loss,
-                    train_accuracy
-                ]
-            )
+            train_vars = sess.run(train_dict.values())
+            it_train_dict = {k: v for k, v in zip(
+                train_dict.keys(), train_vars)}
             duration = time.time() - start_time
-            train_losses[step] = loss_value
-            train_accs[step] = train_acc
+            train_losses[step] = it_train_dict['train_loss']
+            train_accs[step] = it_train_dict['train_accuracy']
             timesteps[step] = duration
             assert not np.isnan(
-                loss_value).any(), 'Model diverged with loss = NaN'
+                it_train_dict['train_loss']
+                ).any(), 'Model diverged with loss = NaN'
             if step % config.validation_iters == 0:
                 it_val_acc = np.asarray([])
                 it_val_loss = np.asarray([])
                 for num_vals in range(config.num_validation_evals):
                     # Validation accuracy as the average of n batches
-                    iva, ivl = sess.run([val_accuracy, val_loss])
-                    it_val_acc = np.append(it_val_acc, iva)
-                    it_val_loss = np.append(it_val_loss, ivl)
+                    val_vars = sess.run(val_dict.values())
+                    it_val_dict = {k: v for k, v in zip(
+                        val_dict.keys(), val_vars)}
+                    it_val_acc = np.append(
+                        it_val_acc,
+                        it_val_dict['val_accuracy'])
+                    it_val_loss = np.append(
+                        it_val_loss,
+                        it_val_dict['val_loss'])
                 val_acc = it_val_acc.mean()
                 val_lo = it_val_loss.mean()
                 val_accs[step] = val_acc
@@ -92,9 +93,9 @@ def training_loop(
                     '%.3f sec/batch) | Training accuracy = %s | '
                     'Validation accuracy = %s | logdir = %s')
                 print (format_str % (
-                    datetime.now(), step, loss_value,
+                    datetime.now(), step, it_train_dict['train_loss'],
                     config.batch_size / duration, float(duration),
-                    train_acc, val_acc, summary_dir))
+                    it_train_dict['train_accuracy'], val_acc, summary_dir))
 
                 # Save the model checkpoint if it's the best yet
                 if config.top_n_validation > 0:
@@ -120,7 +121,7 @@ def training_loop(
                         experiment_name=config.experiment_name,
                         summary_dir=summary_dir,
                         ckpt_file=ckpt_path,
-                        training_loss=float(loss_value),
+                        training_loss=float(it_train_dict['train_loss']),
                         validation_loss=float(val_acc),
                         time_elapsed=time_elapsed,
                         training_step=step)

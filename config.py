@@ -52,4 +52,3 @@ class Config:
 
     def __contains__(self, name):
         return hasattr(self, name)
-

@@ -249,6 +249,21 @@ def main(experiment_name, list_experiments=False):
     coord = tf.train.Coordinator()
     threads = tf.train.start_queue_runners(sess=sess, coord=coord)
 
+    # Create dictionaries of important training and validation information
+    train_dict = {
+        'train_loss': train_loss,
+        'train_accuracy': train_accuracy,
+        'train_images': train_images,
+        'train_labels': train_labels,
+        'train_op': train_op
+    }
+    val_dict = {
+        'val_loss': val_loss,
+        'val_accuracy': val_accuracy,
+        'val_images': val_images,
+        'val_labels': val_labels
+    }
+
     # Start training loop
     np.save(
         os.path.join(
@@ -260,17 +275,14 @@ def main(experiment_name, list_experiments=False):
         db=db,
         coord=coord,
         sess=sess,
-        train_op=train_op,
         summary_op=summary_op,
         summary_writer=summary_writer,
-        train_loss=train_loss,
-        val_loss=val_loss,
         saver=saver,
         threads=threads,
         summary_dir=dir_list['summaries'],
         checkpoint_dir=dir_list['checkpoints'],
-        val_accuracy=val_accuracy,
-        train_accuracy=train_accuracy)
+        train_dict=train_dict,
+        val_dict=val_dict)
     log.info('Finished training.')
 
     files_to_save = {

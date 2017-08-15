@@ -1,21 +1,15 @@
 import os
-import re
 import numpy as np
-import tensorflow as tf
 from db import db
 from config import Config
 from argparse import ArgumentParser
-from datetime import datetime
-from utils import logger
-from utils import py_utils
-from models import experiments
 import pandas as pd
 import seaborn as sns
 from main import get_dt_stamp
 from matplotlib import pyplot as plt
 
 
-def main(experiment_name, im_ext='.pdf'):
+def main(experiment_name, im_ext='.pdf', val_score='val accuracy'):
     """Plot results of provided experiment name."""
     config = Config()
 
@@ -31,6 +25,8 @@ def main(experiment_name, im_ext='.pdf'):
     steps = [float(x['training_step']) for x in perf]
     training_loss = [float(x['training_loss']) for x in perf]
     validation_loss = [float(x['validation_loss']) for x in perf]
+
+    # Pass data into a pandas DF
     model_params = ['%s | %s | %s | %s | %s | %s | %s' % (
         ipa,
         ipb,
@@ -61,28 +57,29 @@ def main(experiment_name, im_ext='.pdf'):
             'model parameters',
             'training iteration',
             'training loss',
-            'validation loss'
+            val_score
             ]
         )
     df['training iteration'] = pd.to_numeric(df['training iteration'])
     df['training loss'] = pd.to_numeric(df['training loss'])
-    df['validation loss'] = pd.to_numeric(df['validation loss'])
-
-    f, axs = plt.subplots(2)
+    df['validation loss'] = pd.to_numeric(df[val_score]) * 100.
+    f, axs = plt.subplots(2, figsize=(20, 30))
     ax = sns.pointplot(
         x='training iteration',
         y='training loss',
         hue='model parameters',
         ci=None,
+        estimator=np.sum,
         data=df,
         ax=axs[0],
         scale=.25)
     ax.set_title('Training')
     ax = sns.pointplot(
         x='training iteration',
-        y='validation loss',
+        y=val_score,
         hue='model parameters',
         ci=None,
+        estimator=np.sum,
         data=df,
         ax=axs[1],
         scale=.25)

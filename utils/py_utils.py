@@ -32,3 +32,11 @@ def save_npys(data, model_name, output_string):
 def check_path(data_pointer, log, msg):
     if not os.path.exists(data_pointer):
         log.error(msg)
+
+
+def ifloor(x):
+    return np.floor(x).astype(np.int)
+
+
+def iceil(x):
+    return np.ceil(x).astype(np.int)

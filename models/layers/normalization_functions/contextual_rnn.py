@@ -43,6 +43,7 @@ class ContextualCircuit(object):
         self.p_nl = tf.identity
         self.i_nl = tf.nn.relu  # input non linearity
         self.o_nl = tf.nn.relu  # output non linearity
+
         self.normal_initializer = False
         if self.SSN is None:
             self.SSN = self.SRF * 3
@@ -115,19 +116,73 @@ class ContextualCircuit(object):
                             uniform=self.normal_initializer,
                             mask=t_array))
 
+        if self.model_version == 'full':
+            # Also create input-facing weight matrices
+            self.q_w = tf.get_variable(
+                name='q_w',
+                shape=self.q_shape,
+                dtype=self.tf.float32,
+                initializer=initialization.xavier_initializer(
+                                uniform=self.normal_initializer,
+                                mask=None))
+            self.q_b = tf.get_variable(
+                name='q_b',
+                shape=self.u_shape,  # Note the u_shape
+                dtype=self.tf.float32,
+                initializer=initialization.xavier_initializer(
+                                uniform=self.normal_initializer,
+                                mask=None))
+            self.u_w = tf.get_variable(
+                name='u_w',
+                shape=self.u_shape,
+                dtype=self.tf.float32,
+                initializer=initialization.xavier_initializer(
+                                uniform=self.normal_initializer,
+                                mask=None))
+            self.u_b = tf.get_variable(
+                name='u_b',
+                shape=self.u_shape,  # Note the u_shape
+                dtype=self.tf.float32,
+                initializer=initialization.xavier_initializer(
+                                uniform=self.normal_initializer,
+                                mask=None))
+            self.p_w = tf.get_variable(
+                name='p_w',
+                shape=self.p_shape,
+                dtype=self.tf.float32,
+                initializer=initialization.xavier_initializer(
+                                uniform=self.normal_initializer,
+                                mask=p_array))
+            self.p_b = tf.get_variable(
+                name='p_b',
+                shape=self.u_shape,  # Note the u_shape
+                dtype=self.tf.float32,
+                initializer=initialization.xavier_initializer(
+                                uniform=self.normal_initializer,
+                                mask=None))
+            self.t_w = tf.get_variable(
+                name='t_w',
+                shape=self.t_shape,
+                dtype=self.tf.float32,
+                initializer=initialization.xavier_initializer(
+                                uniform=self.normal_initializer,
+                                mask=t_array))
+            self.t_b = tf.get_variable(
+                name='t_b',
+                shape=self.u_shape,  # Note the u_shape
+                dtype=self.tf.float32,
+                initializer=initialization.xavier_initializer(
+                                uniform=self.normal_initializer,
+                                mask=None))
+
         # Scalar weights
-        self.xi = tf.get_variable(shape=[], initializer=1.)
         self.alpha = tf.get_variable(shape=[], initializer=1.)
-        self.beta = tf.get_variable(shape=[], initializer=1.)
-        self.mu = tf.get_variable(shape=[], initializer=1.)
-        self.nu = tf.get_variable(shape=[], initializer=1.)
-        self.zeta = tf.get_variable(shape=[], initializer=1.)
-        self.gamma = tf.get_variable(shape=[], initializer=1.)
-        self.delta = tf.get_variable(shape=[], initializer=1.)
-        self.eps_eta = tf.get_variable(shape=[], initializer=1.)
-        self.eta = tf.get_variable(shape=[], initializer=1.)
-        self.sig_tau = tf.get_variable(shape=[], initializer=1.)
         self.tau = tf.get_variable(shape=[], initializer=1.)
+        self.eta = tf.get_variable(shape=[], initializer=1.)
+        self.omega = tf.get_variable(shape=[], initializer=1.)
+        self.eps = tf.get_variable(shape=[], initializer=1.)
+        self.tau = tf.get_variable(shape=[], initializer=1.)
+        self.gamma = tf.get_variable(shape=[], initializer=1.)
 
     def convolve_recurrent_RFs(self, O, I):
         """Convolve CRF and eCRF weights with input and output."""
@@ -156,28 +211,71 @@ class ContextualCircuit(object):
                 I, self._gpu_q, self.strides, padding='SAME')
         return U, T, P, Q
 
+    def convolve_ff_RFs(self):
+        """Convolve CRF and eCRF weights with input and output."""
+        if 'U' in self.lesions:
+            self.U_wself.U_w = tf.constant(0.)
+        else:
+            self.U_w = tf.nn.conv2d(
+                self.X, self.u_w, self.strides, padding='SAME')
+
+        if 'T' in self.lesions:
+            self.T_w = tf.constant(0.)
+        else:
+            self.T_w = tf.nn.conv2d(
+                self.X, self.t_w, self.strides, padding='SAME')
+
+        if 'P' in self.lesions:
+            self.P_w = tf.constant(0.)
+        else:
+            self.P_w = tf.nn.conv2d(
+                self.X, self.p_w, self.strides, padding='SAME')
+
+        if 'Q' in self.lesions:
+            self.Q_w = tf.constant(0.)
+        else:
+            self.Q_w = tf.nn.conv2d(
+                self.X, self.q_w, self.strides, padding='SAME')
+
     def full(self, i0, O, I):
         """Fully parameterized contextual RNN model."""
         U, T, P, Q = self.convolve_RFs(
             O=O,
             I=I)
 
-        I_summand = tf.nn.relu(
-            (self.xi * self.X)
-            - ((self.alpha * I + self.mu) * U)
-            - ((self.beta * I + self.nu) * T))
+        # Input
+        U = self.u_nl(U + self.U_w + self.u_b)
+        T = self.t_nl(T + self.T_w + self.t_b)
+        I_summand = self.eta(self.i_nl(self.alpha * self.X) - U - T)
+        I = (self.eps * I) + I_summand
 
-        I = self.tf_eps_eta * I + self.tf_eta * I_summand
-
-        O_summand = tf.nn.relu(
-            self.zeta * I
-            + self.gamma * P
-            + self.delta * Q)
-        O = self.tf_sig_tau * O + self.tf_tau * O_summand
+        # Output
+        Q = self.q_nl(Q + self.Q_w)
+        P = self.p_nl(P + self.P_w)
+        O_summand = self.tau(self.o_nl(Q + P + (self.gamma * I)))
+        O = (self.omega * O) + O_summand
         return i0, O, I
 
-    def condition(
-            self, i0, O, I):
+    def no_input_facing(self, i0, O, I):
+        """Remove the direct FF drive to the CRF and eCRFs."""
+        U, T, P, Q = self.convolve_RFs(
+            O=O,
+            I=I)
+
+        # Input
+        U = self.u_nl(U + self.u_b)
+        T = self.t_nl(T + self.t_b)
+        I_summand = self.eta(self.i_nl(self.alpha * self.X) - U - T)
+        I = (self.eps * I) + I_summand
+
+        # Output
+        Q = self.q_nl(Q)
+        P = self.p_nl(P)
+        O_summand = self.tau(self.o_nl(Q + P + (self.gamma * I)))
+        O = (self.omega * O) + O_summand
+        return i0, O, I
+
+    def condition(self, i0, O, I):
         """While loop halting condition."""
         return i0 < self.timesteps
 
@@ -194,6 +292,12 @@ class ContextualCircuit(object):
             O,
             I
         ]
+
+        if self.model_version == 'full':
+            self.U_w, self.T_w, self.P_w, self.Q_w = self.convolve_RFs(
+                O=None,
+                I=None,
+                X=self.X)
 
         returned = tf.while_loop(
             self.condition,
