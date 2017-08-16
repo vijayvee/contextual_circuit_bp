@@ -5,6 +5,10 @@ from models.layers import pool
 from models.layers.activations import activations
 from models.layers.normalizations import normalizations
 from models.layers.regularizations import regularizations
+from ops.eRF_calculator import eRF_calculator
+
+
+eRF = eRF_calculator()
 
 
 class model_class(object):
@@ -36,6 +40,12 @@ class model_class(object):
         """Main model creation method."""
         # data -= (self.mean[None, :, :, :]).astype(np.float32)  # H/W/C mean
         input_data = tf.identity(data, name="lrp_input")
+
+        # Calculate eRF info for main tower
+        self.main_tower_eRF = eRF.calculate(
+            layer_structure,
+            data,
+            verbose=True)
         features, layer_summary = create_conv_tower(
             self=self,
             act=input_data,
@@ -45,6 +55,10 @@ class model_class(object):
         if output_layer_structure is None:
             assert self.output_size is not None, 'Give model an output shape.'
             output_layer_structure = self.default_output_layer()
+        self.output_tower_eRF = eRF_calculator.calculate(
+            output_layer_structure,
+            features,
+            verbose=True)
         output, layer_summary = create_conv_tower(
             self=self,
             act=features,

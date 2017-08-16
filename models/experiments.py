@@ -45,7 +45,7 @@ class experiments():
                 os.path.join(model_folder, 'lrn'),
                 os.path.join(model_folder, 'contextual'),
             ],
-            'dataset': ['mnist', 'cifar']
+            'dataset': ['mnist', 'cifar_10']
         }
         return self.add_globals(exp)  # Add globals to the experiment
 
@@ -62,7 +62,7 @@ class experiments():
             'model_struct': [
                 os.path.join(model_folder, 'test'),
             ],
-            'dataset': ['mnist', 'cifar']
+            'dataset': ['mnist', 'cifar_10']
         }
         return self.add_globals(exp)  # Add globals to the experiment
 

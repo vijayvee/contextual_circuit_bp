@@ -32,9 +32,8 @@ class ContextualCircuit(object):
         self.lesions = lesions
         self.strides = strides
         self.padding = padding
-        self.SRF = SRF
-        self.SSN = SSN
-        self.SSF = SSF
+        self.set_RFs(SRF, SSN, SSF)
+
         self.SSN_ext = 2 * pyutils.ifloor(SSN / 2.0) + 1
         self.SSF_ext = 2 * pyutils.ifloor(SSF / 2.0) + 1
         self.q_shape = [self.SRF, self.SRF, self.k, self.k]
@@ -57,6 +56,20 @@ class ContextualCircuit(object):
             self.SSN = self.SRF * 3
         if self.SSF is None:
             self.SSF = self.SRF * 5
+
+    def set_RFs(self, SRF, SSN, SSF):
+        # Angelucci & Shushruth 2013 V1 RFs:
+        # CRF = 0.26 degrees (1x)
+        # eCRF near = 0.54 degrees (2x)
+        # eCRF far = 1.41 degrees (5.5x)
+        assert SRF is not None, 'Provide an SRF (the layer\'s effective RF).'
+        self.SRF = SRF
+        if SSN is None:
+            self.SSN = self.SRF * pyutils.iround(0.54 / 0.26)
+        if SSF is None:
+            self.SSF = pyutils.iround(self.SRF * 5.42)
+        self.SSN = SSN
+        self.SSF = SSF
 
     def prepare_tensors(self):
         """ Prepare recurrent/forward weight matrices."""

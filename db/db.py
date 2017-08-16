@@ -103,30 +103,29 @@ class db(object):
         if self.status_message:
             self.return_status('INSERT')
 
-    def get_parameters(self, random=True):
-        if random:
-            self.cur.execute(
-                """
-                SELECT * from experiments h
-                WHERE NOT EXISTS (
-                    SELECT 1
-                    FROM in_process i
-                    WHERE h._id = i.experiment_id
-                    )
-                ORDER BY random()
-                """
-            )
+    def get_parameters(self, experiment_name=None, random=True):
+        if experiment_name is not None:
+            exp_string = """experiment_name='%s' and""" % experiment_name
         else:
-            self.cur.execute(
-                """
-                SELECT * from experiments h
-                WHERE NOT EXISTS (
-                    SELECT 1
-                    FROM in_process i
-                    WHERE h._id = i.experiment_id
-                    )
-                """
-            )
+            exp_string = """"""
+        if random:
+            rand_string = """ORDER BY random()"""
+        else:
+            rand_string = """"""
+        self.cur.execute(
+            """
+            SELECT * from experiments h
+            WHERE %s NOT EXISTS (
+                SELECT 1
+                FROM in_process i
+                WHERE h._id = i.experiment_id
+                )
+            %s
+            """ % (
+                exp_string,
+                rand_string
+                )
+        )
         if self.status_message:
             self.return_status('SELECT')
         return self.cur.fetchone()
@@ -194,10 +193,19 @@ class db(object):
             self.return_status('SELECT')
 
 
+def get_experiment_name():
+    config = credentials.postgresql_connection()
+    with db(config) as db_conn:
+        param_dict = db_conn.get_parameters()
+    return param_dict['experiment_name']
+
+
 def get_parameters(experiment_name, log, random=False):
     config = credentials.postgresql_connection()
     with db(config) as db_conn:
-        param_dict = db_conn.get_parameters(random=random)
+        param_dict = db_conn.get_parameters(
+            experiment_name=experiment_name,
+            random=random)
         log.info('Using parameters: %s' % param_dict)
         if param_dict is not None:
             experiment_id = param_dict['_id']

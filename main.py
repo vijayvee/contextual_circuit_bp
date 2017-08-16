@@ -14,7 +14,6 @@ from ops import model_utils
 from ops import loss_utils
 from ops import eval_metrics
 from ops import training
-from ops import plotting
 
 
 def print_model_architecture(model_summary):
@@ -84,6 +83,10 @@ def main(experiment_name, list_experiments=False):
             print l.values()[0]
         print '_' * 30
         return
+    if experiment_name is None:
+        print 'No experiment specified. Pulling one out of the DB.'
+        experiment_name = db.get_experiment_name()
+
     # Prepare to run the model
     config = Config()
     condition_label = '%s_%s' % (experiment_name, get_dt_stamp())

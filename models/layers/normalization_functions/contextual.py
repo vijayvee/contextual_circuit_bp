@@ -23,7 +23,6 @@ class ContextualCircuit(object):
             strides=[1, 1, 1, 1],
             padding='SAME'):
 
-        # TODO: DEDUCE SRF/SSN/SSF FROM DATA.
         self.X = X
         self.n, self.h, self.w, self.k = [int(x) for x in self.X.shape()]
         self.model_version = model_version
@@ -31,9 +30,8 @@ class ContextualCircuit(object):
         self.lesions = lesions
         self.strides = strides
         self.padding = padding
-        self.SRF = SRF
-        self.SSN = SSN
-        self.SSF = SSF
+        self.SRF, self.SSN, self.SSF = SRF, SSN, SSF
+
         self.SSN_ext = 2 * pyutils.ifloor(SSN / 2.0) + 1
         self.SSF_ext = 2 * pyutils.ifloor(SSF / 2.0) + 1
         self.q_shape = [self.SRF, self.SRF, self.k, self.k]
