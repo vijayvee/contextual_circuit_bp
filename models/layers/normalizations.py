@@ -16,10 +16,11 @@ class normalizations(object):
         self.timesteps = 1
         self.CRF_excitation = 1
         self.CRF_inhibition = 1
-        self.eCRF_excitation = 3
-        self.eCRF_inhibition = 9
+        self.eCRF_excitation = 9
+        self.eCRF_inhibition = 29
         self.scale_CRF = True
         self.bias_CRF = True
+        self.lesions = None
         self.training = None
         if kwargs is not None:
             self.update_params(**kwargs)
@@ -29,8 +30,25 @@ class normalizations(object):
             setattr(self, k, v)
 
     def contextual(self, x, **kwargs):
-        """Contextual model 2D."""
-        contextual_layer = nf.ContextualCircuit()
+        """Contextual model from paper with learnable weights."""
+        contextual_layer = nf.contextual.ContextualCircuit()
+        if self.CRF_excitation != self.CRF_inhibition:
+            CRF_size = np.max([self.CRF_excitation, self.CRF_inhibition])
+            print 'CRF inhibition/excitation RFs are uneven.' + \
+                'Using the max extent for the contextual model CRF.'
+        else:
+            CRF_size = self.CRF_inhibition
+        return contextual_layer(
+            x,
+            timesteps=self.timesteps,
+            lesions=self.CRF_lesions,
+            SRF=CRF_size,
+            SSN=self.eCRF_excitation,
+            SSF=self.eCRF_inhibition)
+
+    def contextual_rnn(self, x, **kwargs):
+        """Contextual model translated into a RNN architecture."""
+        contextual_layer = nf.contextual_rnn.ContextualCircuit()
         if self.CRF_excitation != self.CRF_inhibition:
             CRF_size = np.max([self.CRF_excitation, self.CRF_inhibition])
             print 'CRF inhibition/excitation RFs are uneven.' + \

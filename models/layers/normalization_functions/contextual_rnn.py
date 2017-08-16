@@ -20,7 +20,9 @@ class ContextualCircuit(object):
             SRF=1,
             SSN=9,
             SSF=29,
-            strides=[1, 1, 1, 1]):
+            strides=[1, 1, 1, 1],
+            padding='SAME',
+            dtype=tf.float32):
 
         # TODO: DEDUCE SRF/SSN/SSF FROM DATA.
         self.X = X
@@ -28,6 +30,8 @@ class ContextualCircuit(object):
         self.model_version = model_version
         self.timesteps = timesteps
         self.lesions = lesions
+        self.strides = strides
+        self.padding = padding
         self.SRF = SRF
         self.SSN = SSN
         self.SSF = SSF
@@ -37,6 +41,10 @@ class ContextualCircuit(object):
         self.u_shape = [self.SRF, self.SRF, self.k, self.SRF]
         self.p_shape = [self.SSN_ext, self.SSN_ext, self.k, self.k]
         self.t_shape = [self.SSF_ext, self.SSF_ext, self.k, self.k]
+        self.i_shape = [self.SRF, self.SRF, self.k]
+        self.o_shape = [self.SRF, self.SRF, self.k]
+        self.bias_shape = self.k
+        self.dtype = tf.float32
         self.u_nl = tf.identity
         self.t_nl = tf.identity
         self.q_nl = tf.identity
@@ -51,23 +59,81 @@ class ContextualCircuit(object):
             self.SSF = self.SRF * 5
 
     def prepare_tensors(self):
-        """ Prepare recurrent weight matrices."""
+        """ Prepare recurrent/forward weight matrices."""
+        self.weight_dict = {  # Weights lower/activity upper
+            'U': {
+                'r': {
+                    'weight': 'u_r',
+                    'activity': 'U_r'
+                    },
+                'f': {
+                    'weight': 'u_f',
+                    'bias': 'ub_f',
+                    'activity': 'U_f'
+                    }
+                },
+            'T': {
+                'r': {
+                    'weight': 't_r',
+                    'activity': 'T_r'
+                    },
+                'f': {
+                    'weight': 't_f',
+                    'bias': 'tb_f',
+                    'activity': 'T_f'
+                    }
+                },
+            'P': {
+                'r': {
+                    'weight': 'p_r',
+                    'activity': 'P_r'
+                    },
+                'f': {
+                    'weight': 'p_f',
+                    'bias': 'pb_f',
+                    'activity': 'P_f'
+                    }
+                },
+            'Q': {
+                'r': {
+                    'weight': 'q_r',
+                    'activity': 'Q_r'
+                    },
+                'f': {
+                    'weight': 'q_f',
+                    'bias': 'qb_f',
+                    'activity': 'Q_f'
+                    }
+                },
+            'I': {
+                'r': {  # Recurrent state
+                    'weight': 'i_r',
+                    'activity': 'I_r'
+                }
+            },
+            'O': {
+                'r': {  # Recurrent state
+                    'weight': 'o_r',
+                    'activity': 'O_r'
+                }
+            }
+        }
         # tuned summation: pooling in h, w dimensions
         #############################################
-        self.q = tf.get_variable(
-            name='q',
+        self[self.weight_dict['Q']['r']['weight']] = tf.get_variable(
+            name=self.weight_dict['Q']['r']['weight'],
             shape=self.q_shape,
-            dtype=self.tf.float32,
+            dtype=self.dtype,
             initializer=initialization.xavier_initializer(
                             uniform=self.normal_initializer,
                             mask=None))
 
         # untuned suppression: reduction across feature axis
         ####################################################
-        self.u = tf.get_variable(
-            name='u',
+        self[self.weight_dict['U']['r']['weight']] = tf.get_variable(
+            name=self.weight_dict['U']['r']['weight'],
             shape=self.u_shape,
-            dtype=self.tf.float32,
+            dtype=self.dtype,
             initializer=initialization.xavier_initializer(
                             uniform=self.normal_initializer,
                             mask=None))
@@ -86,10 +152,10 @@ class ContextualCircuit(object):
                 self.SRF / 2.0),
             :,  # exclude CRF!
             :] = 0.0
-        self.p = tf.get_variable(
-            name='p',
+        self[self.weight_dict['P']['r']['weight']] = tf.get_variable(
+            name=self.weight_dict['P']['r']['weight'],
             shape=self.p_shape,
-            dtype=self.tf.float32,
+            dtype=self.dtype,
             initializer=initialization.xavier_initializer(
                             uniform=self.normal_initializer,
                             mask=p_array))
@@ -108,69 +174,98 @@ class ContextualCircuit(object):
                 self.SSN / 2.0),
             :,  # exclude near surround!
             :] = 0.0
-        self.t = tf.get_variable(
-            name='t',
+        self[self.weight_dict['T']['r']['weight']] = tf.get_variable(
+            name=self.weight_dict['T']['r']['weight'],
             shape=self.t_shape,
-            dtype=self.tf.float32,
+            dtype=self.dtype,
             initializer=initialization.xavier_initializer(
                             uniform=self.normal_initializer,
                             mask=t_array))
 
-        if self.model_version == 'full':
+        if self.model_version != 'no_input_facing':
             # Also create input-facing weight matrices
-            self.q_w = tf.get_variable(
-                name='q_w',
+            self[self.weight_dict['Q']['f']['weight']] = tf.get_variable(
+                name=self.weight_dict['Q']['f']['weight'],
                 shape=self.q_shape,
-                dtype=self.tf.float32,
+                dtype=self.dtype,
                 initializer=initialization.xavier_initializer(
                                 uniform=self.normal_initializer,
                                 mask=None))
-            self.q_b = tf.get_variable(
-                name='q_b',
-                shape=self.u_shape,  # Note the u_shape
-                dtype=self.tf.float32,
+            self[self.weight_dict['Q']['f']['bias']] = tf.get_variable(
+                name=self.weight_dict['Q']['f']['bias'],
+                shape=self.bias_shape,  # Note the u_shape
+                dtype=self.dtype,
                 initializer=initialization.xavier_initializer(
                                 uniform=self.normal_initializer,
                                 mask=None))
-            self.u_w = tf.get_variable(
-                name='u_w',
+            self[self.weight_dict['U']['f']['weight']] = tf.get_variable(
+                name=self.weight_dict['U']['f']['weight'],
                 shape=self.u_shape,
-                dtype=self.tf.float32,
+                dtype=self.dtype,
                 initializer=initialization.xavier_initializer(
                                 uniform=self.normal_initializer,
                                 mask=None))
-            self.u_b = tf.get_variable(
-                name='u_b',
-                shape=self.u_shape,  # Note the u_shape
-                dtype=self.tf.float32,
+            self[self.weight_dict['U']['f']['bias']] = tf.get_variable(
+                name=self.weight_dict['U']['f']['bias'],
+                shape=self.bias_shape,  # Note the u_shape
+                dtype=self.dtype,
                 initializer=initialization.xavier_initializer(
                                 uniform=self.normal_initializer,
                                 mask=None))
-            self.p_w = tf.get_variable(
-                name='p_w',
+            self[self.weight_dict['P']['f']['weight']] = tf.get_variable(
+                name=self.weight_dict['P']['f']['weight'],
                 shape=self.p_shape,
-                dtype=self.tf.float32,
+                dtype=self.dtype,
                 initializer=initialization.xavier_initializer(
                                 uniform=self.normal_initializer,
                                 mask=p_array))
-            self.p_b = tf.get_variable(
-                name='p_b',
-                shape=self.u_shape,  # Note the u_shape
-                dtype=self.tf.float32,
+            self[self.weight_dict['P']['f']['bias']] = tf.get_variable(
+                name=self.weight_dict['P']['f']['bias'],
+                shape=self.bias_shape,  # Note the u_shape
+                dtype=self.dtype,
                 initializer=initialization.xavier_initializer(
                                 uniform=self.normal_initializer,
                                 mask=None))
-            self.t_w = tf.get_variable(
-                name='t_w',
+            self[self.weight_dict['T']['f']['weight']] = tf.get_variable(
+                name=self.weight_dict['T']['f']['weight'],
                 shape=self.t_shape,
-                dtype=self.tf.float32,
+                dtype=self.dtype,
                 initializer=initialization.xavier_initializer(
                                 uniform=self.normal_initializer,
                                 mask=t_array))
-            self.t_b = tf.get_variable(
-                name='t_b',
-                shape=self.u_shape,  # Note the u_shape
-                dtype=self.tf.float32,
+            self[self.weight_dict['T']['f']['bias']] = tf.get_variable(
+                name=self.weight_dict['T']['f']['bias'],
+                shape=self.bias_shape,  # Note the u_shape
+                dtype=self.dtype,
+                initializer=initialization.xavier_initializer(
+                                uniform=self.normal_initializer,
+                                mask=None))
+        if self.model_version == 'full_with_cell_states':
+            self[self.weight_dict['I']['r']['weight']] = tf.get_variable(
+                name=self.weight_dict['I']['r']['weight'],
+                shape=self.i_shape,
+                dtype=self.dtype,
+                initializer=initialization.xavier_initializer(
+                                uniform=self.normal_initializer,
+                                mask=t_array))
+            self[self.weight_dict['I']['r']['bias']] = tf.get_variable(
+                name=self.weight_dict['I']['r']['bias'],
+                shape=self.bias_shape,
+                dtype=self.dtype,
+                initializer=initialization.xavier_initializer(
+                                uniform=self.normal_initializer,
+                                mask=None))
+            self[self.weight_dict['O']['r']['weight']] = tf.get_variable(
+                name=self.weight_dict['O']['r']['weight'],
+                shape=self.o_shape,
+                dtype=self.dtype,
+                initializer=initialization.xavier_initializer(
+                                uniform=self.normal_initializer,
+                                mask=t_array))
+            self[self.weight_dict['O']['r']['bias']] = tf.get_variable(
+                name=self.weight_dict['O']['r']['bias'],
+                shape=self.bias_shape,
+                dtype=self.dtype,
                 initializer=initialization.xavier_initializer(
                                 uniform=self.normal_initializer,
                                 mask=None))
@@ -184,88 +279,87 @@ class ContextualCircuit(object):
         self.tau = tf.get_variable(shape=[], initializer=1.)
         self.gamma = tf.get_variable(shape=[], initializer=1.)
 
-    def convolve_recurrent_RFs(self, O, I):
-        """Convolve CRF and eCRF weights with input and output."""
-        if 'U' in self.lesions:
-            U = tf.constant(0.)
+    def conv_2d_op(self, data, weight_key, out_key=None):
+        """2D convolutions, lesion, return or assign activity as attribute."""
+        if weight_key in self.lesions:
+            weights = tf.constant(0.)
         else:
-            U = tf.nn.conv2d(
-                O, self._gpu_u, self.strides, padding='SAME')
-
-        if 'T' in self.lesions:
-            T = tf.constant(0.)
+            weights = self[weight_key]
+        activities = tf.nn.conv2d(
+                data,
+                weights,
+                self.strides,
+                padding=self.padding)
+        if out_key is None:
+            return activities
         else:
-            T = tf.nn.conv2d(
-                O, self._gpu_t, self.strides, padding='SAME')
-
-        if 'P' in self.lesions:
-            P = tf.constant(0.)
-        else:
-            P = tf.nn.conv2d(
-                I, self._gpu_p, self.strides, padding='SAME')
-
-        if 'Q' in self.lesions:
-            Q = tf.constant(0.)
-        else:
-            Q = tf.nn.conv2d(
-                I, self._gpu_q, self.strides, padding='SAME')
-        return U, T, P, Q
-
-    def convolve_ff_RFs(self):
-        """Convolve CRF and eCRF weights with input and output."""
-        if 'U' in self.lesions:
-            self.U_wself.U_w = tf.constant(0.)
-        else:
-            self.U_w = tf.nn.conv2d(
-                self.X, self.u_w, self.strides, padding='SAME')
-
-        if 'T' in self.lesions:
-            self.T_w = tf.constant(0.)
-        else:
-            self.T_w = tf.nn.conv2d(
-                self.X, self.t_w, self.strides, padding='SAME')
-
-        if 'P' in self.lesions:
-            self.P_w = tf.constant(0.)
-        else:
-            self.P_w = tf.nn.conv2d(
-                self.X, self.p_w, self.strides, padding='SAME')
-
-        if 'Q' in self.lesions:
-            self.Q_w = tf.constant(0.)
-        else:
-            self.Q_w = tf.nn.conv2d(
-                self.X, self.q_w, self.strides, padding='SAME')
+            self[out_key] = activities
 
     def full(self, i0, O, I):
         """Fully parameterized contextual RNN model."""
-        U, T, P, Q = self.convolve_RFs(
-            O=O,
-            I=I)
+        U = self.conv_2d_op(
+            data=O,
+            weight_key=self.weight_dict['U']['r']['weight']
+        )
+        T = self.conv_2d_op(
+            data=O,
+            weight_key=self.weight_dict['T']['r']['weight']
+        )
+        P = self.conv_2d_op(
+            data=I,
+            weight_key=self.weight_dict['P']['r']['weight']
+        )
+        Q = self.conv_2d_op(
+            data=I,
+            weight_key=self.weight_dict['Q']['r']['weight']
+        )
 
         # Input
-        U = self.u_nl(U + self.U_w + self.u_b)
-        T = self.t_nl(T + self.T_w + self.t_b)
-        I_summand = self.eta(self.i_nl(self.alpha * self.X) - U - T)
+        U = self.u_nl(
+            U +
+            self[self.weight_dict['U']['f']['activity']] +
+            self[self.weight_dict['U']['f']['bias']])
+        T = self.t_nl(
+            T +
+            self[self.weight_dict['T']['f']['activity']] +
+            self[self.weight_dict['T']['f']['bias']])
+        I_summand = self.eta(self.i_nl(self.alpha * self.X - U - T))
         I = (self.eps * I) + I_summand
 
         # Output
-        Q = self.q_nl(Q + self.Q_w)
-        P = self.p_nl(P + self.P_w)
+        Q = self.q_nl(
+            Q +
+            self[self.weight_dict['Q']['f']['activity']])
+        P = self.p_nl(
+            P +
+            self[self.weight_dict['P']['f']['activity']])
         O_summand = self.tau(self.o_nl(Q + P + (self.gamma * I)))
         O = (self.omega * O) + O_summand
         return i0, O, I
 
     def no_input_facing(self, i0, O, I):
         """Remove the direct FF drive to the CRF and eCRFs."""
-        U, T, P, Q = self.convolve_RFs(
-            O=O,
-            I=I)
+        U = self.conv_2d_op(
+            data=O,
+            weight_key=self.weight_dict['U']['r']['weight']
+        )
+        T = self.conv_2d_op(
+            data=O,
+            weight_key=self.weight_dict['T']['r']['weight']
+        )
+        P = self.conv_2d_op(
+            data=I,
+            weight_key=self.weight_dict['P']['r']['weight']
+        )
+        Q = self.conv_2d_op(
+            data=I,
+            weight_key=self.weight_dict['Q']['r']['weight']
+        )
 
         # Input
-        U = self.u_nl(U + self.u_b)
-        T = self.t_nl(T + self.t_b)
-        I_summand = self.eta(self.i_nl(self.alpha * self.X) - U - T)
+        U = self.u_nl(U + self[self.weight_dict['U']['f']['bias']])
+        T = self.t_nl(T + self[self.weight_dict['T']['f']['bias']])
+        I_summand = self.eta(self.i_nl(self.alpha * self.X - U - T))
         I = (self.eps * I) + I_summand
 
         # Output
@@ -273,6 +367,98 @@ class ContextualCircuit(object):
         P = self.p_nl(P)
         O_summand = self.tau(self.o_nl(Q + P + (self.gamma * I)))
         O = (self.omega * O) + O_summand
+        return i0, O, I
+
+    def no_input_scaling(self, i0, O, I):
+        """Remove direct FF input to the I."""
+        U = self.conv_2d_op(
+            data=O,
+            weight_key=self.weight_dict['U']['r']['weight']
+        )
+        T = self.conv_2d_op(
+            data=O,
+            weight_key=self.weight_dict['T']['r']['weight']
+        )
+        P = self.conv_2d_op(
+            data=I,
+            weight_key=self.weight_dict['P']['r']['weight']
+        )
+        Q = self.conv_2d_op(
+            data=I,
+            weight_key=self.weight_dict['Q']['r']['weight']
+        )
+
+        # Input
+        U = self.u_nl(
+            U +
+            self[self.weight_dict['U']['f']['activity']] +
+            self[self.weight_dict['U']['f']['bias']])
+        T = self.t_nl(
+            T +
+            self[self.weight_dict['T']['f']['activity']] +
+            self[self.weight_dict['T']['f']['bias']])
+        I_summand = self.eta(self.i_nl(U - T))
+        I = (self.eps * I) + I_summand
+
+        # Output
+        Q = self.q_nl(
+            Q +
+            self[self.weight_dict['Q']['f']['activity']])
+        P = self.p_nl(
+            P +
+            self[self.weight_dict['P']['f']['activity']])
+        O_summand = self.tau(self.o_nl(Q + P + (self.gamma * I)))
+        O = (self.omega * O) + O_summand
+        return i0, O, I
+
+    def full_with_cell_states(self, i0, O, I):
+        """Replace I/O scaling with weight matrices (cell states)."""
+        U = self.conv_2d_op(
+            data=O,
+            weight_key=self.weight_dict['U']['r']['weight']
+        )
+        T = self.conv_2d_op(
+            data=O,
+            weight_key=self.weight_dict['T']['r']['weight']
+        )
+        P = self.conv_2d_op(
+            data=I,
+            weight_key=self.weight_dict['P']['r']['weight']
+        )
+        Q = self.conv_2d_op(
+            data=I,
+            weight_key=self.weight_dict['Q']['r']['weight']
+        )
+        I = self.conv_2d_op(
+            data=I,
+            weight_key=self.weight_dict['I']['r']['weight']
+        ) + self[self.weight_dict['I']['r']['bias']]
+        O = self.conv_2d_op(
+            data=O,
+            weight_key=self.weight_dict['O']['r']['weight']
+        ) + self[self.weight_dict['O']['r']['bias']]
+
+        # Input
+        U = self.u_nl(
+            U +
+            self[self.weight_dict['U']['f']['activity']] +
+            self[self.weight_dict['U']['f']['bias']])
+        T = self.t_nl(
+            T +
+            self[self.weight_dict['T']['f']['activity']] +
+            self[self.weight_dict['T']['f']['bias']])
+        I_summand = self.eta(self.i_nl(self.alpha * self.X - U - T))
+        I += I_summand
+
+        # Output
+        Q = self.q_nl(
+            Q +
+            self[self.weight_dict['Q']['f']['activity']])
+        P = self.p_nl(
+            P +
+            self[self.weight_dict['P']['f']['activity']])
+        O_summand = self.tau(self.o_nl(Q + P + (self.gamma * I)))
+        O += O_summand
         return i0, O, I
 
     def condition(self, i0, O, I):
@@ -294,10 +480,22 @@ class ContextualCircuit(object):
         ]
 
         if self.model_version == 'full':
-            self.U_w, self.T_w, self.P_w, self.Q_w = self.convolve_RFs(
-                O=None,
-                I=None,
-                X=self.X)
+            self.conv_2d_op(
+                data=self.X,
+                weight_key=self.weight_dict['U']['f']['weight'],
+                out_key=self.weight_dict['U']['f']['activity'])
+            self.conv_2d_op(
+                data=self.X,
+                weight_key=self.weight_dict['T']['f']['weight'],
+                out_key=self.weight_dict['T']['f']['activity'])
+            self.conv_2d_op(
+                data=self.X,
+                weight_key=self.weight_dict['P']['f']['weight'],
+                out_key=self.weight_dict['P']['f']['activity'])
+            self.conv_2d_op(
+                data=self.X,
+                weight_key=self.weight_dict['Q']['f']['weight'],
+                out_key=self.weight_dict['Q']['f']['activity'])
 
         returned = tf.while_loop(
             self.condition,

@@ -20,7 +20,8 @@ class ContextualCircuit(object):
             SRF=1,
             SSN=9,
             SSF=29,
-            strides=[1, 1, 1, 1]):
+            strides=[1, 1, 1, 1],
+            padding='SAME'):
 
         # TODO: DEDUCE SRF/SSN/SSF FROM DATA.
         self.X = X
@@ -28,6 +29,8 @@ class ContextualCircuit(object):
         self.model_version = model_version
         self.timesteps = timesteps
         self.lesions = lesions
+        self.strides = strides
+        self.padding = padding
         self.SRF = SRF
         self.SSN = SSN
         self.SSF = SSF
@@ -43,6 +46,7 @@ class ContextualCircuit(object):
         self.p_nl = tf.identity
         self.i_nl = tf.nn.relu  # input non linearity
         self.o_nl = tf.nn.relu  # output non linearity
+
         self.normal_initializer = False
         if self.SSN is None:
             self.SSN = self.SRF * 3
@@ -50,11 +54,70 @@ class ContextualCircuit(object):
             self.SSF = self.SRF * 5
 
     def prepare_tensors(self):
-        """ Prepare recurrent weight matrices."""
+        """ Prepare recurrent/forward weight matrices."""
+        self.weight_dict = {  # Weights lower/activity upper
+            'U': {
+                'r': {
+                    'weight': 'u_r',
+                    'activity': 'U_r'
+                    },
+                'f': {
+                    'weight': 'u_f',
+                    'bias': 'ub_f',
+                    'activity': 'U_f'
+                    }
+                },
+            'T': {
+                'r': {
+                    'weight': 't_r',
+                    'activity': 'T_r'
+                    },
+                'f': {
+                    'weight': 't_f',
+                    'bias': 'tb_f',
+                    'activity': 'T_f'
+                    }
+                },
+            'P': {
+                'r': {
+                    'weight': 'p_r',
+                    'activity': 'P_r'
+                    },
+                'f': {
+                    'weight': 'p_f',
+                    'bias': 'pb_f',
+                    'activity': 'P_f'
+                    }
+                },
+            'Q': {
+                'r': {
+                    'weight': 'q_r',
+                    'activity': 'Q_r'
+                    },
+                'f': {
+                    'weight': 'q_f',
+                    'bias': 'qb_f',
+                    'activity': 'Q_f'
+                    }
+                },
+            'I': {
+                'r': {  # Recurrent state
+                    'weight': 'i_r',
+                    'activity': 'I_r'
+                }
+            },
+            'O': {
+                'r': {  # Recurrent state
+                    'weight': 'o_r',
+                    'activity': 'O_r'
+                }
+            }
+        }
+
         # tuned summation: pooling in h, w dimensions
         #############################################
-        self.q = tf.get_variable(
-            name='q',
+        self[self.weight_dict['Q']['r']['weight']] = tf.get_variable(
+            name=self.weight_dict['Q']['r']['weight'],
             shape=self.q_shape,
             dtype=self.tf.float32,
             initializer=initialization.xavier_initializer(
@@ -63,8 +126,8 @@ class ContextualCircuit(object):
 
         # untuned suppression: reduction across feature axis
         ####################################################
-        self.u = tf.get_variable(
-            name='u',
+        self[self.weight_dict['U']['r']['weight']] = tf.get_variable(
+            name=self.weight_dict['U']['r']['weight'],
             shape=self.u_shape,
             dtype=self.tf.float32,
             initializer=initialization.xavier_initializer(
@@ -85,8 +148,8 @@ class ContextualCircuit(object):
                 self.SRF / 2.0),
             :,  # exclude CRF!
             :] = 0.0
-        self.p = tf.get_variable(
-            name='p',
+        self[self.weight_dict['P']['r']['weight']] = tf.get_variable(
+            name=self.weight_dict['P']['r']['weight'],
             shape=self.p_shape,
             dtype=self.tf.float32,
             initializer=initialization.xavier_initializer(
@@ -107,8 +170,8 @@ class ContextualCircuit(object):
                 self.SSN / 2.0),
             :,  # exclude near surround!
             :] = 0.0
-        self.t = tf.get_variable(
-            name='t',
+        self[self.weight_dict['T']['r']['weight']] = tf.get_variable(
+            name=self.weight_dict['T']['r']['weight'],
             shape=self.t_shape,
             dtype=self.tf.float32,
             initializer=initialization.xavier_initializer(
@@ -124,60 +187,64 @@ class ContextualCircuit(object):
         self.zeta = tf.get_variable(shape=[], initializer=1.)
         self.gamma = tf.get_variable(shape=[], initializer=1.)
         self.delta = tf.get_variable(shape=[], initializer=1.)
-        self.eps_eta = tf.get_variable(shape=[], initializer=1.)
+        self.eps = tf.get_variable(shape=[], initializer=1.)
         self.eta = tf.get_variable(shape=[], initializer=1.)
-        self.sig_tau = tf.get_variable(shape=[], initializer=1.)
+        self.sig = tf.get_variable(shape=[], initializer=1.)
         self.tau = tf.get_variable(shape=[], initializer=1.)
 
-    def convolve_recurrent_RFs(self, O, I):
-        """Convolve CRF and eCRF weights with input and output."""
-        if 'U' in self.lesions:
-            U = tf.constant(0.)
+    def conv_2d_op(self, data, weight_key, out_key=None):
+        """2D convolutions, lesion, return or assign activity as attribute."""
+        if weight_key in self.lesions:
+            weights = tf.constant(0.)
         else:
-            U = tf.nn.conv2d(
-                O, self._gpu_u, self.strides, padding='SAME')
-
-        if 'T' in self.lesions:
-            T = tf.constant(0.)
+            weights = self[weight_key]
+        activities = tf.nn.conv2d(
+                data,
+                weights,
+                self.strides,
+                padding=self.padding)
+        if out_key is None:
+            return activities
         else:
-            T = tf.nn.conv2d(
-                O, self._gpu_t, self.strides, padding='SAME')
-
-        if 'P' in self.lesions:
-            P = tf.constant(0.)
-        else:
-            P = tf.nn.conv2d(
-                I, self._gpu_p, self.strides, padding='SAME')
-
-        if 'Q' in self.lesions:
-            Q = tf.constant(0.)
-        else:
-            Q = tf.nn.conv2d(
-                I, self._gpu_q, self.strides, padding='SAME')
-        return U, T, P, Q
+            self[out_key] = activities
 
     def full(self, i0, O, I):
-        """Fully parameterized contextual RNN model."""
-        U, T, P, Q = self.convolve_RFs(
-            O=O,
-            I=I)
+        """Published CM with learnable weights."""
+        U = self.conv_2d_op(
+            data=O,
+            weight_key=self.weight_dict['U']['r']['weight']
+        )
+        T = self.conv_2d_op(
+            data=O,
+            weight_key=self.weight_dict['T']['r']['weight']
+        )
+        P = self.conv_2d_op(
+            data=I,
+            weight_key=self.weight_dict['P']['r']['weight']
+        )
+        Q = self.conv_2d_op(
+            data=I,
+            weight_key=self.weight_dict['Q']['r']['weight']
+        )
+
+        eps_eta = tf.pow(self.eps, 2) * self.eta
+        sig_tau = tf.pow(self.sig, 2) * self.tau
 
         I_summand = tf.nn.relu(
             (self.xi * self.X)
             - ((self.alpha * I + self.mu) * U)
             - ((self.beta * I + self.nu) * T))
 
-        I = self.tf_eps_eta * I + self.tf_eta * I_summand
+        I = eps_eta * I + self.eta * I_summand
 
         O_summand = tf.nn.relu(
             self.zeta * I
             + self.gamma * P
             + self.delta * Q)
-        O = self.tf_sig_tau * O + self.tf_tau * O_summand
+        O = sig_tau * O + self.tau * O_summand
         return i0, O, I
 
-    def condition(
-            self, i0, O, I):
+    def condition(self, i0, O, I):
         """While loop halting condition."""
         return i0 < self.timesteps
 

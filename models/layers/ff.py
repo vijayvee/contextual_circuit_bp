@@ -9,7 +9,8 @@ def resnet_layer(
         layer_weights,
         name,
         activation=None,
-        normalization=None):
+        normalization=None,
+        combination=tf.add):  # tf.multiply
     ln = '%s_branch' % name
     in_layer = conv_layer(
             self,
@@ -32,7 +33,7 @@ def resnet_layer(
             out_channels=lw,
             name=ln)
         rlayer = nm(ac(rlayer))
-    return rlayer + bottom
+    return combination(rlayer, bottom)
 
 
 def conv_layer(
