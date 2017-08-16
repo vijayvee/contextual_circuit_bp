@@ -316,13 +316,17 @@ class ContextualCircuit(object):
 
         # Input
         U = self.u_nl(
-            U +
-            self[self.weight_dict['U']['f']['activity']] +
-            self[self.weight_dict['U']['f']['bias']])
+            tf.nn.bias_add(
+                U +
+                self[self.weight_dict['U']['f']['activity']],
+                self[self.weight_dict['U']['f']['bias']])
+            )
         T = self.t_nl(
-            T +
-            self[self.weight_dict['T']['f']['activity']] +
-            self[self.weight_dict['T']['f']['bias']])
+            tf.nn.bias_add(
+                T +
+                self[self.weight_dict['T']['f']['activity']],
+                self[self.weight_dict['T']['f']['bias']])
+            )
         I_summand = self.eta(self.i_nl(self.alpha * self.X - U - T))
         I = (self.eps * I) + I_summand
 
@@ -357,8 +361,14 @@ class ContextualCircuit(object):
         )
 
         # Input
-        U = self.u_nl(U + self[self.weight_dict['U']['f']['bias']])
-        T = self.t_nl(T + self[self.weight_dict['T']['f']['bias']])
+        U = self.u_nl(tf.nn.bias_add(
+            U,
+            self[self.weight_dict['U']['f']['bias']])
+        )
+        T = self.t_nl(tf.nn.bias_add(
+            T,
+            self[self.weight_dict['T']['f']['bias']])
+        )
         I_summand = self.eta(self.i_nl(self.alpha * self.X - U - T))
         I = (self.eps * I) + I_summand
 
@@ -390,13 +400,17 @@ class ContextualCircuit(object):
 
         # Input
         U = self.u_nl(
-            U +
-            self[self.weight_dict['U']['f']['activity']] +
-            self[self.weight_dict['U']['f']['bias']])
+            tf.nn.bias_add(
+                U +
+                self[self.weight_dict['U']['f']['activity']],
+                self[self.weight_dict['U']['f']['bias']])
+            )
         T = self.t_nl(
-            T +
-            self[self.weight_dict['T']['f']['activity']] +
-            self[self.weight_dict['T']['f']['bias']])
+            tf.nn.bias_add(
+                T +
+                self[self.weight_dict['T']['f']['activity']],
+                self[self.weight_dict['T']['f']['bias']])
+            )
         I_summand = self.eta(self.i_nl(U - T))
         I = (self.eps * I) + I_summand
 
@@ -429,24 +443,30 @@ class ContextualCircuit(object):
             data=I,
             weight_key=self.weight_dict['Q']['r']['weight']
         )
-        I = self.conv_2d_op(
-            data=I,
-            weight_key=self.weight_dict['I']['r']['weight']
-        ) + self[self.weight_dict['I']['r']['bias']]
-        O = self.conv_2d_op(
-            data=O,
-            weight_key=self.weight_dict['O']['r']['weight']
-        ) + self[self.weight_dict['O']['r']['bias']]
+        I = tf.nn.bias_add(
+            self.conv_2d_op(
+                data=I,
+                weight_key=self.weight_dict['I']['r']['weight']
+            ), self[self.weight_dict['I']['r']['bias']])
+        O = tf.nn.bias_add(
+            self.conv_2d_op(
+                data=O,
+                weight_key=self.weight_dict['O']['r']['weight']
+            ), self[self.weight_dict['O']['r']['bias']])
 
         # Input
         U = self.u_nl(
-            U +
-            self[self.weight_dict['U']['f']['activity']] +
-            self[self.weight_dict['U']['f']['bias']])
+            tf.nn.bias_add(
+                U +
+                self[self.weight_dict['U']['f']['activity']],
+                self[self.weight_dict['U']['f']['bias']])
+            )
         T = self.t_nl(
-            T +
-            self[self.weight_dict['T']['f']['activity']] +
-            self[self.weight_dict['T']['f']['bias']])
+            tf.nn.bias_add(
+                T +
+                self[self.weight_dict['T']['f']['activity']],
+                self[self.weight_dict['T']['f']['bias']])
+            )
         I_summand = self.eta(self.i_nl(self.alpha * self.X - U - T))
         I += I_summand
 

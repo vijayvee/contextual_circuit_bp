@@ -12,13 +12,6 @@ def resnet_layer(
         normalization=None,
         combination=tf.add):  # tf.multiply
     ln = '%s_branch' % name
-    in_layer = conv_layer(
-            self,
-            bottom,
-            int(bottom.get_shape()[-1]),
-            layer_weights[0],
-            batchnorm=[ln],
-            name=ln)
     rlayer = tf.identity(bottom)
     if normalization is not None:
         nm = normalizations()[normalization]
@@ -29,7 +22,7 @@ def resnet_layer(
         rlayer = conv_layer(
             self=self,
             bottom=rlayer,
-            in_channels=int(in_layer.get_shape()[-1]),
+            in_channels=int(rlayer.get_shape()[-1]),
             out_channels=lw,
             name=ln)
         rlayer = nm(ac(rlayer))
