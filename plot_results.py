@@ -15,6 +15,8 @@ def main(experiment_name, im_ext='.pdf', val_score='val accuracy'):
 
     # Get experiment data
     perf = db.get_performance(experiment_name=experiment_name)
+    if len(perf) == 0:
+        raise RuntimeError('Could not find any results.')
     structure_names = [x['model_struct'].split('/')[-1] for x in perf]
     optimizers = [x['optimizer'] for x in perf]
     lrs = [x['lr'] for x in perf]
@@ -64,6 +66,7 @@ def main(experiment_name, im_ext='.pdf', val_score='val accuracy'):
     df['training loss'] = pd.to_numeric(df['training loss'])
     df['validation loss'] = pd.to_numeric(df[val_score]) * 100.
     f, axs = plt.subplots(2, figsize=(20, 30))
+    import ipdb;ipdb.set_trace()
     ax = sns.pointplot(
         x='training iteration',
         y='training loss',

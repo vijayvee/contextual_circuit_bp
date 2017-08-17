@@ -39,11 +39,12 @@ class experiments():
             'wd_type': [None, 'l1', 'l2'],
             'wd_penalty': [0.005],
             'model_struct': [
-                os.path.join(model_folder, 'divisive'),
-                os.path.join(model_folder, 'batch'),
-                os.path.join(model_folder, 'layer'),
-                os.path.join(model_folder, 'lrn'),
+                # os.path.join(model_folder, 'divisive'),
+                # os.path.join(model_folder, 'batch'),
+                # os.path.join(model_folder, 'layer'),
+                # os.path.join(model_folder, 'lrn'),
                 os.path.join(model_folder, 'contextual'),
+                os.path.join(model_folder, 'contextual_rnn'),
             ],
             'dataset': ['mnist', 'cifar_10']
         }

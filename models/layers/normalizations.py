@@ -57,6 +57,7 @@ class normalizations(object):
 
     def contextual(self, x, **kwargs):
         """Contextual model from paper with learnable weights."""
+        import ipdb;ipdb.set_trace()
         self.set_RFs(
             eSRF=kwargs['eRFs']['rf'],
             iSRF=kwargs['eRFs']['rf'])

@@ -160,7 +160,7 @@ class db(object):
             """
             SELECT * FROM PERFORMANCE AS P
             INNER JOIN experiments ON experiments._id = P.experiment_id
-            WHERE P.experiment_name='one_layer_conv_mlp'
+            WHERE P.experiment_name=%(experiment_name)s
             """,
             {
                 'experiment_name': experiment_name
