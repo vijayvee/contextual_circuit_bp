@@ -12,5 +12,5 @@ while [ $RUN_LOOP == "true" ]
 		if [[ $CHECK =~ "(0 rows)" ]]; then  # EMPTY
 			RUN_LOOP=false
 		fi
-		CUDA_VISIBLE_DEVICES=gpu python main.py
+		CUDA_VISIBLE_DEVICES=$gpu python main.py
 	done
