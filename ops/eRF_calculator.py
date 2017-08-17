@@ -9,28 +9,34 @@ class eRF_calculator(object):
         self.default_stride = 1
         self.default_padding = lambda k: [ik // 2 for ik in k]
 
-    def calculate(self, network, image, verbose=True):
+    def calculate(self, network, image, verbose=True, r_i=None):
         """Routine for calculating effective RF size."""
-        network_params = self.extract_params(network)
-        imsize = int(image.get_shape()[1])
-        if verbose:
-            print '-------Net summary-------'
-        currentLayer = {
-            'n_i': imsize,
-            'j_i': 1,
-            'r_i': 1,
-            'start_i': 0.5
-        }
-        # self.easy_calculate(network_params)
-        self.printLayer(currentLayer, 'input image')
-        layer_infos = []
-        for k, v in network_params.iteritems():
-            currentLayer = self.outFromIn(v, currentLayer)
-            layer_infos += [currentLayer]
+        try:
+            network_params = self.extract_params(network)
+            imsize = int(image.get_shape()[1])
             if verbose:
-                self.printLayer(currentLayer, k)
-        return {k: v['r_i'] for k, v in zip(
-            network_params.keys(), layer_infos)}
+                print '-------Net summary-------'
+            if r_i is None:
+                r_i = 1  # Image RF size
+            currentLayer = {
+                'n_i': imsize,
+                'j_i': 1,
+                'r_i': r_i,
+                'start_i': 0.5
+            }
+            # self.easy_calculate(network_params)
+            self.printLayer(currentLayer, 'input image')
+            layer_infos = []
+            for k, v in network_params.iteritems():
+                currentLayer = self.outFromIn(v, currentLayer)
+                layer_infos += [currentLayer]
+                if verbose:
+                    self.printLayer(currentLayer, k)
+            return {k: v['r_i'] for k, v in zip(
+                network_params.keys(), layer_infos)}
+        except:
+            print 'Could not derive eRFs.'
+            return None
 
     def easy_calculate(self, layers):
         rfs = [1]

@@ -170,7 +170,6 @@ class db(object):
             self.return_status('SELECT')
         return self.cur.fetchall()
 
-
     def reset_in_process(self):
         self.cur.execute(
             """
@@ -197,6 +196,8 @@ def get_experiment_name():
     config = credentials.postgresql_connection()
     with db(config) as db_conn:
         param_dict = db_conn.get_parameters()
+    if param_dict is None:
+        raise RuntimeError('No remaining experiments to run.')
     return param_dict['experiment_name']
 
 
@@ -214,6 +215,8 @@ def get_parameters(experiment_name, log, random=False):
                 experiment_name=experiment_name)
         else:
             experiment_id = None
+    if param_dict is None:
+        raise RuntimeError('This experiment is complete.')
     return param_dict, experiment_id
 
 

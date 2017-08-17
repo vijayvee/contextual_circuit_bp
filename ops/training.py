@@ -92,10 +92,15 @@ def training_loop(
                     '%s: step %d, loss = %.2f (%.1f examples/sec; '
                     '%.3f sec/batch) | Training accuracy = %s | '
                     'Validation accuracy = %s | logdir = %s')
-                print (format_str % (
-                    datetime.now(), step, it_train_dict['train_loss'],
-                    config.batch_size / duration, float(duration),
-                    it_train_dict['train_accuracy'], val_acc, summary_dir))
+                print format_str % (
+                    datetime.now(),
+                    step,
+                    it_train_dict['train_loss'],
+                    config.batch_size / duration,
+                    float(duration),
+                    it_train_dict['train_accuracy'],
+                    val_acc,
+                    summary_dir)
 
                 # Save the model checkpoint if it's the best yet
                 if config.top_n_validation > 0:
@@ -135,9 +140,13 @@ def training_loop(
                 # Training status
                 format_str = ('%s: step %d, loss = %.2f (%.1f examples/sec; '
                               '%.3f sec/batch) | Training accuracy = %s')
-                print (format_str % (datetime.now(), step, loss_value,
-                                     config.batch_size / duration,
-                                     float(duration), train_acc))
+                print format_str % (
+                    datetime.now(),
+                    step,
+                    it_train_dict['train_loss'],
+                    config.batch_size / duration,
+                    float(duration),
+                    it_train_dict['train_accuracy'])
 
             # End iteration
             step += 1

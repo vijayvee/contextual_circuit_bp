@@ -1,7 +1,7 @@
 import numpy as np
 import tensorflow as tf
 from models.layers import normalization_functions as nf
-from utils import pyutils
+from utils import py_utils
 
 
 class normalizations(object):
@@ -26,64 +26,66 @@ class normalizations(object):
         for k, v in kwargs.iteritems():
             setattr(self, k, v)
 
-    def set_RFs(self, eSRF, iSRF, SSN, SSF):
+    def set_RFs(
+            self,
+            eSRF,
+            iSRF,
+            SSN=None,
+            SSF=None,
+            V1_CRF=0.26,
+            V1_neCRF=0.54,
+            V1_feCRF=1.41):
         # Angelucci & Shushruth 2013 V1 RFs:
         # CRF = 0.26 degrees (1x)
         # eCRF near = 0.54 degrees (2x)
         # eCRF far = 1.41 degrees (5.5x)
-        assert SRF is not None, 'Provide an SRF (the layer\'s effective RF).'
-        self.SRF = SRF
+        if eSRF != iSRF:
+            CRF_size = np.max([self.CRF_excitation, self.CRF_inhibition])
+            print 'CRF inhibition/excitation RFs are uneven.' + \
+                'Using the max extent for the contextual model CRF.'
+        else:
+            CRF_size = iSRF
+        self.CRF_excitation = CRF_size
+        self.CRF_inhibition = CRF_size
+        self.SRF = CRF_size
         if SSN is None:
-            self.SSN = self.SRF * pyutils.iround(0.54 / 0.26)
+            self.SSN = self.SRF * py_utils.iround(0.54 / 0.26)
         if SSF is None:
-            self.SSF = pyutils.iround(self.SRF * 5.42)
+            self.SSF = py_utils.iround(self.SRF * 5.42)
         self.SSN = SSN
         self.SSF = SSF
 
     def contextual(self, x, **kwargs):
         """Contextual model from paper with learnable weights."""
-        self.set_CRF_eCRF_sizes(
-            CRF_excitation=self.CRF_excitation,
-            CRF_inhibition=self.CRF_inhibition,
-            eCRF_excitation=self.eCRF_excitation,
-            eCRF_inhibition=self.eCRF_inhibition,
-            )
-        if self.CRF_excitation != self.CRF_inhibition:
-            CRF_size = np.max([self.CRF_excitation, self.CRF_inhibition])
-            print 'CRF inhibition/excitation RFs are uneven.' + \
-                'Using the max extent for the contextual model CRF.'
-        else:
-            CRF_size = self.CRF_inhibition
+        self.set_RFs(
+            eSRF=kwargs['eRFs']['rf'],
+            iSRF=kwargs['eRFs']['rf'])
         contextual_layer = nf.ContextualCircuit(
             timesteps=self.timesteps,
             lesions=None,
-            SRF=CRF_size,
+            SRF=self.SRF,
             SSN=self.eCRF_excitation,
             SSF=self.eCRF_inhibition)
         return contextual_layer(x)
 
     def contextual_rnn(self, x, **kwargs):
         """Contextual model translated into a RNN architecture."""
-        self.set_CRF_eCRF_sizes(
-            CRF_excitation=self.CRF_excitation,
-            CRF_inhibition=self.CRF_inhibition,
-            eCRF_excitation=self.eCRF_excitation,
-            eCRF_inhibition=self.eCRF_inhibition,
-            )
+        self.set_RFs(
+            eSRF=kwargs['eRFs']['rf'],
+            iSRF=kwargs['eRFs']['rf'])
         contextual_layer = nf.contextual_rnn.ContextualCircuit(
             timesteps=self.timesteps,
             lesions=None,
-            SRF=CRF_size,
+            SRF=self.SRF,
             SSN=self.eCRF_excitation,
             SSF=self.eCRF_inhibition)
         return contextual_layer(x)
 
     def divisive(self, x, **kwargs):
         """Divisive normalization 2D."""
-        self.set_CRF_eCRF_sizes(
-            CRF_excitation=self.CRF_excitation,
-            CRF_inhibition=self.CRF_inhibition
-            )
+        self.set_RFs(
+            eSRF=kwargs['eRFs']['rf'],
+            iSRF=kwargs['eRFs']['rf'])
         return nf.div_norm.div_norm_2d(
             x,
             sum_window=self.CRF_excitation,
@@ -93,10 +95,9 @@ class normalizations(object):
 
     def divisive_1d(self, x, **kwargs):
         """Divisive normalization 2D."""
-        self.set_CRF_eCRF_sizes(
-            CRF_excitation=self.CRF_excitation,
-            CRF_inhibition=self.CRF_inhibition
-            )
+        self.set_RFs(
+            eSRF=kwargs['eRFs']['rf'],
+            iSRF=kwargs['eRFs']['rf'])
         return nf.div_norm.div_norm_1d(
             x,
             sum_window=self.CRF_excitation,
@@ -130,9 +131,9 @@ class normalizations(object):
 
     def lrn(self, x, **kwargs):
         """Local response normalization."""
-        self.set_CRF_eCRF_sizes(
-            CRF_inhibition=self.CRF_inhibition
-            )
+        self.set_RFs(
+            eSRF=kwargs['eRFs']['rf'],
+            iSRF=kwargs['eRFs']['rf'])
         return tf.nn.local_response_normalization(
             x,
             depth_radius=self.CRF_inhibition,

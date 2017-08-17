@@ -42,7 +42,7 @@ class model_class(object):
         input_data = tf.identity(data, name="lrp_input")
 
         # Calculate eRF info for main tower
-        self.main_tower_eRF = eRF.calculate(
+        tower_eRFs = eRF.calculate(
             layer_structure,
             data,
             verbose=True)
@@ -51,19 +51,22 @@ class model_class(object):
             act=input_data,
             layer_structure=layer_structure,
             tower_name=tower_name,
+            eRFs=tower_eRFs,
             layer_summary=None)
         if output_layer_structure is None:
             assert self.output_size is not None, 'Give model an output shape.'
             output_layer_structure = self.default_output_layer()
-        self.output_tower_eRF = eRF_calculator.calculate(
+        output_eRFs = eRF.calculate(
             output_layer_structure,
             features,
+            r_i=tower_eRFs.items()[-1][1],
             verbose=True)
         output, layer_summary = create_conv_tower(
             self=self,
             act=features,
             layer_structure=output_layer_structure,
             tower_name='output',
+            eRFs=output_eRFs,
             layer_summary=layer_summary)
         self.output = tf.identity(output, name='lrp_output')
         self.data_dict = None
@@ -118,7 +121,7 @@ def update_summary(layer_summary, op_name):
     return layer_summary
 
 
-def flatten_op(self, it_dict, act, layer_summary, target):
+def flatten_op(self, it_dict, act, layer_summary, eRFs, target):
     """Wrapper for a flatten operation in a graph."""
     tshape = [int(x) for x in act.get_shape()]
     if 'flatten_target' in it_dict.keys() and \
@@ -133,7 +136,7 @@ def flatten_op(self, it_dict, act, layer_summary, target):
     return act, layer_summary
 
 
-def wd_op(self, it_dict, act, layer_summary, reg_mod, target):
+def wd_op(self, it_dict, act, layer_summary, reg_mod, eRFs, target):
     """Wrapper for a weight decay operation in a graph."""
     it_name = it_dict['names'][0]
     if 'wd_target' in it_dict.keys() and \
@@ -149,7 +152,7 @@ def wd_op(self, it_dict, act, layer_summary, reg_mod, target):
     return act, layer_summary
 
 
-def dropout_op(self, it_dict, act, layer_summary, reg_mod, target):
+def dropout_op(self, it_dict, act, layer_summary, reg_mod, eRFs, target):
     """Wrapper for a dropout operation in a graph."""
     if 'dropout_target' in it_dict.keys() and \
             it_dict['dropout_target'][0] == 'pre':
@@ -161,7 +164,7 @@ def dropout_op(self, it_dict, act, layer_summary, reg_mod, target):
     return act, layer_summary
 
 
-def activ_op(self, it_dict, act, layer_summary, activ_mod, target):
+def activ_op(self, it_dict, act, layer_summary, activ_mod, eRFs, target):
     """Wrapper for an activation operation in a graph."""
     if 'activation_target' in it_dict.keys() and \
             it_dict['activation_target'][0] == 'pre':
@@ -173,12 +176,13 @@ def activ_op(self, it_dict, act, layer_summary, activ_mod, target):
     return act, layer_summary
 
 
-def norm_op(self, it_dict, act, layer_summary, norm_mod, target):
+def norm_op(self, it_dict, act, layer_summary, norm_mod, eRFs, target):
     """Wrapper for a normalization operation in a graph."""
     if 'normalization_target' in it_dict.keys() and \
             it_dict['normalization_target'][0] == 'pre':
         normalization = it_dict['normalization'][0]
-        act = norm_mod[normalization](act)
+        import ipdb;ipdb.set_trace()
+        act = norm_mod[normalization](act, eRFs)
         layer_summary = update_summary(
             layer_summary=layer_summary,
             op_name=normalization)
@@ -190,6 +194,7 @@ def create_conv_tower(
         act,
         layer_structure,
         tower_name,
+        eRFs=None,
         layer_summary=None):
     """
     Construct a feedforward neural model tower.
@@ -208,15 +213,43 @@ def create_conv_tower(
             it_name = it_dict['names'][0]
             it_neuron_op = it_dict['layers'][0]
             act, layer_summary = flatten_op(
-                self, it_dict, act, layer_summary, target='pre')
+                self,
+                it_dict,
+                act,
+                layer_summary,
+                eRFs=eRFs,
+                target='pre')
             act, layer_summary = wd_op(
-                self, it_dict, act, layer_summary, reg_mod, target='pre')
+                self,
+                it_dict,
+                act, layer_summary,
+                reg_mod,
+                eRFs=eRFs,
+                target='pre')
             act, layer_summary = dropout_op(
-                self, it_dict, act, layer_summary, reg_mod, target='pre')
+                self,
+                it_dict,
+                act,
+                layer_summary,
+                reg_mod,
+                eRFs=eRFs,
+                target='pre')
             act, layer_summary = activ_op(
-                self, it_dict, act, layer_summary, activ_mod, target='pre')
+                self,
+                it_dict,
+                act,
+                layer_summary,
+                activ_mod,
+                eRFs=eRFs,
+                target='pre')
             act, layer_summary = norm_op(
-                self, it_dict, act, layer_summary, norm_mod, target='pre')
+                self,
+                it_dict,
+                act,
+                layer_summary,
+                norm_mod,
+                eRFs=eRFs,
+                target='pre')
             if it_dict['layers'] == 'pool':  # TODO create wrapper for FF ops.
                 act = pool.max_pool(
                     bottom=act,
@@ -247,15 +280,43 @@ def create_conv_tower(
                 layer_summary=layer_summary,
                 op_name=it_dict['layers'])
             act, layer_summary = norm_op(
-                self, it_dict, act, layer_summary, norm_mod, target='post')
+                self,
+                it_dict,
+                act,
+                layer_summary,
+                norm_mod,
+                eRFs=eRFs,
+                target='post')
             act, layer_summary = activ_op(
-                self, it_dict, act, layer_summary, activ_mod, target='post')
+                self,
+                it_dict,
+                act,
+                layer_summary,
+                activ_mod,
+                eRFs=eRFs,
+                target='post')
             act, layer_summary = dropout_op(
-                self, it_dict, act, layer_summary, reg_mod, target='post')
+                self,
+                it_dict,
+                act,
+                layer_summary,
+                reg_mod,
+                eRFs=eRFs,
+                target='post')
             act, layer_summary = wd_op(
-                self, it_dict, act, layer_summary, reg_mod, target='post')
+                self,
+                it_dict,
+                act, layer_summary,
+                reg_mod,
+                eRFs=eRFs,
+                target='post')
             act, layer_summary = flatten_op(
-                self, it_dict, act, layer_summary, target='post')
+                self,
+                it_dict,
+                act,
+                layer_summary,
+                eRFs=eRFs,
+                target='post')
             setattr(self, it_name, act)
             print 'Added layer: %s' % it_name
     return act, layer_summary

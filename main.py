@@ -227,7 +227,7 @@ def main(experiment_name, list_experiments=False):
                 loss_type=config.loss_function)
             val_accuracy = eval_metrics.class_accuracy(
                 pred=val_scores,
-                labels=train_labels)  # training accuracy
+                labels=val_labels)  # training accuracy
             tf.summary.image('val images', val_images)
             tf.summary.scalar('validation loss', val_loss)
             tf.summary.scalar('validation accuracy', val_accuracy)
