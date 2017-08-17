@@ -42,7 +42,6 @@ class ContextualCircuit():
         self.t_shape = [self.SSF_ext, self.SSF_ext, self.k, self.k]
         self.i_shape = [self.SRF, self.SRF, self.k]
         self.o_shape = [self.SRF, self.SRF, self.k]
-        self.bias_shape = self.k
         self.u_nl = tf.identity
         self.t_nl = tf.identity
         self.q_nl = tf.identity
@@ -124,9 +123,9 @@ class ContextualCircuit():
             self.weight_dict['Q']['r']['weight'],
             tf.get_variable(
                 name=self.weight_dict['Q']['r']['weight'],
-                shape=self.q_shape,
                 dtype=self.dtype,
                 initializer=initialization.xavier_initializer(
+                    shape=self.q_shape,
                     uniform=self.normal_initializer,
                     mask=None)))
 
@@ -137,9 +136,9 @@ class ContextualCircuit():
             self.weight_dict['U']['r']['weight'],
             tf.get_variable(
                 name=self.weight_dict['U']['r']['weight'],
-                shape=self.u_shape,
                 dtype=self.dtype,
                 initializer=initialization.xavier_initializer(
+                    shape=self.u_shape,
                     uniform=self.normal_initializer,
                     mask=None)))
 
@@ -163,9 +162,9 @@ class ContextualCircuit():
             self.weight_dict['P']['r']['weight'],
             tf.get_variable(
                 name=self.weight_dict['P']['r']['weight'],
-                shape=self.p_shape,
                 dtype=self.dtype,
                 initializer=initialization.xavier_initializer(
+                    shape=self.p_shape,
                     uniform=self.normal_initializer,
                     mask=p_array)))
 
@@ -188,9 +187,9 @@ class ContextualCircuit():
             self.weight_dict['T']['r']['weight'],
             tf.get_variable(
                 name=self.weight_dict['T']['r']['weight'],
-                shape=self.t_shape,
                 dtype=self.dtype,
                 initializer=initialization.xavier_initializer(
+                    shape=self.t_shape,
                     uniform=self.normal_initializer,
                     mask=t_array)))
 
@@ -205,18 +204,17 @@ class ContextualCircuit():
                     shape=self.q_shape,
                     dtype=self.dtype,
                     initializer=initialization.xavier_initializer(
-                        uniform=self.normal_initializer,
-                        mask=None)))
+                        shape=self.q_shape,
+                        uniform=self.normal_initializer)))
             setattr(
                 self,
                 self.weight_dict['Q']['f']['bias'],
                 tf.get_variable(
                     name=self.weight_dict['Q']['f']['bias'],
-                    shape=self.bias_shape,  # Note the u_shape
                     dtype=self.dtype,
                     initializer=initialization.xavier_initializer(
-                        uniform=self.normal_initializer,
-                        mask=None)))
+                        shape=self.q_shape[-1],
+                        uniform=self.normal_initializer)))
 
             # U
             setattr(
@@ -224,21 +222,19 @@ class ContextualCircuit():
                 self.weight_dict['U']['f']['weight'],
                 tf.get_variable(
                     name=self.weight_dict['U']['f']['weight'],
-                    shape=self.u_shape,
                     dtype=self.dtype,
                     initializer=initialization.xavier_initializer(
-                        uniform=self.normal_initializer,
-                        mask=None)))
+                        shape=self.u_shape,
+                        uniform=self.normal_initializer)))
             setattr(
                 self,
                 self.weight_dict['U']['f']['bias'],
                 tf.get_variable(
                     name=self.weight_dict['U']['f']['bias'],
-                    shape=self.bias_shape,  # Note the u_shape
                     dtype=self.dtype,
                     initializer=initialization.xavier_initializer(
-                        uniform=self.normal_initializer,
-                        mask=None)))
+                        self.u_shape[-1],
+                        uniform=self.normal_initializer)))
 
             # P
             setattr(
@@ -246,9 +242,9 @@ class ContextualCircuit():
                 self.weight_dict['P']['f']['weight'],
                 tf.get_variable(
                     name=self.weight_dict['P']['f']['weight'],
-                    shape=self.p_shape,
                     dtype=self.dtype,
                     initializer=initialization.xavier_initializer(
+                        self.p_shape,
                         uniform=self.normal_initializer,
                         mask=p_array)))
             setattr(
@@ -256,9 +252,9 @@ class ContextualCircuit():
                 self.weight_dict['P']['f']['bias'],
                 tf.get_variable(
                     name=self.weight_dict['P']['f']['bias'],
-                    shape=self.bias_shape,  # Note the u_shape
                     dtype=self.dtype,
                     initializer=initialization.xavier_initializer(
+                        self.p_shape[-1],
                         uniform=self.normal_initializer,
                         mask=None)))
 
@@ -268,9 +264,9 @@ class ContextualCircuit():
                 self.weight_dict['T']['f']['weight'],
                 tf.get_variable(
                     name=self.weight_dict['T']['f']['weight'],
-                    shape=self.t_shape,
                     dtype=self.dtype,
                     initializer=initialization.xavier_initializer(
+                        shape=self.t_shape,
                         uniform=self.normal_initializer,
                         mask=t_array)))
             setattr(
@@ -278,9 +274,9 @@ class ContextualCircuit():
                 self.weight_dict['T']['f']['bias'],
                 tf.get_variable(
                     name=self.weight_dict['T']['f']['bias'],
-                    shape=self.bias_shape,  # Note the u_shape
                     dtype=self.dtype,
                     initializer=initialization.xavier_initializer(
+                        shape=self.t_shape[-1],
                         uniform=self.normal_initializer,
                         mask=None)))
         if self.model_version == 'full_with_cell_states':
@@ -301,7 +297,7 @@ class ContextualCircuit():
                 self.weight_dict['I']['r']['bias'],
                 tf.get_variable(
                     name=self.weight_dict['I']['r']['bias'],
-                    shape=self.bias_shape,
+                    shape=self.k,
                     dtype=self.dtype,
                     initializer=initialization.xavier_initializer(
                         uniform=self.normal_initializer,
@@ -323,7 +319,7 @@ class ContextualCircuit():
                 self.weight_dict['O']['r']['bias'],
                 tf.get_variable(
                     name=self.weight_dict['O']['r']['bias'],
-                    shape=self.bias_shape,
+                    shape=self.k,
                     dtype=self.dtype,
                     initializer=initialization.xavier_initializer(
                         uniform=self.normal_initializer,
@@ -546,7 +542,7 @@ class ContextualCircuit():
         """While loop halting condition."""
         return i0 < self.timesteps
 
-    def build(self):
+    def build(self, reduce_memory=True):
         """Run the backprop version of the CCircuit."""
         self.prepare_tensors()
         i0 = tf.constant(0)
@@ -578,13 +574,19 @@ class ContextualCircuit():
                 weight_key=self.weight_dict['Q']['f']['weight'],
                 out_key=self.weight_dict['Q']['f']['activity'])
 
-        returned = tf.while_loop(
-            self.condition,
-            self[self.model_version],
-            loop_vars=elems,
-            back_prop=True,
-            swap_memory=False)
+        if reduce_memory:
+            print 'Warning: Using FF version of the model.'
+            for t in range(self.timesteps):
+                i0, O, I = self[self.model_version](i0, O, I)
+                i0 = tf.constant(0)
+        else:
+            returned = tf.while_loop(
+                self.condition,
+                self[self.model_version],
+                loop_vars=elems,
+                back_prop=True,
+                swap_memory=False)
 
-        # Prepare output
-        _, _, I = returned  # i0, O, I
+            # Prepare output
+            _, _, I = returned  # i0, O, I
         return I

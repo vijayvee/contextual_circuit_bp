@@ -258,13 +258,13 @@ def main(experiment_name, list_experiments=False):
         'train_accuracy': train_accuracy,
         'train_images': train_images,
         'train_labels': train_labels,
-        'train_op': train_op
+        'train_op': train_op,
     }
     val_dict = {
         'val_loss': val_loss,
         'val_accuracy': val_accuracy,
         'val_images': val_images,
-        'val_labels': val_labels
+        'val_labels': val_labels,
     }
 
     # Start training loop
@@ -285,7 +285,9 @@ def main(experiment_name, list_experiments=False):
         summary_dir=dir_list['summaries'],
         checkpoint_dir=dir_list['checkpoints'],
         train_dict=train_dict,
-        val_dict=val_dict)
+        val_dict=val_dict,
+        train_model=model,
+        val_model=val_model)
     log.info('Finished training.')
 
     files_to_save = {

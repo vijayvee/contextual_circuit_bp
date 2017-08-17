@@ -17,7 +17,7 @@ class normalizations(object):
 
     def __init__(self, kwargs=None):
         """Globals for normalization functions."""
-        self.timesteps = 5
+        self.timesteps = 3
         self.scale_CRF = True
         self.bias_CRF = True
         self.lesions = [None]

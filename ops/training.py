@@ -47,7 +47,9 @@ def training_loop(
         summary_dir,
         checkpoint_dir,
         train_dict,
-        val_dict):
+        val_dict,
+        train_model,
+        val_model):
     step, time_elapsed = 0, 0
     train_losses, train_accs, timesteps = {}, {}, {}
     val_losses, val_accs = {}, {}

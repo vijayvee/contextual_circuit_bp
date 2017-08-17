@@ -121,9 +121,9 @@ class ContextualCircuit(object):
             self.weight_dict['Q']['r']['weight'],
             tf.get_variable(
                 name=self.weight_dict['Q']['r']['weight'],
-                shape=self.q_shape,
                 dtype=self.dtype,
                 initializer=initialization.xavier_initializer(
+                    shape=self.q_shape,
                     uniform=self.normal_initializer,
                     mask=None)))
 
@@ -134,9 +134,9 @@ class ContextualCircuit(object):
             self.weight_dict['U']['r']['weight'],
             tf.get_variable(
                 name=self.weight_dict['U']['r']['weight'],
-                shape=self.u_shape,
                 dtype=self.dtype,
                 initializer=initialization.xavier_initializer(
+                    shape=self.u_shape,
                     uniform=self.normal_initializer,
                     mask=None)))
 
@@ -160,9 +160,9 @@ class ContextualCircuit(object):
             self.weight_dict['P']['r']['weight'],
             tf.get_variable(
                 name=self.weight_dict['P']['r']['weight'],
-                shape=self.p_shape,
                 dtype=self.dtype,
                 initializer=initialization.xavier_initializer(
+                    shape=self.p_shape,
                     uniform=self.normal_initializer,
                     mask=p_array)))
 
@@ -185,9 +185,9 @@ class ContextualCircuit(object):
             self.weight_dict['T']['r']['weight'],
             tf.get_variable(
                 name=self.weight_dict['T']['r']['weight'],
-                shape=self.t_shape,
                 dtype=self.dtype,
                 initializer=initialization.xavier_initializer(
+                    shape=self.t_shape,
                     uniform=self.normal_initializer,
                     mask=t_array)))
 
@@ -275,7 +275,6 @@ class ContextualCircuit(object):
             print 'Warning: Using FF version of the model.'
             for t in range(self.timesteps):
                 i0, O, I = self[self.model_version](i0, O, I)
-                i0 = tf.constant(0)
         else:
             # While loop
             elems = [
