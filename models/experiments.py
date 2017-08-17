@@ -15,9 +15,9 @@ class experiments():
         return {
             'batch_size': 32,  # Train/val batch size.
             'data_augmentations': [None],  # Random_crop, etc.
-            'epochs': 1,
+            'epochs': 2,
             'shuffle': True,  # Shuffle data.
-            'validation_iters': 500,  # How often to evaluate validation.
+            'validation_iters': 250,  # How often to evaluate validation.
             'num_validation_evals': 100,  # How many validation batches.
             'top_n_validation': 0,  # Set to 0 to save all checkpoints.
             'early_stop': False  # Stop training if the loss stops improving.

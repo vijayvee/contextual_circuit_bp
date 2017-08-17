@@ -3,7 +3,7 @@
 
 
 read -p "Enter the ID of the gpu you want to use: "  gpu
-echo "Developing worker for gpu $gpu on p$node."
+echo "Developing worker for gpu $gpu."
 export PGPASSWORD=serrelab
 RUN_LOOP=true
 while [ $RUN_LOOP == "true" ]
