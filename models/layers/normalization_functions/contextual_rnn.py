@@ -201,7 +201,6 @@ class ContextualCircuit():
                 self.weight_dict['Q']['f']['weight'],
                 tf.get_variable(
                     name=self.weight_dict['Q']['f']['weight'],
-                    shape=self.q_shape,
                     dtype=self.dtype,
                     initializer=initialization.xavier_initializer(
                         shape=self.q_shape,
@@ -287,9 +286,9 @@ class ContextualCircuit():
                 self.weight_dict['I']['r']['weight'],
                 tf.get_variable(
                     name=self.weight_dict['I']['r']['weight'],
-                    shape=self.i_shape,
                     dtype=self.dtype,
                     initializer=initialization.xavier_initializer(
+                        shape=self.i_shape,
                         uniform=self.normal_initializer,
                         mask=t_array)))
             setattr(
@@ -297,9 +296,9 @@ class ContextualCircuit():
                 self.weight_dict['I']['r']['bias'],
                 tf.get_variable(
                     name=self.weight_dict['I']['r']['bias'],
-                    shape=self.k,
                     dtype=self.dtype,
                     initializer=initialization.xavier_initializer(
+                        shape=self.k,
                         uniform=self.normal_initializer,
                         mask=None)))
 
@@ -309,9 +308,9 @@ class ContextualCircuit():
                 self.weight_dict['O']['r']['weight'],
                 tf.get_variable(
                     name=self.weight_dict['O']['r']['weight'],
-                    shape=self.o_shape,
                     dtype=self.dtype,
                     initializer=initialization.xavier_initializer(
+                        shape=self.o_shape,
                         uniform=self.normal_initializer,
                         mask=t_array)))
             setattr(
@@ -319,9 +318,9 @@ class ContextualCircuit():
                 self.weight_dict['O']['r']['bias'],
                 tf.get_variable(
                     name=self.weight_dict['O']['r']['bias'],
-                    shape=self.k,
                     dtype=self.dtype,
                     initializer=initialization.xavier_initializer(
+                        shape=self.k,
                         uniform=self.normal_initializer,
                         mask=None)))
 

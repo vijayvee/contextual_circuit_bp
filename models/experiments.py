@@ -15,7 +15,7 @@ class experiments():
         return {
             'batch_size': 32,  # Train/val batch size.
             'data_augmentations': [None],  # Random_crop, etc.
-            'epochs': 4,
+            'epochs': 10,
             'shuffle': True,  # Shuffle data.
             'validation_iters': 250,  # How often to evaluate validation.
             'num_validation_evals': 100,  # How many validation batches.
@@ -33,20 +33,20 @@ class experiments():
         model_folder = 'two_layer_conv_mlp'
         exp = {
             'experiment_name': [model_folder],
-            'lr': [1e-4],
+            'lr': [1e-2, 1e-3, 1e-4],
             'loss_function': ['cce'],
             'optimizer': ['adam'],
             'wd_type': [None],  # [None, 'l1', 'l2'],
             'wd_penalty': [0.005],
             'model_struct': [
-                # os.path.join(model_folder, 'divisive'),
-                # os.path.join(model_folder, 'batch'),
-                # os.path.join(model_folder, 'layer'),
-                # os.path.join(model_folder, 'lrn'),
+                os.path.join(model_folder, 'divisive'),
+                os.path.join(model_folder, 'batch'),
+                os.path.join(model_folder, 'layer'),
+                os.path.join(model_folder, 'lrn'),
                 os.path.join(model_folder, 'contextual'),
                 os.path.join(model_folder, 'contextual_rnn'),
-                # os.path.join(model_folder, 'contextual_selu'),
-                # os.path.join(model_folder, 'contextual_rnn_selu'),
+                os.path.join(model_folder, 'contextual_selu'),
+                os.path.join(model_folder, 'contextual_rnn_selu'),
             ],
             'dataset': ['cifar_10']
         }
