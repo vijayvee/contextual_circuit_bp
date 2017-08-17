@@ -1,5 +1,4 @@
 import numpy as np
-from collections import OrderedDict
 
 
 class eRF_calculator(object):
@@ -27,13 +26,13 @@ class eRF_calculator(object):
             # self.easy_calculate(network_params)
             self.printLayer(currentLayer, 'input image')
             layer_infos = []
-            for k, v in network_params.iteritems():
-                currentLayer = self.outFromIn(v, currentLayer)
+            for l in network_params:
+                currentLayer = self.outFromIn(l, currentLayer)
                 layer_infos += [currentLayer]
                 if verbose:
-                    self.printLayer(currentLayer, k)
-            return {k: v['r_i'] for k, v in zip(
-                network_params.keys(), layer_infos)}
+                    self.printLayer(currentLayer, l['layer'])
+            return {k['layer']: v['r_i'] for k, v in zip(
+                network_params, layer_infos)}
         except:
             print 'Could not derive eRFs.'
             return None
@@ -55,7 +54,7 @@ class eRF_calculator(object):
 
     def extract_params(self, network):
         """Extract the filter size, stride, and padding from each layer."""
-        params = {}
+        params = []
         for l in network:
             K = l['filter_size']
             K = [k if k is not None else self.default_kernel for k in K]
@@ -73,13 +72,16 @@ class eRF_calculator(object):
             else:
                 P = self.default_padding(K)
 
-            for idx, (k, s, p) in enumerate(zip(K, S, P)):
-                params[l['names'][idx]] = {
+            N = l['names']
+
+            for idx, (k, s, p, n) in enumerate(zip(K, S, P, N)):
+                params += [{
+                    'layer': n,
                     'kernel': k,
                     'stride': s,
                     'padding': p
-                }
-        return OrderedDict(sorted(params.items(), key=lambda t: t[0]))
+                }]
+        return params
 
     def outFromIn(self, conv, layer):
         """Calculate effective RF for a layer.
@@ -106,7 +108,7 @@ class eRF_calculator(object):
         p = conv['padding']
         n_out = np.floor((n_in - k + 2*p)/s) + 1
         actualP = (n_out-1)*s - n_in + k
-        pR = np.ceil(actualP/2)
+        # pR = np.ceil(actualP/2)
         pL = np.floor(actualP/2)
         j_out = j_in * s
         r_out = r_in + (k - 1)*j_in
