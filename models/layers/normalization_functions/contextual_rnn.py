@@ -37,8 +37,7 @@ class ContextualCircuit():
         self.SSN_ext = 2 * py_utils.ifloor(SSN / 2.0) + 1
         self.SSF_ext = 2 * py_utils.ifloor(SSF / 2.0) + 1
         self.q_shape = [self.SRF, self.SRF, self.k, self.k]
-        print 'Warning U is currently broadly tuned not untuned.'
-        self.u_shape = [self.SRF, self.SRF, self.k, self.k]
+        self.u_shape = [self.SRF, self.SRF, self.k, 1]
         self.p_shape = [self.SSN_ext, self.SSN_ext, self.k, self.k]
         self.t_shape = [self.SSF_ext, self.SSF_ext, self.k, self.k]
         self.i_shape = [self.SRF, self.SRF, self.k]

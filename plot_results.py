@@ -20,6 +20,7 @@ def main(experiment_name, im_ext='.pdf', val_score='val accuracy'):
     structure_names = [x['model_struct'].split('/')[-1] for x in perf]
     optimizers = [x['optimizer'] for x in perf]
     lrs = [x['lr'] for x in perf]
+    datasets = [x['dataset'] for x in perf]
     loss_funs = [x['loss_function'] for x in perf]
     optimizers = [x['optimizer'] for x in perf]
     wd_types = [x['wd_type'] for x in perf]
@@ -29,21 +30,23 @@ def main(experiment_name, im_ext='.pdf', val_score='val accuracy'):
     validation_loss = [float(x['validation_loss']) for x in perf]
 
     # Pass data into a pandas DF
-    model_params = ['%s | %s | %s | %s | %s | %s | %s' % (
+    model_params = ['%s | %s | %s | %s | %s | %s | %s | %s' % (
         ipa,
         ipb,
         ipc,
         ipd,
         ipe,
         ipf,
-        ipg) for ipa, ipb, ipc, ipd, ipe, ipf, ipg in zip(
+        ipg,
+        iph) for ipa, ipb, ipc, ipd, ipe, ipf, ipg, iph in zip(
             structure_names,
             optimizers,
             lrs,
             loss_funs,
             optimizers,
             wd_types,
-            wd_penalties)]
+            wd_penalties,
+            datasets)]
 
     # DF and plot
     df = pd.DataFrame(
@@ -65,6 +68,7 @@ def main(experiment_name, im_ext='.pdf', val_score='val accuracy'):
     df['training iteration'] = pd.to_numeric(df['training iteration'])
     df['training loss'] = pd.to_numeric(df['training loss'])
     df['validation loss'] = pd.to_numeric(df[val_score]) * 100.
+    sns.set_palette(sns.color_palette("colorblind", 100))
     f, axs = plt.subplots(2, figsize=(20, 30))
     ax = sns.pointplot(
         x='training iteration',

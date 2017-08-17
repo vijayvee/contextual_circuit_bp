@@ -15,7 +15,7 @@ class experiments():
         return {
             'batch_size': 32,  # Train/val batch size.
             'data_augmentations': [None],  # Random_crop, etc.
-            'epochs': 2,
+            'epochs': 4,
             'shuffle': True,  # Shuffle data.
             'validation_iters': 250,  # How often to evaluate validation.
             'num_validation_evals': 100,  # How many validation batches.
@@ -39,16 +39,16 @@ class experiments():
             'wd_type': [None],  # [None, 'l1', 'l2'],
             'wd_penalty': [0.005],
             'model_struct': [
-                os.path.join(model_folder, 'divisive'),
-                os.path.join(model_folder, 'batch'),
-                os.path.join(model_folder, 'layer'),
-                os.path.join(model_folder, 'lrn'),
+                # os.path.join(model_folder, 'divisive'),
+                # os.path.join(model_folder, 'batch'),
+                # os.path.join(model_folder, 'layer'),
+                # os.path.join(model_folder, 'lrn'),
                 os.path.join(model_folder, 'contextual'),
                 # os.path.join(model_folder, 'contextual_rnn'),
                 # os.path.join(model_folder, 'contextual_selu'),
                 # os.path.join(model_folder, 'contextual_rnn_selu'),
             ],
-            'dataset': ['mnist', 'cifar_10']
+            'dataset': ['cifar_10']
         }
         return self.add_globals(exp)  # Add globals to the experiment
 

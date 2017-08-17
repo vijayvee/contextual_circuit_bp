@@ -37,8 +37,7 @@ class ContextualCircuit(object):
         self.SSN_ext = 2 * py_utils.ifloor(SSN / 2.0) + 1
         self.SSF_ext = 2 * py_utils.ifloor(SSF / 2.0) + 1
         self.q_shape = [self.SRF, self.SRF, self.k, self.k]
-        print 'Warning U is currently broadly tuned not untuned.'
-        self.u_shape = [self.SRF, self.SRF, self.k, self.k]
+        self.u_shape = [self.SRF, self.SRF, self.k, 1]
         self.p_shape = [self.SSN_ext, self.SSN_ext, self.k, self.k]
         self.t_shape = [self.SSF_ext, self.SSF_ext, self.k, self.k]
         self.u_nl = tf.identity
@@ -274,7 +273,9 @@ class ContextualCircuit(object):
 
         if reduce_memory:
             print 'Warning: Using FF version of the model.'
-            returned = self[self.model_version](i0, O, I)
+            for t in range(self.timesteps):
+                i0, O, I = self[self.model_version](i0, O, I)
+                i0 = tf.constant(0)
         else:
             # While loop
             elems = [
@@ -289,6 +290,6 @@ class ContextualCircuit(object):
                 loop_vars=elems,
                 back_prop=True,
                 swap_memory=False)
-        # Prepare output
-        _, _, I = returned  # i0, O, I
+            # Prepare output
+            _, _, I = returned  # i0, O, I
         return I
