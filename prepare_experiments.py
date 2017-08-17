@@ -53,7 +53,7 @@ if __name__ == '__main__':
     parser.add_argument(
         "--experiment_name",
         dest="experiment_name",
-        default='one_layer_conv_mlp',
+        default=None,
         type=str,
         help='Experiment to add to the database.')
     args = parser.parse_args()

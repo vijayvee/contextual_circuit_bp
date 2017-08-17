@@ -1,5 +1,4 @@
 import tensorflow as tf
-# from models.layers import activation_functions
 
 
 class activations(object):

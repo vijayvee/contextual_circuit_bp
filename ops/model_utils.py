@@ -155,7 +155,7 @@ def wd_op(self, it_dict, act, layer_summary, reg_mod, eRFs, target):
 def dropout_op(self, it_dict, act, layer_summary, reg_mod, eRFs, target):
     """Wrapper for a dropout operation in a graph."""
     if 'dropout_target' in it_dict.keys() and \
-            it_dict['dropout_target'][0] == 'pre':
+            it_dict['dropout_target'][0] == target:
         dropout_prop = it_dict['dropout'][0]
         act = reg_mod.dropout(act, keep_prob=dropout_prop)
         layer_summary = update_summary(
@@ -167,7 +167,7 @@ def dropout_op(self, it_dict, act, layer_summary, reg_mod, eRFs, target):
 def activ_op(self, it_dict, act, layer_summary, activ_mod, eRFs, target):
     """Wrapper for an activation operation in a graph."""
     if 'activation_target' in it_dict.keys() and \
-            it_dict['activation_target'][0] == 'pre':
+            it_dict['activation_target'][0] == target:
         activation = it_dict['activation'][0]
         act = activ_mod[activation](act)
         layer_summary = update_summary(
@@ -179,10 +179,11 @@ def activ_op(self, it_dict, act, layer_summary, activ_mod, eRFs, target):
 def norm_op(self, it_dict, act, layer_summary, norm_mod, eRFs, target):
     """Wrapper for a normalization operation in a graph."""
     if 'normalization_target' in it_dict.keys() and \
-            it_dict['normalization_target'][0] == 'pre':
+            it_dict['normalization_target'][0] == target:
         normalization = it_dict['normalization'][0]
-        import ipdb;ipdb.set_trace()
-        act = norm_mod[normalization](act, eRFs)
+        if len(it_dict['names']) > 1:
+            raise RuntimeError('TODO: Fix implementation for multiple names.')
+        act = norm_mod[normalization](act, eRFs[it_dict['names'][0]])
         layer_summary = update_summary(
             layer_summary=layer_summary,
             op_name=normalization)
@@ -250,7 +251,7 @@ def create_conv_tower(
                 norm_mod,
                 eRFs=eRFs,
                 target='pre')
-            if it_dict['layers'] == 'pool':  # TODO create wrapper for FF ops.
+            if it_neuron_op == 'pool':  # TODO create wrapper for FF ops.
                 act = pool.max_pool(
                     bottom=act,
                     name=it_name)

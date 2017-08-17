@@ -66,7 +66,6 @@ def main(experiment_name, im_ext='.pdf', val_score='val accuracy'):
     df['training loss'] = pd.to_numeric(df['training loss'])
     df['validation loss'] = pd.to_numeric(df[val_score]) * 100.
     f, axs = plt.subplots(2, figsize=(20, 30))
-    import ipdb;ipdb.set_trace()
     ax = sns.pointplot(
         x='training iteration',
         y='training loss',

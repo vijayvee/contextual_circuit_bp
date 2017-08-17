@@ -1,10 +1,10 @@
 import numpy as np
 import tensorflow as tf
-from utils import pyutils
+from utils import py_utils
 from ops import initialization
 
 
-class ContextualCircuit(object):
+class ContextualCircuit():
     def __getitem__(self, name):
         return getattr(self, name)
 
@@ -24,26 +24,26 @@ class ContextualCircuit(object):
             padding='SAME',
             dtype=tf.float32):
 
-        # TODO: DEDUCE SRF/SSN/SSF FROM DATA.
         self.X = X
-        self.n, self.h, self.w, self.k = [int(x) for x in self.X.shape()]
+        self.n, self.h, self.w, self.k = [int(x) for x in X.get_shape()]
         self.model_version = model_version
         self.timesteps = timesteps
         self.lesions = lesions
         self.strides = strides
         self.padding = padding
+        self.dtype = dtype
         self.SRF, self.SSN, self.SSF = SRF, SSN, SSF
 
-        self.SSN_ext = 2 * pyutils.ifloor(SSN / 2.0) + 1
-        self.SSF_ext = 2 * pyutils.ifloor(SSF / 2.0) + 1
+        self.SSN_ext = 2 * py_utils.ifloor(SSN / 2.0) + 1
+        self.SSF_ext = 2 * py_utils.ifloor(SSF / 2.0) + 1
         self.q_shape = [self.SRF, self.SRF, self.k, self.k]
-        self.u_shape = [self.SRF, self.SRF, self.k, self.SRF]
+        print 'Warning U is currently broadly tuned not untuned.'
+        self.u_shape = [self.SRF, self.SRF, self.k, self.k]
         self.p_shape = [self.SSN_ext, self.SSN_ext, self.k, self.k]
         self.t_shape = [self.SSF_ext, self.SSF_ext, self.k, self.k]
         self.i_shape = [self.SRF, self.SRF, self.k]
         self.o_shape = [self.SRF, self.SRF, self.k]
         self.bias_shape = self.k
-        self.dtype = tf.float32
         self.u_nl = tf.identity
         self.t_nl = tf.identity
         self.q_nl = tf.identity
@@ -117,25 +117,32 @@ class ContextualCircuit(object):
                 }
             }
         }
+
         # tuned summation: pooling in h, w dimensions
         #############################################
-        self[self.weight_dict['Q']['r']['weight']] = tf.get_variable(
-            name=self.weight_dict['Q']['r']['weight'],
-            shape=self.q_shape,
-            dtype=self.dtype,
-            initializer=initialization.xavier_initializer(
-                            uniform=self.normal_initializer,
-                            mask=None))
+        setattr(
+            self,
+            self.weight_dict['Q']['r']['weight'],
+            tf.get_variable(
+                name=self.weight_dict['Q']['r']['weight'],
+                shape=self.q_shape,
+                dtype=self.dtype,
+                initializer=initialization.xavier_initializer(
+                    uniform=self.normal_initializer,
+                    mask=None)))
 
         # untuned suppression: reduction across feature axis
         ####################################################
-        self[self.weight_dict['U']['r']['weight']] = tf.get_variable(
-            name=self.weight_dict['U']['r']['weight'],
-            shape=self.u_shape,
-            dtype=self.dtype,
-            initializer=initialization.xavier_initializer(
-                            uniform=self.normal_initializer,
-                            mask=None))
+        setattr(
+            self,
+            self.weight_dict['U']['r']['weight'],
+            tf.get_variable(
+                name=self.weight_dict['U']['r']['weight'],
+                shape=self.u_shape,
+                dtype=self.dtype,
+                initializer=initialization.xavier_initializer(
+                    uniform=self.normal_initializer,
+                    mask=None)))
 
         # tuned summation: pooling in h, w dimensions
         #############################################
@@ -143,140 +150,193 @@ class ContextualCircuit(object):
         for pdx in range(self.k):
             p_array[:self.SSN, :self.SSN, pdx, pdx] = 1.0
         p_array[
-            self.SSN // 2 - pyutils.ifloor(
-                self.SRF / 2.0):self.SSN // 2 + pyutils.iceil(
+            self.SSN // 2 - py_utils.ifloor(
+                self.SRF / 2.0):self.SSN // 2 + py_utils.iceil(
                 self.SRF / 2.0),
-            self.SSN // 2 - pyutils.ifloor(
-                self.SRF / 2.0):self.SSN // 2 + pyutils.iceil(
+            self.SSN // 2 - py_utils.ifloor(
+                self.SRF / 2.0):self.SSN // 2 + py_utils.iceil(
                 self.SRF / 2.0),
             :,  # exclude CRF!
             :] = 0.0
-        self[self.weight_dict['P']['r']['weight']] = tf.get_variable(
-            name=self.weight_dict['P']['r']['weight'],
-            shape=self.p_shape,
-            dtype=self.dtype,
-            initializer=initialization.xavier_initializer(
-                            uniform=self.normal_initializer,
-                            mask=p_array))
+
+        setattr(
+            self,
+            self.weight_dict['P']['r']['weight'],
+            tf.get_variable(
+                name=self.weight_dict['P']['r']['weight'],
+                shape=self.p_shape,
+                dtype=self.dtype,
+                initializer=initialization.xavier_initializer(
+                    uniform=self.normal_initializer,
+                    mask=p_array)))
 
         # tuned suppression: pooling in h, w dimensions
         ###############################################
         t_array = np.zeros(self.t_shape)
         for tdx in range(self.k):
-            t_array[tdx, tdx, :self.SSF, :self.SSF] = 1.0
+            t_array[:self.SSF, :self.SSF, tdx, tdx] = 1.0
         t_array[
-            self.SSF // 2 - pyutils.ifloor(
-                self.SSN / 2.0):self.SSF // 2 + pyutils.iceil(
+            self.SSF // 2 - py_utils.ifloor(
+                self.SSN / 2.0):self.SSF // 2 + py_utils.iceil(
                 self.SSN / 2.0),
-            self.SSF // 2 - pyutils.ifloor(
-                self.SSN / 2.0):self.SSF // 2 + pyutils.iceil(
+            self.SSF // 2 - py_utils.ifloor(
+                self.SSN / 2.0):self.SSF // 2 + py_utils.iceil(
                 self.SSN / 2.0),
             :,  # exclude near surround!
             :] = 0.0
-        self[self.weight_dict['T']['r']['weight']] = tf.get_variable(
-            name=self.weight_dict['T']['r']['weight'],
-            shape=self.t_shape,
-            dtype=self.dtype,
-            initializer=initialization.xavier_initializer(
-                            uniform=self.normal_initializer,
-                            mask=t_array))
-
-        if self.model_version != 'no_input_facing':
-            # Also create input-facing weight matrices
-            self[self.weight_dict['Q']['f']['weight']] = tf.get_variable(
-                name=self.weight_dict['Q']['f']['weight'],
-                shape=self.q_shape,
-                dtype=self.dtype,
-                initializer=initialization.xavier_initializer(
-                                uniform=self.normal_initializer,
-                                mask=None))
-            self[self.weight_dict['Q']['f']['bias']] = tf.get_variable(
-                name=self.weight_dict['Q']['f']['bias'],
-                shape=self.bias_shape,  # Note the u_shape
-                dtype=self.dtype,
-                initializer=initialization.xavier_initializer(
-                                uniform=self.normal_initializer,
-                                mask=None))
-            self[self.weight_dict['U']['f']['weight']] = tf.get_variable(
-                name=self.weight_dict['U']['f']['weight'],
-                shape=self.u_shape,
-                dtype=self.dtype,
-                initializer=initialization.xavier_initializer(
-                                uniform=self.normal_initializer,
-                                mask=None))
-            self[self.weight_dict['U']['f']['bias']] = tf.get_variable(
-                name=self.weight_dict['U']['f']['bias'],
-                shape=self.bias_shape,  # Note the u_shape
-                dtype=self.dtype,
-                initializer=initialization.xavier_initializer(
-                                uniform=self.normal_initializer,
-                                mask=None))
-            self[self.weight_dict['P']['f']['weight']] = tf.get_variable(
-                name=self.weight_dict['P']['f']['weight'],
-                shape=self.p_shape,
-                dtype=self.dtype,
-                initializer=initialization.xavier_initializer(
-                                uniform=self.normal_initializer,
-                                mask=p_array))
-            self[self.weight_dict['P']['f']['bias']] = tf.get_variable(
-                name=self.weight_dict['P']['f']['bias'],
-                shape=self.bias_shape,  # Note the u_shape
-                dtype=self.dtype,
-                initializer=initialization.xavier_initializer(
-                                uniform=self.normal_initializer,
-                                mask=None))
-            self[self.weight_dict['T']['f']['weight']] = tf.get_variable(
-                name=self.weight_dict['T']['f']['weight'],
+        setattr(
+            self,
+            self.weight_dict['T']['r']['weight'],
+            tf.get_variable(
+                name=self.weight_dict['T']['r']['weight'],
                 shape=self.t_shape,
                 dtype=self.dtype,
                 initializer=initialization.xavier_initializer(
-                                uniform=self.normal_initializer,
-                                mask=t_array))
-            self[self.weight_dict['T']['f']['bias']] = tf.get_variable(
-                name=self.weight_dict['T']['f']['bias'],
-                shape=self.bias_shape,  # Note the u_shape
-                dtype=self.dtype,
-                initializer=initialization.xavier_initializer(
-                                uniform=self.normal_initializer,
-                                mask=None))
+                    uniform=self.normal_initializer,
+                    mask=t_array)))
+
+        if self.model_version != 'no_input_facing':
+            # Also create input-facing weight matrices
+            # Q
+            setattr(
+                self,
+                self.weight_dict['Q']['f']['weight'],
+                tf.get_variable(
+                    name=self.weight_dict['Q']['f']['weight'],
+                    shape=self.q_shape,
+                    dtype=self.dtype,
+                    initializer=initialization.xavier_initializer(
+                        uniform=self.normal_initializer,
+                        mask=None)))
+            setattr(
+                self,
+                self.weight_dict['Q']['f']['bias'],
+                tf.get_variable(
+                    name=self.weight_dict['Q']['f']['bias'],
+                    shape=self.bias_shape,  # Note the u_shape
+                    dtype=self.dtype,
+                    initializer=initialization.xavier_initializer(
+                        uniform=self.normal_initializer,
+                        mask=None)))
+
+            # U
+            setattr(
+                self,
+                self.weight_dict['U']['f']['weight'],
+                tf.get_variable(
+                    name=self.weight_dict['U']['f']['weight'],
+                    shape=self.u_shape,
+                    dtype=self.dtype,
+                    initializer=initialization.xavier_initializer(
+                        uniform=self.normal_initializer,
+                        mask=None)))
+            setattr(
+                self,
+                self.weight_dict['U']['f']['bias'],
+                tf.get_variable(
+                    name=self.weight_dict['U']['f']['bias'],
+                    shape=self.bias_shape,  # Note the u_shape
+                    dtype=self.dtype,
+                    initializer=initialization.xavier_initializer(
+                        uniform=self.normal_initializer,
+                        mask=None)))
+
+            # P
+            setattr(
+                self,
+                self.weight_dict['P']['f']['weight'],
+                tf.get_variable(
+                    name=self.weight_dict['P']['f']['weight'],
+                    shape=self.p_shape,
+                    dtype=self.dtype,
+                    initializer=initialization.xavier_initializer(
+                        uniform=self.normal_initializer,
+                        mask=p_array)))
+            setattr(
+                self,
+                self.weight_dict['P']['f']['bias'],
+                tf.get_variable(
+                    name=self.weight_dict['P']['f']['bias'],
+                    shape=self.bias_shape,  # Note the u_shape
+                    dtype=self.dtype,
+                    initializer=initialization.xavier_initializer(
+                        uniform=self.normal_initializer,
+                        mask=None)))
+
+            # T
+            setattr(
+                self,
+                self.weight_dict['T']['f']['weight'],
+                tf.get_variable(
+                    name=self.weight_dict['T']['f']['weight'],
+                    shape=self.t_shape,
+                    dtype=self.dtype,
+                    initializer=initialization.xavier_initializer(
+                        uniform=self.normal_initializer,
+                        mask=t_array)))
+            setattr(
+                self,
+                self.weight_dict['T']['f']['bias'],
+                tf.get_variable(
+                    name=self.weight_dict['T']['f']['bias'],
+                    shape=self.bias_shape,  # Note the u_shape
+                    dtype=self.dtype,
+                    initializer=initialization.xavier_initializer(
+                        uniform=self.normal_initializer,
+                        mask=None)))
         if self.model_version == 'full_with_cell_states':
-            self[self.weight_dict['I']['r']['weight']] = tf.get_variable(
-                name=self.weight_dict['I']['r']['weight'],
-                shape=self.i_shape,
-                dtype=self.dtype,
-                initializer=initialization.xavier_initializer(
-                                uniform=self.normal_initializer,
-                                mask=t_array))
-            self[self.weight_dict['I']['r']['bias']] = tf.get_variable(
-                name=self.weight_dict['I']['r']['bias'],
-                shape=self.bias_shape,
-                dtype=self.dtype,
-                initializer=initialization.xavier_initializer(
-                                uniform=self.normal_initializer,
-                                mask=None))
-            self[self.weight_dict['O']['r']['weight']] = tf.get_variable(
-                name=self.weight_dict['O']['r']['weight'],
-                shape=self.o_shape,
-                dtype=self.dtype,
-                initializer=initialization.xavier_initializer(
-                                uniform=self.normal_initializer,
-                                mask=t_array))
-            self[self.weight_dict['O']['r']['bias']] = tf.get_variable(
-                name=self.weight_dict['O']['r']['bias'],
-                shape=self.bias_shape,
-                dtype=self.dtype,
-                initializer=initialization.xavier_initializer(
-                                uniform=self.normal_initializer,
-                                mask=None))
+
+            # Input
+            setattr(
+                self,
+                self.weight_dict['I']['r']['weight'],
+                tf.get_variable(
+                    name=self.weight_dict['I']['r']['weight'],
+                    shape=self.i_shape,
+                    dtype=self.dtype,
+                    initializer=initialization.xavier_initializer(
+                        uniform=self.normal_initializer,
+                        mask=t_array)))
+            setattr(
+                self,
+                self.weight_dict['I']['r']['bias'],
+                tf.get_variable(
+                    name=self.weight_dict['I']['r']['bias'],
+                    shape=self.bias_shape,
+                    dtype=self.dtype,
+                    initializer=initialization.xavier_initializer(
+                        uniform=self.normal_initializer,
+                        mask=None)))
+
+            # Output
+            setattr(
+                self,
+                self.weight_dict['O']['r']['weight'],
+                tf.get_variable(
+                    name=self.weight_dict['O']['r']['weight'],
+                    shape=self.o_shape,
+                    dtype=self.dtype,
+                    initializer=initialization.xavier_initializer(
+                        uniform=self.normal_initializer,
+                        mask=t_array)))
+            setattr(
+                self,
+                self.weight_dict['O']['r']['bias'],
+                tf.get_variable(
+                    name=self.weight_dict['O']['r']['bias'],
+                    shape=self.bias_shape,
+                    dtype=self.dtype,
+                    initializer=initialization.xavier_initializer(
+                        uniform=self.normal_initializer,
+                        mask=None)))
 
         # Scalar weights
-        self.alpha = tf.get_variable(shape=[], initializer=1.)
-        self.tau = tf.get_variable(shape=[], initializer=1.)
-        self.eta = tf.get_variable(shape=[], initializer=1.)
-        self.omega = tf.get_variable(shape=[], initializer=1.)
-        self.eps = tf.get_variable(shape=[], initializer=1.)
-        self.tau = tf.get_variable(shape=[], initializer=1.)
-        self.gamma = tf.get_variable(shape=[], initializer=1.)
+        self.alpha = tf.get_variable(name='alpha', initializer=1.)
+        self.tau = tf.get_variable(name='tau', initializer=1.)
+        self.eta = tf.get_variable(name='eta', initializer=1.)
+        self.omega = tf.get_variable(name='omega', initializer=1.)
+        self.eps = tf.get_variable(name='eps', initializer=1.)
+        self.gamma = tf.get_variable(name='gamma', initializer=1.)
 
     def conv_2d_op(self, data, weight_key, out_key=None):
         """2D convolutions, lesion, return or assign activity as attribute."""
@@ -292,7 +352,10 @@ class ContextualCircuit(object):
         if out_key is None:
             return activities
         else:
-            self[out_key] = activities
+            setattr(
+                self,
+                out_key,
+                activities)
 
     def full(self, i0, O, I):
         """Fully parameterized contextual RNN model."""
@@ -326,7 +389,7 @@ class ContextualCircuit(object):
                 self[self.weight_dict['T']['f']['activity']],
                 self[self.weight_dict['T']['f']['bias']])
             )
-        I_summand = self.eta(self.i_nl(self.alpha * self.X - U - T))
+        I_summand = self.eta * self.i_nl(self.alpha * self.X - U - T)
         I = (self.eps * I) + I_summand
 
         # Output
@@ -336,7 +399,7 @@ class ContextualCircuit(object):
         P = self.p_nl(
             P +
             self[self.weight_dict['P']['f']['activity']])
-        O_summand = self.tau(self.o_nl(Q + P + (self.gamma * I)))
+        O_summand = self.tau * self.o_nl(Q + P + (self.gamma * I))
         O = (self.omega * O) + O_summand
         return i0, O, I
 
@@ -484,9 +547,9 @@ class ContextualCircuit(object):
         """While loop halting condition."""
         return i0 < self.timesteps
 
-    def run(self, in_array):
+    def build(self):
         """Run the backprop version of the CCircuit."""
-        # Using run_reference implementation
+        self.prepare_tensors()
         i0 = tf.constant(0)
         O = tf.identity(self.X)
         I = tf.identity(self.X)
@@ -524,4 +587,5 @@ class ContextualCircuit(object):
             swap_memory=False)
 
         # Prepare output
-        return returned
+        _, _, I = returned  # i0, O, I
+        return I

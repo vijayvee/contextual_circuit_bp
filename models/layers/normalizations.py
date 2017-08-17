@@ -1,7 +1,10 @@
 import numpy as np
 import tensorflow as tf
-from models.layers import normalization_functions as nf
 from utils import py_utils
+from models.layers.normalization_functions import div_norm
+from models.layers.normalization_functions import layer_norm
+from models.layers.normalization_functions import contextual
+from models.layers.normalization_functions import contextual_rnn
 
 
 class normalizations(object):
@@ -14,11 +17,13 @@ class normalizations(object):
 
     def __init__(self, kwargs=None):
         """Globals for normalization functions."""
-        self.timesteps = 1
+        self.timesteps = 2
         self.scale_CRF = True
         self.bias_CRF = True
-        self.lesions = None
+        self.lesions = [None]
         self.training = None
+        self.strides = [1, 1, 1, 1]
+        self.padding = 'SAME'
         if kwargs is not None:
             self.update_params(**kwargs)
 
@@ -34,13 +39,25 @@ class normalizations(object):
             SSF=None,
             V1_CRF=0.26,
             V1_neCRF=0.54,
-            V1_feCRF=1.41):
-        # Angelucci & Shushruth 2013 V1 RFs:
-        # CRF = 0.26 degrees (1x)
-        # eCRF near = 0.54 degrees (2x)
-        # eCRF far = 1.41 degrees (5.5x)
+            V1_feCRF=1.00):  # 1.41
+        """ Set RF sizes for the normalizations.
+        Based on calculation of an effective RF (i.e. not
+        simply kernel size of the current layer, but instead
+        w.r.t. input).
+
+        Angelucci & Shushruth 2013 V1 RFs:
+        https://www.shadlenlab.columbia.edu/people/Shushruth/Lab_Page/Home_files/GalleyProof.pdf
+        CRF = 0.26 degrees (1x)
+        eCRF near = 0.54 degrees (2x)
+        eCRF far = 1.41 degrees (5.5x)
+        """
         if eSRF != iSRF:
-            CRF_size = np.max([self.CRF_excitation, self.CRF_inhibition])
+            if eSRF is not None and iSRF is not None:
+                CRF_size = np.max([eSRF, iSRF])
+            elif eSRF is None:
+                CRF_size = iSRF
+            elif iSRF is None:
+                CRF_size = eSRF
             print 'CRF inhibition/excitation RFs are uneven.' + \
                 'Using the max extent for the contextual model CRF.'
         else:
@@ -49,64 +66,73 @@ class normalizations(object):
         self.CRF_inhibition = CRF_size
         self.SRF = CRF_size
         if SSN is None:
-            self.SSN = self.SRF * py_utils.iround(0.54 / 0.26)
+            self.SSN = py_utils.iceil(self.SRF * (V1_neCRF / V1_CRF))
+        else:
+            self.SSN = SSN
         if SSF is None:
-            self.SSF = py_utils.iround(self.SRF * 5.42)
-        self.SSN = SSN
-        self.SSF = SSF
+            self.SSF = py_utils.iceil(self.SRF * (V1_feCRF / V1_CRF))
+        else:
+            self.SSF = SSF
 
-    def contextual(self, x, **kwargs):
+    def contextual(self, x, eRF):
         """Contextual model from paper with learnable weights."""
-        import ipdb;ipdb.set_trace()
         self.set_RFs(
-            eSRF=kwargs['eRFs']['rf'],
-            iSRF=kwargs['eRFs']['rf'])
-        contextual_layer = nf.ContextualCircuit(
+            eSRF=eRF,
+            iSRF=eRF)
+        contextual_layer = contextual.ContextualCircuit(
+            X=x,
             timesteps=self.timesteps,
-            lesions=None,
+            lesions=self.lesions,
             SRF=self.SRF,
-            SSN=self.eCRF_excitation,
-            SSF=self.eCRF_inhibition)
-        return contextual_layer(x)
+            SSN=self.SSN,
+            SSF=self.SSF,
+            strides=self.strides,
+            padding=self.padding)
+        return contextual_layer.build()
 
-    def contextual_rnn(self, x, **kwargs):
+    def contextual_rnn(self, x, eRF):
         """Contextual model translated into a RNN architecture."""
         self.set_RFs(
-            eSRF=kwargs['eRFs']['rf'],
-            iSRF=kwargs['eRFs']['rf'])
-        contextual_layer = nf.contextual_rnn.ContextualCircuit(
+            eSRF=eRF,
+            iSRF=eRF)
+        contextual_layer = contextual_rnn.ContextualCircuit(
+            X=x,
             timesteps=self.timesteps,
-            lesions=None,
+            lesions=self.lesions,
             SRF=self.SRF,
-            SSN=self.eCRF_excitation,
-            SSF=self.eCRF_inhibition)
-        return contextual_layer(x)
+            SSN=self.SSN,
+            SSF=self.SSF,
+            strides=self.strides,
+            padding=self.padding)
+        return contextual_layer.build()
 
-    def divisive(self, x, **kwargs):
+    def divisive_2d(self, x, eRF):
         """Divisive normalization 2D."""
         self.set_RFs(
-            eSRF=kwargs['eRFs']['rf'],
-            iSRF=kwargs['eRFs']['rf'])
-        return nf.div_norm.div_norm_2d(
+            eSRF=eRF,
+            iSRF=eRF)
+        return div_norm.div_norm_2d(
+            x,
+            sum_window=self.CRF_excitation,
+            sup_window=self.CRF_inhibition,
+            gamma=self.scale_CRF,
+            beta=self.bias_CRF,
+            strides=self.strides,
+            padding=self.padding)
+
+    def divisive_1d(self, x, eRF):
+        """Divisive normalization 2D."""
+        self.set_RFs(
+            eSRF=eRF,
+            iSRF=eRF)
+        return div_norm.div_norm_1d(
             x,
             sum_window=self.CRF_excitation,
             sup_window=self.CRF_inhibition,
             gamma=self.scale_CRF,
             beta=self.bias_CRF)
 
-    def divisive_1d(self, x, **kwargs):
-        """Divisive normalization 2D."""
-        self.set_RFs(
-            eSRF=kwargs['eRFs']['rf'],
-            iSRF=kwargs['eRFs']['rf'])
-        return nf.div_norm.div_norm_1d(
-            x,
-            sum_window=self.CRF_excitation,
-            sup_window=self.CRF_inhibition,
-            gamma=self.scale_CRF,
-            beta=self.bias_CRF)
-
-    def batch(self, x, **kwargs):
+    def batch(self, x, eRF):
         """Batch normalization."""
         return tf.layers.batch_normalization(
             x,
@@ -125,16 +151,16 @@ class normalizations(object):
 
     def layer(self, x, **kwargs):
         """Layer normalization."""
-        return nf.layer_norm.layer_norm(
+        return layer_norm.layer_norm(
             x,
             gamma=self.scale_CRF,
             beta=self.bias_CRF)
 
-    def lrn(self, x, **kwargs):
+    def lrn(self, x, eRF):
         """Local response normalization."""
         self.set_RFs(
-            eSRF=kwargs['eRFs']['rf'],
-            iSRF=kwargs['eRFs']['rf'])
+            eSRF=eRF,
+            iSRF=eRF)
         return tf.nn.local_response_normalization(
             x,
             depth_radius=self.CRF_inhibition,
