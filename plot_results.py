@@ -7,6 +7,7 @@ import pandas as pd
 import seaborn as sns
 from main import get_dt_stamp
 from matplotlib import pyplot as plt
+from matplotlib.ticker import MaxNLocator
 
 
 def main(experiment_name, im_ext='.pdf', val_score='val accuracy'):
@@ -67,8 +68,11 @@ def main(experiment_name, im_ext='.pdf', val_score='val accuracy'):
         )
     df['training iteration'] = pd.to_numeric(df['training iteration'])
     df['training loss'] = pd.to_numeric(df['training loss'])
+    df['training loss'] /= df.groupby(
+        'model parameters')['training loss'].transform(max)
     df['validation loss'] = pd.to_numeric(df[val_score]) * 100.
     sns.set_palette(sns.color_palette("colorblind", 100))
+    plt.rc('font', size=8)
     f, axs = plt.subplots(2, figsize=(20, 30))
     ax = sns.pointplot(
         x='training iteration',
@@ -79,7 +83,10 @@ def main(experiment_name, im_ext='.pdf', val_score='val accuracy'):
         data=df,
         ax=axs[0],
         scale=.25)
+    plt.setp(ax.xaxis.get_majorticklabels(), rotation=30)
+    ax.xaxis.set_major_locator(MaxNLocator(integer=True))
     ax.set_title('Training')
+    ax.set_ylabel('Normalized loss (x / max(x))')
     ax = sns.pointplot(
         x='training iteration',
         y=val_score,
@@ -89,6 +96,8 @@ def main(experiment_name, im_ext='.pdf', val_score='val accuracy'):
         data=df,
         ax=axs[1],
         scale=.25)
+    plt.setp(ax.xaxis.get_majorticklabels(), rotation=30)
+    ax.xaxis.set_major_locator(MaxNLocator(integer=True))
     ax.set_title('Validation')
     out_name = os.path.join(
         config.plots,

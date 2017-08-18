@@ -33,16 +33,16 @@ class experiments():
         model_folder = 'two_layer_conv_mlp'
         exp = {
             'experiment_name': [model_folder],
-            'lr': [1e-3],
+            'lr': [1e-5],
             'loss_function': ['cce'],
             'optimizer': ['adam'],
             'wd_type': [None],  # [None, 'l1', 'l2'],
             'wd_penalty': [0.005],
             'model_struct': [
-                # os.path.join(model_folder, 'divisive'),
-                # os.path.join(model_folder, 'batch'),
-                # os.path.join(model_folder, 'layer'),
-                # os.path.join(model_folder, 'lrn'),
+                os.path.join(model_folder, 'divisive'),
+                os.path.join(model_folder, 'batch'),
+                os.path.join(model_folder, 'layer'),
+                os.path.join(model_folder, 'lrn'),
                 # os.path.join(model_folder, 'contextual'),
                 os.path.join(model_folder, 'contextual_rnn'),
                 # os.path.join(model_folder, 'contextual_selu'),
