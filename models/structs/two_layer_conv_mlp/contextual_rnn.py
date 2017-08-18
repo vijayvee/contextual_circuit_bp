@@ -24,8 +24,6 @@ layer_structure = [
         'weights': [64],
         'names': ['conv2_1'],
         'filter_size': [3],
-        'normalization': ['contextual_rnn'],
-        'normalization_target': ['post'],
         'activation': ['relu'],
         'activation_target': ['post'],
         'wd_target': ['pre'],

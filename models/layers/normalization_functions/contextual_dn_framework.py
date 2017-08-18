@@ -291,5 +291,5 @@ class ContextualCircuit(object):
                 back_prop=True,
                 swap_memory=False)
             # Prepare output
-            i0, O, I = returned  # i0, O, I
-        return O
+            _, _, I = returned  # i0, O, I
+        return I

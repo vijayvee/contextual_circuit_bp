@@ -14,7 +14,7 @@ class ContextualCircuit():
     def __init__(
             self,
             X,
-            model_version='full',
+            model_version='full_with_cell_states',
             timesteps=1,
             lesions=None,
             SRF=1,
@@ -40,8 +40,8 @@ class ContextualCircuit():
         self.u_shape = [self.SRF, self.SRF, self.k, 1]
         self.p_shape = [self.SSN_ext, self.SSN_ext, self.k, self.k]
         self.t_shape = [self.SSF_ext, self.SSF_ext, self.k, self.k]
-        self.i_shape = [self.SRF, self.SRF, self.k]
-        self.o_shape = [self.SRF, self.SRF, self.k]
+        self.i_shape = self.q_shape
+        self.o_shape = self.q_shape
         self.u_nl = tf.identity
         self.t_nl = tf.identity
         self.q_nl = tf.identity
@@ -105,12 +105,14 @@ class ContextualCircuit():
             'I': {
                 'r': {  # Recurrent state
                     'weight': 'i_r',
+                    'bias': 'ib_r',
                     'activity': 'I_r'
                 }
             },
             'O': {
                 'r': {  # Recurrent state
                     'weight': 'o_r',
+                    'bias': 'ob_r',
                     'activity': 'O_r'
                 }
             }
@@ -212,7 +214,7 @@ class ContextualCircuit():
                     name=self.weight_dict['Q']['f']['bias'],
                     dtype=self.dtype,
                     initializer=initialization.xavier_initializer(
-                        shape=self.q_shape[-1],
+                        shape=[self.q_shape[-1]],
                         uniform=self.normal_initializer)))
 
             # U
@@ -232,7 +234,7 @@ class ContextualCircuit():
                     name=self.weight_dict['U']['f']['bias'],
                     dtype=self.dtype,
                     initializer=initialization.xavier_initializer(
-                        self.u_shape[-1],
+                        [self.u_shape[-1]],
                         uniform=self.normal_initializer)))
 
             # P
@@ -253,7 +255,7 @@ class ContextualCircuit():
                     name=self.weight_dict['P']['f']['bias'],
                     dtype=self.dtype,
                     initializer=initialization.xavier_initializer(
-                        self.p_shape[-1],
+                        [self.p_shape[-1]],
                         uniform=self.normal_initializer,
                         mask=None)))
 
@@ -275,11 +277,11 @@ class ContextualCircuit():
                     name=self.weight_dict['T']['f']['bias'],
                     dtype=self.dtype,
                     initializer=initialization.xavier_initializer(
-                        shape=self.t_shape[-1],
+                        shape=[self.t_shape[-1]],
                         uniform=self.normal_initializer,
                         mask=None)))
-        if self.model_version == 'full_with_cell_states':
 
+        if self.model_version == 'full_with_cell_states':
             # Input
             setattr(
                 self,
@@ -290,7 +292,7 @@ class ContextualCircuit():
                     initializer=initialization.xavier_initializer(
                         shape=self.i_shape,
                         uniform=self.normal_initializer,
-                        mask=t_array)))
+                        mask=None)))
             setattr(
                 self,
                 self.weight_dict['I']['r']['bias'],
@@ -298,7 +300,7 @@ class ContextualCircuit():
                     name=self.weight_dict['I']['r']['bias'],
                     dtype=self.dtype,
                     initializer=initialization.xavier_initializer(
-                        shape=self.k,
+                        shape=[self.k],
                         uniform=self.normal_initializer,
                         mask=None)))
 
@@ -312,7 +314,7 @@ class ContextualCircuit():
                     initializer=initialization.xavier_initializer(
                         shape=self.o_shape,
                         uniform=self.normal_initializer,
-                        mask=t_array)))
+                        mask=None)))
             setattr(
                 self,
                 self.weight_dict['O']['r']['bias'],
@@ -320,7 +322,7 @@ class ContextualCircuit():
                     name=self.weight_dict['O']['r']['bias'],
                     dtype=self.dtype,
                     initializer=initialization.xavier_initializer(
-                        shape=self.k,
+                        shape=[self.k],
                         uniform=self.normal_initializer,
                         mask=None)))
 
@@ -426,13 +428,13 @@ class ContextualCircuit():
             T,
             self[self.weight_dict['T']['f']['bias']])
         )
-        I_summand = self.eta(self.i_nl(self.alpha * self.X - U - T))
+        I_summand = self.eta * self.i_nl(self.alpha * self.X - U - T)
         I = (self.eps * I) + I_summand
 
         # Output
         Q = self.q_nl(Q)
         P = self.p_nl(P)
-        O_summand = self.tau(self.o_nl(Q + P + (self.gamma * I)))
+        O_summand = self.tau * self.o_nl(Q + P + (self.gamma * I))
         O = (self.omega * O) + O_summand
         i0 += 1  # Iterate loop
         return i0, O, I
@@ -469,7 +471,7 @@ class ContextualCircuit():
                 self[self.weight_dict['T']['f']['activity']],
                 self[self.weight_dict['T']['f']['bias']])
             )
-        I_summand = self.eta(self.i_nl(U - T))
+        I_summand = self.eta * self.i_nl(U - T)
         I = (self.eps * I) + I_summand
 
         # Output
@@ -479,7 +481,7 @@ class ContextualCircuit():
         P = self.p_nl(
             P +
             self[self.weight_dict['P']['f']['activity']])
-        O_summand = self.tau(self.o_nl(Q + P + (self.gamma * I)))
+        O_summand = self.tau * self.o_nl(Q + P + (self.gamma * I))
         O = (self.omega * O) + O_summand
         i0 += 1  # Iterate loop
         return i0, O, I
@@ -526,7 +528,7 @@ class ContextualCircuit():
                 self[self.weight_dict['T']['f']['activity']],
                 self[self.weight_dict['T']['f']['bias']])
             )
-        I_summand = self.eta(self.i_nl(self.alpha * self.X - U - T))
+        I_summand = self.eta * self.i_nl(self.alpha * self.X - U - T)
         I += I_summand
 
         # Output
@@ -536,7 +538,7 @@ class ContextualCircuit():
         P = self.p_nl(
             P +
             self[self.weight_dict['P']['f']['activity']])
-        O_summand = self.tau(self.o_nl(Q + P + (self.gamma * I)))
+        O_summand = self.tau * self.o_nl(Q + P + (self.gamma * I))
         O += O_summand
         i0 += 1  # Iterate loop
         return i0, O, I
@@ -559,7 +561,7 @@ class ContextualCircuit():
             I
         ]
 
-        if self.model_version == 'full':
+        if self.model_version != 'no_input_facing':
             self.conv_2d_op(
                 data=self.X,
                 weight_key=self.weight_dict['U']['f']['weight'],
@@ -591,5 +593,5 @@ class ContextualCircuit():
                 swap_memory=False)
 
             # Prepare output
-            _, _, I = returned  # i0, O, I
-        return I
+            i0, O, I = returned  # i0, O, I
+        return O
