@@ -183,7 +183,7 @@ def norm_op(self, it_dict, act, layer_summary, norm_mod, eRFs, target):
         normalization = it_dict['normalization'][0]
         if len(it_dict['names']) > 1:
             raise RuntimeError('TODO: Fix implementation for multiple names.')
-        act = norm_mod[normalization](act, eRFs[it_dict['names'][0]])
+        act = norm_mod[normalization](act, layer=it_dict, eRF=eRFs[it_dict['names'][0]])
         layer_summary = update_summary(
             layer_summary=layer_summary,
             op_name=normalization)

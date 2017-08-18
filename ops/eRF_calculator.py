@@ -31,7 +31,7 @@ class eRF_calculator(object):
                 layer_infos += [currentLayer]
                 if verbose:
                     self.printLayer(currentLayer, l['layer'])
-            return {k['layer']: v['r_i'] for k, v in zip(
+            return {k['layer']: v for k, v in zip(
                 network_params, layer_infos)}
         except:
             print 'Could not derive eRFs.'
@@ -83,7 +83,7 @@ class eRF_calculator(object):
                 }]
         return params
 
-    def outFromIn(self, conv, layer):
+    def outFromIn(self, conv, layer, fix_r_out=None):
         """Calculate effective RF for a layer.
         Assume the two dimensions are the same
         Each conv is a dict with:
@@ -111,6 +111,8 @@ class eRF_calculator(object):
         # pR = np.ceil(actualP/2)
         pL = np.floor(actualP/2)
         j_out = j_in * s
+        if fix_r_out is not None:
+            return (fix_r_out / j_in) + 1 - r_in
         r_out = r_in + (k - 1)*j_in
         start_out = start_in + ((k-1)/2 - pL)*j_in
         return {
