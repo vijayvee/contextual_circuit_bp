@@ -106,8 +106,13 @@
 
 TODO
 
-1) FIX THESE ISSUES WITH eRF calculation:
-	b) figure out why the "start" coordinate is fucked.
+- Expose normalization layers to main model API. For accessing through sess.run()
+- Add "aux" options to FF and normalization layers.
+- Add multiply and concat(add, multiply) ops to the residual layer.
+- Add ability to have regularization in normalization layers.
+- Build a contextual model off of the div_norm framework.
+
+
 1) Pull from DB for visualizations
 2) Evaluation script: Visualizations w/ LRP + plotting loss curves + plotting accuracy curves across multiple models.
 3) Fix tests

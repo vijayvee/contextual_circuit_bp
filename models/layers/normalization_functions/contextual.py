@@ -258,6 +258,7 @@ class ContextualCircuit(object):
             + self.gamma * P
             + self.delta * Q)
         O = sig_tau * O + self.tau * O_summand
+        i0 += 1  # Iterate loop
         return i0, O, I
 
     def condition(self, i0, O, I):

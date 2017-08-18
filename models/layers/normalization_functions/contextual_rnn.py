@@ -395,6 +395,7 @@ class ContextualCircuit():
             self[self.weight_dict['P']['f']['activity']])
         O_summand = self.tau * self.o_nl(Q + P + (self.gamma * I))
         O = (self.omega * O) + O_summand
+        i0 += 1  # Iterate loop
         return i0, O, I
 
     def no_input_facing(self, i0, O, I):
@@ -433,6 +434,7 @@ class ContextualCircuit():
         P = self.p_nl(P)
         O_summand = self.tau(self.o_nl(Q + P + (self.gamma * I)))
         O = (self.omega * O) + O_summand
+        i0 += 1  # Iterate loop
         return i0, O, I
 
     def no_input_scaling(self, i0, O, I):
@@ -479,6 +481,7 @@ class ContextualCircuit():
             self[self.weight_dict['P']['f']['activity']])
         O_summand = self.tau(self.o_nl(Q + P + (self.gamma * I)))
         O = (self.omega * O) + O_summand
+        i0 += 1  # Iterate loop
         return i0, O, I
 
     def full_with_cell_states(self, i0, O, I):
@@ -535,13 +538,14 @@ class ContextualCircuit():
             self[self.weight_dict['P']['f']['activity']])
         O_summand = self.tau(self.o_nl(Q + P + (self.gamma * I)))
         O += O_summand
+        i0 += 1  # Iterate loop
         return i0, O, I
 
     def condition(self, i0, O, I):
         """While loop halting condition."""
         return i0 < self.timesteps
 
-    def build(self, reduce_memory=True):
+    def build(self, reduce_memory=False):
         """Run the backprop version of the CCircuit."""
         self.prepare_tensors()
         i0 = tf.constant(0)

@@ -15,7 +15,7 @@ class experiments():
         return {
             'batch_size': 32,  # Train/val batch size.
             'data_augmentations': [None],  # Random_crop, etc.
-            'epochs': 10,
+            'epochs': 50,
             'shuffle': True,  # Shuffle data.
             'validation_iters': 250,  # How often to evaluate validation.
             'num_validation_evals': 100,  # How many validation batches.
