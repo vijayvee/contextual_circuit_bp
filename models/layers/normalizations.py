@@ -1,4 +1,3 @@
-import numpy as np
 import tensorflow as tf
 from utils import py_utils
 from ops.eRF_calculator import eRF_calculator
@@ -18,7 +17,7 @@ class normalizations(object):
 
     def __init__(self, kwargs=None):
         """Globals for normalization functions."""
-        self.timesteps = 1
+        self.timesteps = 10
         self.scale_CRF = True
         self.bias_CRF = True
         self.lesions = [None]
@@ -63,7 +62,7 @@ class normalizations(object):
             'stride': 1
         }
         if len(layer['filter_size']) > 1:
-            raise RuntimError('API not implemented for layers with > 1 module.')
+            raise RuntimeError('API not implemented for layers with > 1 module.')
         self.SRF = layer['filter_size'][0]
         self.CRF_excitation = layer['filter_size'][0]
         self.CRF_inhibition = layer['filter_size'][0]

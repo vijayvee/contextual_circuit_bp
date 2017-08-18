@@ -33,7 +33,7 @@ class experiments():
         model_folder = 'two_layer_conv_mlp'
         exp = {
             'experiment_name': [model_folder],
-            'lr': [1e-2, 1e-3, 1e-4],
+            'lr': [1e-3],
             'loss_function': ['cce'],
             'optimizer': ['adam'],
             'wd_type': [None],  # [None, 'l1', 'l2'],

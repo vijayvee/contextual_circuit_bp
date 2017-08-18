@@ -43,17 +43,13 @@ def div_norm_2d(
       normed: Divisive-normalized variable.
       mean: Mean used for normalization (optional).
     """
+    if not isinstance(sum_window, list):
+        sum_window = list(np.repeat(sum_window, 2))
+    if not isinstance(sup_window, list):
+        sup_window = list(np.repeat(sup_window, 2))
     with tf.variable_scope(scope):
-        w_sum = tf.expand_dims(
-            tf.expand_dims(
-                tf.ones(sum_window + [1, 1]) / np.prod(np.array(sum_window)),
-                axis=-1),
-            axis=-1)
-        w_sup = tf.expand_dims(
-            tf.expand_dims(  # Note: below differs from reference.
-                tf.ones(sup_window + [1, 1]) / np.prod(np.array(sup_window)),
-                axis=-1),
-            axis=-1)
+        w_sum = tf.ones(sum_window + [1, 1]) / np.prod(np.array(sum_window))
+        w_sup = tf.ones(sup_window + [1, 1]) / np.prod(np.array(sup_window))
         x_mean = tf.reduce_mean(x, [3], keep_dims=True)
         x_mean = tf.nn.conv2d(
             x_mean,
