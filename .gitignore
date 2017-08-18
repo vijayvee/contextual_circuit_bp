@@ -3,3 +3,4 @@ db/credentials.py
 build/
 dist/
 *egg-info
+*.swp
