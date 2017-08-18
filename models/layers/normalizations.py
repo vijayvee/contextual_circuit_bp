@@ -17,7 +17,7 @@ class normalizations(object):
 
     def __init__(self, kwargs=None):
         """Globals for normalization functions."""
-        self.timesteps = 4
+        self.timesteps = 5
         self.scale_CRF = True
         self.bias_CRF = True
         self.lesions = [None]
@@ -43,7 +43,7 @@ class normalizations(object):
             V1_neCRF=0.54,
             V1_feCRF=1.41,
             default_stride=1,
-            padding=1):  # TODO: Rewrite this API.
+            padding=1):
         """ Set RF sizes for the normalizations.
         Based on calculation of an effective RF (i.e. not
         simply kernel size of the current layer, but instead
@@ -62,7 +62,8 @@ class normalizations(object):
             'stride': 1
         }
         if len(layer['filter_size']) > 1:
-            raise RuntimeError('API not implemented for layers with > 1 module.')
+            raise RuntimeError(
+                'API not implemented for layers with > 1 module.')
         self.SRF = layer['filter_size'][0]
         self.CRF_excitation = layer['filter_size'][0]
         self.CRF_inhibition = layer['filter_size'][0]
