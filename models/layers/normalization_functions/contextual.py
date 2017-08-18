@@ -265,7 +265,7 @@ class ContextualCircuit(object):
         """While loop halting condition."""
         return i0 < self.timesteps
 
-    def build(self, reduce_memory=True):
+    def build(self, reduce_memory=False):
         """Run the backprop version of the CCircuit."""
         self.prepare_tensors()
         i0 = tf.constant(0)
