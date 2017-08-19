@@ -192,7 +192,7 @@ def main(experiment_name, list_experiments=False):
             # Add weight decay if requested
             if len(model.regularizations) > 0:
                 train_loss = loss_utils.wd_loss(
-                    model=model,
+                    regularizations=model.regularizations,
                     loss=train_loss,
                     wd_penalty=config.wd_penalty)
             train_op = loss_utils.optimizer_interpreter(

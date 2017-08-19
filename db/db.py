@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+import sys
 import sshtunnel
 import argparse
 import psycopg2
@@ -197,7 +198,8 @@ def get_experiment_name():
     with db(config) as db_conn:
         param_dict = db_conn.get_parameters()
     if param_dict is None:
-        raise RuntimeError('No remaining experiments to run.')
+        print 'No remaining experiments to run.'
+        sys.exit(1)
     return param_dict['experiment_name']
 
 

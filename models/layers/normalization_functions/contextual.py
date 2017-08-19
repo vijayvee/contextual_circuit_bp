@@ -22,7 +22,8 @@ class ContextualCircuit(object):
             SSF=29,
             strides=[1, 1, 1, 1],
             padding='SAME',
-            dtype=tf.float32):
+            dtype=tf.float32,
+            return_weights=True):
 
         self.X = X
         self.n, self.h, self.w, self.k = [int(x) for x in X.get_shape()]
@@ -47,6 +48,7 @@ class ContextualCircuit(object):
         self.i_nl = tf.nn.relu  # input non linearity
         self.o_nl = tf.nn.relu  # output non linearity
 
+        self.return_weights = return_weights
         self.normal_initializer = False
         if self.SSN is None:
             self.SSN = self.SRF * 3
@@ -265,6 +267,14 @@ class ContextualCircuit(object):
         """While loop halting condition."""
         return i0 < self.timesteps
 
+    def gather_weights(self):
+        weights = {}
+        for k, v in self.weight_dict.iteritems():
+            for wk, wv in v.iteritems():
+                if hasattr(self, wv['weight']):
+                    weights['%s_%s' % (k, wk)] = self[wv['weight']]
+        return weights
+
     def build(self, reduce_memory=False):
         """Run the backprop version of the CCircuit."""
         self.prepare_tensors()
@@ -292,4 +302,8 @@ class ContextualCircuit(object):
                 swap_memory=False)
             # Prepare output
             i0, O, I = returned  # i0, O, I
-        return O
+        if self.return_weights:
+            weights = self.gather_weights()
+            return O, weights
+        else:
+            return O

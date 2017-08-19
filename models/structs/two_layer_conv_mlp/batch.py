@@ -12,6 +12,7 @@ layer_structure = [
         'activation_target': ['post'],
         'wd_target': ['pre'],
         'wd_type': [None],
+        'wd_strength': [1e-5]
     },
     {
         'layers': ['pool'],
@@ -28,6 +29,7 @@ layer_structure = [
         'activation_target': ['post'],
         'wd_target': ['pre'],
         'wd_type': [None],
+        'wd_strength': [1e-5]
     },
     {
         'layers': ['pool'],

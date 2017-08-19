@@ -46,7 +46,7 @@ class model_class(object):
             layer_structure,
             data,
             verbose=True)
-        features, layer_summary = create_conv_tower(
+        self, features, layer_summary = create_conv_tower(
             self=self,
             act=input_data,
             layer_structure=layer_structure,
@@ -61,7 +61,7 @@ class model_class(object):
             features,
             r_i=tower_eRFs.items()[-1][1],
             verbose=True)
-        output, layer_summary = create_conv_tower(
+        self, output, layer_summary = create_conv_tower(
             self=self,
             act=features,
             layer_structure=output_layer_structure,
@@ -133,7 +133,7 @@ def flatten_op(self, it_dict, act, layer_summary, eRFs, target):
         layer_summary = update_summary(
             layer_summary=layer_summary,
             op_name=['flattened'])
-    return act, layer_summary
+    return self, act, layer_summary
 
 
 def wd_op(self, it_dict, act, layer_summary, reg_mod, eRFs, target):
@@ -149,7 +149,7 @@ def wd_op(self, it_dict, act, layer_summary, reg_mod, eRFs, target):
         layer_summary = update_summary(
             layer_summary=layer_summary,
             op_name=wd_type)
-    return act, layer_summary
+    return self, act, layer_summary
 
 
 def dropout_op(self, it_dict, act, layer_summary, reg_mod, eRFs, target):
@@ -161,7 +161,7 @@ def dropout_op(self, it_dict, act, layer_summary, reg_mod, eRFs, target):
         layer_summary = update_summary(
             layer_summary=layer_summary,
             op_name=['dropout_%s' % dropout_prop])
-    return act, layer_summary
+    return self, act, layer_summary
 
 
 def activ_op(self, it_dict, act, layer_summary, activ_mod, eRFs, target):
@@ -173,7 +173,7 @@ def activ_op(self, it_dict, act, layer_summary, activ_mod, eRFs, target):
         layer_summary = update_summary(
             layer_summary=layer_summary,
             op_name=activation)
-    return act, layer_summary
+    return self, act, layer_summary
 
 
 def norm_op(self, it_dict, act, layer_summary, norm_mod, eRFs, target):
@@ -181,13 +181,58 @@ def norm_op(self, it_dict, act, layer_summary, norm_mod, eRFs, target):
     if 'normalization_target' in it_dict.keys() and \
             it_dict['normalization_target'][0] == target:
         normalization = it_dict['normalization'][0]
+        if 'normalization_aux' in it_dict:
+            aux = it_dict['normalization_aux']
+        else:
+            aux = None
         if len(it_dict['names']) > 1:
             raise RuntimeError('TODO: Fix implementation for multiple names.')
-        act = norm_mod[normalization](act, layer=it_dict, eRF=eRFs[it_dict['names'][0]])
+        act, weights = norm_mod[normalization](act, layer=it_dict, eRF=eRFs[it_dict['names'][0]], aux=aux)
+        if weights is not None:
+            self = attach_weights(self, weights, layer_name=it_dict['names'][0])
+        self = attach_regularizations(self, weights, aux, layer_name=it_dict['names'][0])        
         layer_summary = update_summary(
             layer_summary=layer_summary,
             op_name=normalization)
-    return act, layer_summary
+    return self, act, layer_summary
+
+
+def attach_weights(self, weights, layer_name):
+    """Attach weights to model."""
+    for k, v in weights.iteritems():
+        if '_b' in k:
+            w_or_b = 1
+        else:
+            w_or_b = 0
+        it_key = ('%s_%s' % (layer_name, k), w_or_b)
+        self.var_dict[it_key] = v
+    return self
+
+
+def attach_regularizations(self, weights, aux, layer_name, it_dict=None, side=None):
+    """Attach regularizations. TODO combine this and other reg. interface."""
+    if it_dict is not None and 'wd_type' in it_dict:
+        # Regularization of model layers
+        target = it_dict['wd_target'][0]
+        wd_type = it_dict['wd_type'][0]
+        reg_strength = it_dict['wd_strength'][0]
+        if target == side and wd_type is not None:
+            it_key = '%s_%s' % (layer_name, k)
+            self.regularizations[it_key] = {
+                'weight': weights,
+                'regularization_type': wd_type,
+                'regularization_stregth': reg_strength
+            }
+    if aux is not None:
+        # Auxillary regularizations
+        for k, v in weights.iteritems():
+            it_key = '%s_%s' % (layer_name, k)
+            self.regularizations[it_key] = {
+                'weight': v,
+                'regularization_type': aux['regularization_type'],
+                'regularization_strength': aux['regularization_strength']
+            }
+    return self
 
 
 def create_conv_tower(
@@ -213,21 +258,22 @@ def create_conv_tower(
         for it_dict in layer_structure:
             it_name = it_dict['names'][0]
             it_neuron_op = it_dict['layers'][0]
-            act, layer_summary = flatten_op(
+            self, act, layer_summary = flatten_op(
                 self,
                 it_dict,
                 act,
                 layer_summary,
                 eRFs=eRFs,
                 target='pre')
-            act, layer_summary = wd_op(
-                self,
-                it_dict,
-                act, layer_summary,
-                reg_mod,
-                eRFs=eRFs,
-                target='pre')
-            act, layer_summary = dropout_op(
+            self = attach_regularizations(self, act, aux=None, layer_name=None, it_dict=it_dict, side='pre')
+            # self, act, layer_summary = wd_op(
+            #     self,
+            #     it_dict,
+            #     act, layer_summary,
+            #     reg_mod,
+            #     eRFs=eRFs,
+            #     target='pre')
+            self, act, layer_summary = dropout_op(
                 self,
                 it_dict,
                 act,
@@ -235,7 +281,7 @@ def create_conv_tower(
                 reg_mod,
                 eRFs=eRFs,
                 target='pre')
-            act, layer_summary = activ_op(
+            self, act, layer_summary = activ_op(
                 self,
                 it_dict,
                 act,
@@ -243,7 +289,7 @@ def create_conv_tower(
                 activ_mod,
                 eRFs=eRFs,
                 target='pre')
-            act, layer_summary = norm_op(
+            self, act, layer_summary = norm_op(
                 self,
                 it_dict,
                 act,
@@ -280,7 +326,7 @@ def create_conv_tower(
             layer_summary = update_summary(
                 layer_summary=layer_summary,
                 op_name=it_dict['layers'])
-            act, layer_summary = norm_op(
+            self, act, layer_summary = norm_op(
                 self,
                 it_dict,
                 act,
@@ -288,7 +334,7 @@ def create_conv_tower(
                 norm_mod,
                 eRFs=eRFs,
                 target='post')
-            act, layer_summary = activ_op(
+            self, act, layer_summary = activ_op(
                 self,
                 it_dict,
                 act,
@@ -296,7 +342,7 @@ def create_conv_tower(
                 activ_mod,
                 eRFs=eRFs,
                 target='post')
-            act, layer_summary = dropout_op(
+            self, act, layer_summary = dropout_op(
                 self,
                 it_dict,
                 act,
@@ -304,14 +350,15 @@ def create_conv_tower(
                 reg_mod,
                 eRFs=eRFs,
                 target='post')
-            act, layer_summary = wd_op(
-                self,
-                it_dict,
-                act, layer_summary,
-                reg_mod,
-                eRFs=eRFs,
-                target='post')
-            act, layer_summary = flatten_op(
+            # self, act, layer_summary = wd_op(
+            #     self,
+            #     it_dict,
+            #     act, layer_summary,
+            #     reg_mod,
+            #     eRFs=eRFs,
+            #     target='post')
+            self = attach_regularizations(self, act, aux=None, layer_name=None, it_dict=it_dict, side='pre')
+            self, act, layer_summary = flatten_op(
                 self,
                 it_dict,
                 act,
@@ -320,4 +367,5 @@ def create_conv_tower(
                 target='post')
             setattr(self, it_name, act)
             print 'Added layer: %s' % it_name
-    return act, layer_summary
+    return self, act, layer_summary
+

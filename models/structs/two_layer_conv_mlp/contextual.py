@@ -10,13 +10,14 @@ layer_structure = [
         'normalization_target': ['post'],
         'normalization_aux': {
             'timesteps': 5,
-            'regularization_': 'l1',
-            'regulatization_stregth': 1e-4,
+            'regularization_type': 'l1',
+            'regularization_strength': 1e-4,
         },
         'activation': ['relu'],
         'activation_target': ['post'],
         'wd_target': ['pre'],
         'wd_type': [None],
+        'wd_strength': [1e-5]
     },
     {
         'layers': ['pool'],
@@ -33,6 +34,7 @@ layer_structure = [
         'activation_target': ['post'],
         'wd_target': ['pre'],
         'wd_type': [None],
+        'wd_strength': [1e-5]
     },
     {
         'layers': ['pool'],

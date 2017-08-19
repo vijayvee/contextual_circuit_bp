@@ -17,19 +17,19 @@ class normalizations(object):
 
     def __init__(self, kwargs=None):
         """Globals for normalization functions."""
-        self.timesteps = 5
+        self.timesteps = 3
         self.scale_CRF = True
         self.bias_CRF = True
         self.lesions = [None]
         self.training = None
         self.strides = [1, 1, 1, 1]
         self.padding = 'SAME'
-        if kwargs is not None:
-            self.update_params(**kwargs)
+        self.update_params(kwargs)
 
-    def update_params(self, **kwargs):
-        for k, v in kwargs.iteritems():
-            setattr(self, k, v)
+    def update_params(self, kwargs):
+        if kwargs is not None:
+            for k, v in kwargs.iteritems():
+                setattr(self, k, v)
 
     def set_RFs(
             self,
@@ -82,8 +82,9 @@ class normalizations(object):
         else:
             self.SSF = SSF
 
-    def contextual(self, x, layer, eRF):
+    def contextual(self, x, layer, eRF, aux):
         """Contextual model from paper with learnable weights."""
+        self.update_params(aux)
         self.set_RFs(layer=layer, eRF=eRF)
         contextual_layer = contextual.ContextualCircuit(
             X=x,
@@ -96,8 +97,9 @@ class normalizations(object):
             padding=self.padding)
         return contextual_layer.build()
 
-    def contextual_rnn(self, x, layer, eRF):
+    def contextual_rnn(self, x, layer, eRF, aux):
         """Contextual model translated into a RNN architecture."""
+        self.update_params(aux)
         self.set_RFs(layer=layer, eRF=eRF)
         contextual_layer = contextual_rnn.ContextualCircuit(
             X=x,
@@ -110,8 +112,9 @@ class normalizations(object):
             padding=self.padding)
         return contextual_layer.build()
 
-    def divisive_2d(self, x, layer, eRF):
+    def divisive_2d(self, x, layer, eRF, aux):
         """Divisive normalization 2D."""
+        self.update_params(aux)
         self.set_RFs(layer=layer, eRF=eRF)
         return div_norm.div_norm_2d(
             x,
@@ -120,48 +123,53 @@ class normalizations(object):
             gamma=self.scale_CRF,
             beta=self.bias_CRF,
             strides=self.strides,
-            padding=self.padding)
+            padding=self.padding), None
 
-    def divisive_1d(self, x, layer, eRF):
+    def divisive_1d(self, x, layer, eRF, aux):
         """Divisive normalization 2D."""
+        self.update_params(aux)
         self.set_RFs(layer=layer, eRF=eRF)
         return div_norm.div_norm_1d(
             x,
             sum_window=self.CRF_excitation,
             sup_window=self.CRF_inhibition,
             gamma=self.scale_CRF,
-            beta=self.bias_CRF)
+            beta=self.bias_CRF), None
 
-    def batch(self, x, layer, eRF):
+    def batch(self, x, layer, eRF, aux):
         """Batch normalization."""
+        self.update_params(aux)
         return tf.layers.batch_normalization(
             x,
             scale=self.scale_CRF,
             center=self.bias_CRF,
-            training=self.training)
+            training=self.training), None
 
-    def batch_renorm(self, x, layer, eRF):
+    def batch_renorm(self, x, layer, eRF, aux):
         """Batch re-normalization."""
+        self.update_params(aux)
         return tf.layers.batch_normalization(
             x,
             scale=self.scale_CRF,
             center=self.bias_CRF,
             training=self.training,
-            renorm=True)
+            renorm=True), None
 
-    def layer(self, x, layer, eRF):
+    def layer(self, x, layer, eRF, aux):
         """Layer normalization."""
+        self.update_params(aux)
         return layer_norm.layer_norm(
             x,
             gamma=self.scale_CRF,
-            beta=self.bias_CRF)
+            beta=self.bias_CRF), None
 
-    def lrn(self, x, layer, eRF):
+    def lrn(self, x, layer, eRF, aux):
         """Local response normalization."""
+        self.update_params(aux)
         self.set_RFs(layer=layer, eRF=eRF)
         return tf.nn.local_response_normalization(
             x,
             depth_radius=self.CRF_inhibition,
             alpha=self.scale_CRF,
-            beta=self.bias_CRF)
+            beta=self.bias_CRF), None
 

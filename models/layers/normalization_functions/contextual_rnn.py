@@ -547,6 +547,14 @@ class ContextualCircuit():
         """While loop halting condition."""
         return i0 < self.timesteps
 
+    def gather_weights(self):
+        weights = {}
+        for k, v in self.weight_dict.iteritems():
+            for wk, wv in v.iteritems():
+                if hasattr(self, wv['weight']):
+                    weights['%s_%s' % (k, wk)] = self[wv['weight']]
+        return weights
+
     def build(self, reduce_memory=False):
         """Run the backprop version of the CCircuit."""
         self.prepare_tensors()
@@ -594,4 +602,9 @@ class ContextualCircuit():
 
             # Prepare output
             i0, O, I = returned  # i0, O, I
-        return O
+        if self.return_weights:
+            weights = self.gather_weights()
+            return O, weights
+        else:
+            return O
+

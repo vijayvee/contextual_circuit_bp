@@ -52,12 +52,26 @@ def loss_interpreter(
 
 
 def wd_loss(
-        model,
+        regularizations,
         loss,
         wd_penalty):
     """Calculate weight decay loss and add it to the main loss."""
-    regs = [model[v] for k, v in model.regularizations.iteritems()]
-    return loss + (wd_penalty * tf.add_n(regs))
+    regs = []
+    for k, v in regularizations.iteritems():
+        lt = v['regularization_type']
+        ls = v['regularization_strength']
+        lw = v['weight']
+        regs += [interpret_reg_loss(lw, lt) * ls]
+    return loss + tf.add_n(regs)
+
+
+def interpret_reg_loss(weight, loss_type):
+    if loss_type == 'l2':
+        return tf.nn.l2_loss(weight)
+    elif loss_type == 'l1':
+        return tf.reduce_sum(tf.abs(weight))
+    else:
+        raise RuntimeError('Cannot understand regularization type.')
 
 
 def cce(logits, labels, weights=None):
