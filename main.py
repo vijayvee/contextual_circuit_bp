@@ -154,13 +154,16 @@ def main(experiment_name, list_experiments=False):
 
     # Prepare model on GPU
     struct_name = config.model_struct.split(os.path.sep)[-1]
-    model_dict = py_utils.import_module(
-        dataset=struct_name,
-        model_dir=os.path.join(
-            'models',
-            'structs',
-            experiment_name).replace(os.path.sep, '.')
-        )
+    try:
+        model_dict = py_utils.import_module(
+            dataset=struct_name,
+            model_dir=os.path.join(
+                'models',
+                'structs',
+                experiment_name).replace(os.path.sep, '.')
+            )
+    except e:
+        raise RuntimeError('Could not find the specify model structure: %s' % e)
     with tf.device('/gpu:0'):
         with tf.variable_scope('cnn') as scope:
 

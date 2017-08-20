@@ -44,6 +44,7 @@ class experiments():
                 os.path.join(model_folder, 'layer'),
                 os.path.join(model_folder, 'lrn'),
                 os.path.join(model_folder, 'contextual'),
+                os.path.join(model_folder, 'contextual_frozen_connectivity'),
                 os.path.join(model_folder, 'contextual_rnn_1'),
                 os.path.join(model_folder, 'contextual_rnn_2'),
                 os.path.join(model_folder, 'contextual_rnn_3'),

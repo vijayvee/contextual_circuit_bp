@@ -22,7 +22,8 @@ class ContextualCircuit():
             SSF=29,
             strides=[1, 1, 1, 1],
             padding='SAME',
-            dtype=tf.float32):
+            dtype=tf.float32,
+            return_weights=True):
 
         self.X = X
         self.n, self.h, self.w, self.k = [int(x) for x in X.get_shape()]
@@ -49,6 +50,7 @@ class ContextualCircuit():
         self.i_nl = tf.nn.relu  # input non linearity
         self.o_nl = tf.nn.relu  # output non linearity
 
+        self.return_weights = return_weights
         self.normal_initializer = False
         if self.SSN is None:
             self.SSN = self.SRF * 3

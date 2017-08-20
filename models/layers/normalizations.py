@@ -5,6 +5,7 @@ from models.layers.normalization_functions import div_norm
 from models.layers.normalization_functions import layer_norm
 from models.layers.normalization_functions import contextual
 from models.layers.normalization_functions import contextual_rnn
+from models.layers.normalization_functions import contextual_frozen_connectivity
 
 
 class normalizations(object):
@@ -87,6 +88,21 @@ class normalizations(object):
         self.update_params(aux)
         self.set_RFs(layer=layer, eRF=eRF)
         contextual_layer = contextual.ContextualCircuit(
+            X=x,
+            timesteps=self.timesteps,
+            lesions=self.lesions,
+            SRF=self.SRF,
+            SSN=self.SSN,
+            SSF=self.SSF,
+            strides=self.strides,
+            padding=self.padding)
+        return contextual_layer.build()
+
+    def contextual_frozen_connectivity(self, x, layer, eRF, aux):
+        """Contextual model from paper with learnable weights and frozen eCRFs."""
+        self.update_params(aux)
+        self.set_RFs(layer=layer, eRF=eRF)
+        contextual_layer = contextual_frozen_connectivity.ContextualCircuit(
             X=x,
             timesteps=self.timesteps,
             lesions=self.lesions,
