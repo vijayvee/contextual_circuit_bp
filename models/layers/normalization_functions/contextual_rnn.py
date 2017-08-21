@@ -549,12 +549,12 @@ class ContextualCircuit():
         """While loop halting condition."""
         return i0 < self.timesteps
 
-    def gather_weights(self):
+    def gather_tensors(self, wak='weight'):
         weights = {}
         for k, v in self.weight_dict.iteritems():
             for wk, wv in v.iteritems():
-                if hasattr(self, wv['weight']):
-                    weights['%s_%s' % (k, wk)] = self[wv['weight']]
+                if hasattr(self, wv[wak]):
+                    weights['%s_%s' % (k, wk)] = self[wv[wak]]
         return weights
 
     def build(self, reduce_memory=False):
@@ -605,8 +605,8 @@ class ContextualCircuit():
             # Prepare output
             i0, O, I = returned  # i0, O, I
         if self.return_weights:
-            weights = self.gather_weights()
-            return O, weights
+            weights = self.gather_tensors(wak='weight')
+            activities = self.gather_tensors(wak='activity')
+            return O, weights, activities
         else:
             return O
-

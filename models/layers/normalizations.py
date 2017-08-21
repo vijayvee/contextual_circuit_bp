@@ -7,6 +7,7 @@ from models.layers.normalization_functions import contextual
 from models.layers.normalization_functions import contextual_rnn
 from models.layers.normalization_functions import contextual_frozen_connectivity
 from models.layers.normalization_functions import contextual_frozen_eCRF_connectivity
+from models.layers.normalization_functions import contextual_div_norm
 
 
 class normalizations(object):
@@ -144,6 +145,21 @@ class normalizations(object):
             padding=self.padding)
         return contextual_layer.build()
 
+    def contextual_div_norm_2d(self, x, layer, eRF, aux):
+        """Divisive normalization 2D."""
+        self.update_params(aux)
+        self.set_RFs(layer=layer, eRF=eRF)
+        return contextual_div_norm.contextual_div_norm_2d(
+            x,
+            CRF_sum_window=self.CRF_excitation,
+            CRF_sup_window=self.CRF_inhibition,
+            eCRF_sum_window=self.SSN,
+            eCRF_sup_window=self.SSF,
+            gamma=self.scale_CRF,
+            beta=self.bias_CRF,
+            strides=self.strides,
+            padding=self.padding), None, None
+
     def divisive_2d(self, x, layer, eRF, aux):
         """Divisive normalization 2D."""
         self.update_params(aux)
@@ -155,7 +171,7 @@ class normalizations(object):
             gamma=self.scale_CRF,
             beta=self.bias_CRF,
             strides=self.strides,
-            padding=self.padding), None
+            padding=self.padding), None, None
 
     def divisive_1d(self, x, layer, eRF, aux):
         """Divisive normalization 2D."""
@@ -166,7 +182,7 @@ class normalizations(object):
             sum_window=self.CRF_excitation,
             sup_window=self.CRF_inhibition,
             gamma=self.scale_CRF,
-            beta=self.bias_CRF), None
+            beta=self.bias_CRF), None, None
 
     def batch(self, x, layer, eRF, aux):
         """Batch normalization."""
@@ -175,7 +191,7 @@ class normalizations(object):
             x,
             scale=self.scale_CRF,
             center=self.bias_CRF,
-            training=self.training), None
+            training=self.training), None, None
 
     def batch_renorm(self, x, layer, eRF, aux):
         """Batch re-normalization."""
@@ -185,7 +201,7 @@ class normalizations(object):
             scale=self.scale_CRF,
             center=self.bias_CRF,
             training=self.training,
-            renorm=True), None
+            renorm=True), None, None
 
     def layer(self, x, layer, eRF, aux):
         """Layer normalization."""
@@ -193,7 +209,7 @@ class normalizations(object):
         return layer_norm.layer_norm(
             x,
             gamma=self.scale_CRF,
-            beta=self.bias_CRF), None
+            beta=self.bias_CRF), None, None
 
     def lrn(self, x, layer, eRF, aux):
         """Local response normalization."""
@@ -203,5 +219,4 @@ class normalizations(object):
             x,
             depth_radius=self.CRF_inhibition,
             alpha=self.scale_CRF,
-            beta=self.bias_CRF), None
-
+            beta=self.bias_CRF), None, None

@@ -13,11 +13,6 @@ layer_structure = [
             'regularization_type': 'l2',
             'regularization_strength': 1e-3,
         },
-        'activation': ['relu'],
-        'activation_target': ['post'],
-        'wd_target': ['pre'],
-        'wd_type': [None],
-        'wd_strength': [1e-5]
     },
     {
         'layers': ['pool'],

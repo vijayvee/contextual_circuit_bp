@@ -44,6 +44,7 @@ class experiments():
                 os.path.join(model_folder, 'layer'),
                 os.path.join(model_folder, 'lrn'),
                 os.path.join(model_folder, 'contextual'),
+                os.path.join(model_folder, 'contextual_div_norm'),
                 os.path.join(model_folder, 'contextual_l2'),
                 os.path.join(model_folder, 'contextual_frozen_connectivity_l2'),
                 os.path.join(model_folder, 'contextual_frozen_eCRF_connectivity_l2'),
@@ -59,7 +60,6 @@ class experiments():
                 os.path.join(model_folder, 'contextual_rnn_3_l2'),
                 os.path.join(model_folder, 'contextual_rnn_4_l2'),
                 os.path.join(model_folder, 'contextual_rnn_5_l2'),
-                # os.path.join(model_folder, 'contextual_rnn_no_relu'),
             ],
             'dataset': ['cifar_10']
         }

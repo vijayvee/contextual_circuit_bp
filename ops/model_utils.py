@@ -187,10 +187,20 @@ def norm_op(self, it_dict, act, layer_summary, norm_mod, eRFs, target):
             aux = None
         if len(it_dict['names']) > 1:
             raise RuntimeError('TODO: Fix implementation for multiple names.')
-        act, weights = norm_mod[normalization](act, layer=it_dict, eRF=eRFs[it_dict['names'][0]], aux=aux)
+        act, weights, activities = norm_mod[normalization](
+            act, layer=it_dict, eRF=eRFs[it_dict['names'][0]], aux=aux)
         if weights is not None:
-            self = attach_weights(self, weights, layer_name=it_dict['names'][0])
-        self = attach_regularizations(self, weights, aux, layer_name=it_dict['names'][0])        
+            self = attach_weights(
+                self,
+                weights,
+                layer_name=it_dict['names'][0])
+            # TODO: Attach activities too.
+        self = attach_regularizations(
+            self,
+            weights,
+            activities,
+            aux,
+            layer_name=it_dict['names'][0])
         layer_summary = update_summary(
             layer_summary=layer_summary,
             op_name=normalization)
@@ -209,28 +219,50 @@ def attach_weights(self, weights, layer_name):
     return self
 
 
-def attach_regularizations(self, weights, aux, layer_name, it_dict=None, side=None):
+def attach_regularizations(
+        self,
+        weights,
+        activities,
+        aux,
+        layer_name,
+        it_dict=None,
+        side=None,
+        a_or_w='weights'):
     """Attach regularizations. TODO combine this and other reg. interface."""
-    if it_dict is not None and 'wd_type' in it_dict:
+    if it_dict is not None and 'regularization_type' in it_dict:
         # Regularization of model layers
-        target = it_dict['wd_target'][0]
-        wd_type = it_dict['wd_type'][0]
-        reg_strength = it_dict['wd_strength'][0]
+        target = it_dict['regularization_target'][0]
+        wd_type = it_dict['regularization_type'][0]
         if target == side and wd_type is not None:
-            it_key = '%s_%s' % (layer_name, k)
+            reg_strength = it_dict['regularization_strength'][0]
+            if 'regularization_activities_or_weights' in it_dict.keys():
+                a_or_w = it_dict['regularization_activities_or_weights']
+            if a_or_w == 'weights':
+                weights = self.var_dict[('%s' % layer_name, 0)]
+            else:
+                weights = activities
+            it_key = '%s_%s_%s' % (layer_name, side, a_or_w)
             self.regularizations[it_key] = {
                 'weight': weights,
                 'regularization_type': wd_type,
-                'regularization_stregth': reg_strength
+                'regularization_strength': reg_strength
             }
-    if aux is not None:
+    if aux is not None and 'regularization_type' in aux.keys():
         # Auxillary regularizations
+        wd_type = aux['regularization_type']
+        reg_strength = aux['regularization_strength']
+        if 'regularization_activities_or_weights' in aux.keys():
+            a_or_w = aux['regularization_activities_or_weights']
+        if a_or_w == 'weights':
+            pass
+        else:
+            weights = activities
         for k, v in weights.iteritems():
             it_key = '%s_%s' % (layer_name, k)
             self.regularizations[it_key] = {
                 'weight': v,
-                'regularization_type': aux['regularization_type'],
-                'regularization_strength': aux['regularization_strength']
+                'regularization_type': wd_type,
+                'regularization_strength': reg_strength
             }
     return self
 
@@ -265,7 +297,14 @@ def create_conv_tower(
                 layer_summary,
                 eRFs=eRFs,
                 target='pre')
-            self = attach_regularizations(self, act, aux=None, layer_name=None, it_dict=it_dict, side='pre')
+            self = attach_regularizations(
+                self,
+                weights=None,
+                activities=act,
+                aux=None,
+                layer_name=None,
+                it_dict=it_dict,
+                side='pre')
             # self, act, layer_summary = wd_op(
             #     self,
             #     it_dict,
@@ -357,7 +396,14 @@ def create_conv_tower(
             #     reg_mod,
             #     eRFs=eRFs,
             #     target='post')
-            self = attach_regularizations(self, act, aux=None, layer_name=None, it_dict=it_dict, side='pre')
+            self = attach_regularizations(
+                self,
+                weights=None,
+                activities=act,
+                aux=None,
+                layer_name=None,
+                it_dict=it_dict,
+                side='post')
             self, act, layer_summary = flatten_op(
                 self,
                 it_dict,
@@ -368,4 +414,3 @@ def create_conv_tower(
             setattr(self, it_name, act)
             print 'Added layer: %s' % it_name
     return self, act, layer_summary
-
