@@ -5,12 +5,14 @@ from db import db
 from db import credentials
 from utils import logger
 from config import Config
-from models.experiments import experiments
+from experiments import experiments
 
 
 def package_parameters(parameter_dict, log):
     """Derive combinations of experiment parameters."""
-    parameter_dict = {k: v for k, v in parameter_dict.iteritems() if isinstance(v, list)}
+    parameter_dict = {
+        k: v for k, v in parameter_dict.iteritems() if isinstance(v, list)
+        }
     keys_sorted = sorted(parameter_dict)
     values = list(it.product(*(parameter_dict[key] for key in keys_sorted)))
     combos = tuple({k: v for k, v in zip(keys_sorted, row)} for row in values)

@@ -10,6 +10,7 @@ from __future__ import (absolute_import, division, print_function,
 
 import numpy as np
 import tensorflow as tf
+from utils import py_utils
 
 
 def contextual_div_norm_2d(
@@ -53,40 +54,78 @@ def contextual_div_norm_2d(
         eCRF_sum_window = list(np.repeat(eCRF_sum_window, 2))
     if not isinstance(eCRF_sup_window, list):
         eCRF_sup_window = list(np.repeat(eCRF_sup_window, 2))
+    k = int(x.get_shape()[-1])
     with tf.variable_scope(scope):
-        w_sum = tf.ones(
-            CRF_sum_window + [1, 1]) / np.prod(np.array(CRF_sum_window))
-        w_sup = tf.ones(
-            CRF_sup_window + [1, 1]) / np.prod(np.array(CRF_sup_window))
-        w_esum = tf.ones(
-            eCRF_sum_window + [1, 1]) / np.prod(np.array(eCRF_sum_window))
-        w_esup = tf.ones(
-            eCRF_sup_window + [1, 1]) / np.prod(np.array(eCRF_sup_window))
-        x_mean = tf.reduce_mean(x, [3], keep_dims=True)
+
+        # Q
+        q_array = np.ones((CRF_sum_window + [k, k]))
+        q_array /= q_array.sum()
+        w_sum = tf.cast(tf.constant(q_array), tf.float32)
+        # U
+        u_array = np.ones((CRF_sum_window + [k, 1]))
+        u_array /= u_array.sum()
+        w_sup = tf.cast(tf.constant(u_array), tf.float32)
+        CRF_sum_window = CRF_sum_window[0]
+        CRF_sup_window = CRF_sup_window[0]
+        # P
+        p_shape = eCRF_sum_window + [k, k]
+        eCRF_sum_window = eCRF_sum_window[0]
+        p_array = np.zeros(p_shape)
+        for pdx in range(k):
+            p_array[:eCRF_sum_window, :eCRF_sum_window, pdx, pdx] = 1.0
+        p_array[
+            eCRF_sum_window // 2 - py_utils.ifloor(
+                CRF_sum_window / 2.0):eCRF_sum_window // 2 + py_utils.iceil(
+                CRF_sum_window / 2.0),
+            CRF_sum_window // 2 - py_utils.ifloor(
+                CRF_sum_window / 2.0):eCRF_sum_window // 2 + py_utils.iceil(
+                CRF_sum_window / 2.0),
+            :,  # exclude CRF!
+            :] = 0.0
+        w_esum = tf.cast(
+            tf.constant(p_array) / p_array.sum(), tf.float32)
+
+        # T
+        t_shape = eCRF_sup_window + [k, k]
+        eCRF_sup_window = eCRF_sup_window[0]
+        t_array = np.zeros(t_shape)
+        for tdx in range(k):
+            t_array[:eCRF_sup_window, :eCRF_sup_window, tdx, tdx] = 1.0
+        t_array[
+            eCRF_sup_window // 2 - py_utils.ifloor(
+                CRF_sup_window / 2.0):eCRF_sup_window // 2 + py_utils.iceil(
+                CRF_sup_window / 2.0),
+            eCRF_sup_window // 2 - py_utils.ifloor(
+                CRF_sup_window / 2.0):eCRF_sup_window // 2 + py_utils.iceil(
+                CRF_sup_window / 2.0),
+            :,  # exclude near surround!
+            :] = 0.0
+
+        w_esup = tf.cast(
+            tf.constant(t_array) / t_array.sum(), tf.float32)
 
         # SUM
         x_mean_CRF = tf.nn.conv2d(
-            x_mean,
+            x,
             w_sum,
             strides=strides,
             padding=padding)
         x_mean_eCRF = tf.nn.conv2d(
-            x_mean,
+            x,
             w_esum,
             strides=strides,
             padding=padding)
         normed = x - x_mean_CRF - x_mean_eCRF
         x2 = tf.square(normed)
-        x2_mean = tf.reduce_mean(x2, [3], keep_dims=True)
 
         # SUP
         x2_mean_CRF = tf.nn.conv2d(
-            x2_mean,
+            x2,
             w_sup,
             strides=strides,
             padding=padding)
         x2_mean_eCRF = tf.nn.conv2d(
-            x2_mean,
+            x2,
             w_esup,
             strides=strides,
             padding=padding)
@@ -98,6 +137,6 @@ def contextual_div_norm_2d(
             normed += beta
     normed = tf.identity(normed, name=name)
     if return_mean:
-        return normed, x_mean
+        return normed, x2
     else:
         return normed

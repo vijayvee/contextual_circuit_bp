@@ -136,22 +136,6 @@ def flatten_op(self, it_dict, act, layer_summary, eRFs, target):
     return self, act, layer_summary
 
 
-def wd_op(self, it_dict, act, layer_summary, reg_mod, eRFs, target):
-    """Wrapper for a weight decay operation in a graph."""
-    it_name = it_dict['names'][0]
-    if 'wd_target' in it_dict.keys() and \
-            it_dict['wd_type'][0] is not None and \
-            it_dict['wd_target'][0] == target:
-        wd_type = it_dict['wd_type'][0]
-        self.regularizations['%s_%s' % (
-            it_name, target)] = reg_mod[
-                wd_type](act)
-        layer_summary = update_summary(
-            layer_summary=layer_summary,
-            op_name=wd_type)
-    return self, act, layer_summary
-
-
 def dropout_op(self, it_dict, act, layer_summary, reg_mod, eRFs, target):
     """Wrapper for a dropout operation in a graph."""
     if 'dropout_target' in it_dict.keys() and \
@@ -305,13 +289,6 @@ def create_conv_tower(
                 layer_name=None,
                 it_dict=it_dict,
                 side='pre')
-            # self, act, layer_summary = wd_op(
-            #     self,
-            #     it_dict,
-            #     act, layer_summary,
-            #     reg_mod,
-            #     eRFs=eRFs,
-            #     target='pre')
             self, act, layer_summary = dropout_op(
                 self,
                 it_dict,
@@ -389,13 +366,6 @@ def create_conv_tower(
                 reg_mod,
                 eRFs=eRFs,
                 target='post')
-            # self, act, layer_summary = wd_op(
-            #     self,
-            #     it_dict,
-            #     act, layer_summary,
-            #     reg_mod,
-            #     eRFs=eRFs,
-            #     target='post')
             self = attach_regularizations(
                 self,
                 weights=None,

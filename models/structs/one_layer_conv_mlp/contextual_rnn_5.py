@@ -15,7 +15,7 @@ layer_structure = [
         # 'activation_target': ['post'],
         'regularization_target': ['post'],
         'regularization_type': ['l1'],
-        'regularization_strength': [1e-3],
+        'regularization_strength': [1e-5],
         'regularization_activities_or_weights': 'activities',
     },
     {

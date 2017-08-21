@@ -11,7 +11,7 @@ layer_structure = [
         'normalization_aux': {
             'timesteps': 5,
             'regularization_type': 'l2',
-            'regularization_strength': 1e-3,
+            'regularization_strength': 1e-5,
         },
     },
     {
