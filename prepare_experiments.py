@@ -28,7 +28,7 @@ def main(reset_process, initialize_db, experiment_name):
     if initialize_db:
         db.initialize_database()
         log.info('Initialized DB.')
-    if experiment_name is not None:
+    if experiment_name is not None:  # TODO: add capability for bayesian opt.
         db_config = credentials.postgresql_connection()
         experiment_dict = experiments()[experiment_name]()
         exp_combos = package_parameters(experiment_dict, log)

@@ -96,9 +96,9 @@ class db(object):
         self.cur.executemany(
             """
             INSERT INTO experiments
-            (experiment_name, model_struct, loss_function, wd_type, wd_penalty, optimizer, lr, dataset)
+            (experiment_name, model_struct, loss_function, regularization_type, regularization_strength, optimizer, lr, dataset)
             VALUES
-            (%(experiment_name)s, %(model_struct)s, %(loss_function)s, %(wd_type)s, %(wd_penalty)s, %(optimizer)s, %(lr)s, %(dataset)s)
+            (%(experiment_name)s, %(model_struct)s, %(loss_function)s, %(regularization_type)s, %(regularization_strength)s, %(optimizer)s, %(lr)s, %(dataset)s)
             """,
             namedict)
         if self.status_message:

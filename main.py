@@ -32,6 +32,7 @@ def add_to_config(d, config):
 
 
 def process_DB_exps(experiment_name, log, config):
+    # TODO: Add bayesian optimization here.
     exp_params, exp_id = db.get_parameters(
         experiment_name=experiment_name,
         log=log)
