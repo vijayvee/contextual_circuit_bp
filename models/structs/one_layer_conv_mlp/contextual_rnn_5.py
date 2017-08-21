@@ -11,7 +11,7 @@ layer_structure = [
         'normalization_aux': {
             'timesteps': 5,
             'regularization_type': 'l1',
-            'regularization_strength': 1e-4,
+            'regularization_strength': 1e-3,
         },
         'activation': ['relu'],
         'activation_target': ['post'],

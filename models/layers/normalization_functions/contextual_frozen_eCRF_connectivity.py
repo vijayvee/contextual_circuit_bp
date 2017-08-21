@@ -131,15 +131,16 @@ class ContextualCircuit(object):
 
         # untuned suppression: reduction across feature axis
         ####################################################
-        u_array = 1.0/self.k * np.ones((1, 1, self.k, 1))
         setattr(
             self,
             self.weight_dict['U']['r']['weight'],
             tf.get_variable(
                 name=self.weight_dict['U']['r']['weight'],
                 dtype=self.dtype,
-                initializer=u_array.astype(np.float32),
-                trainable=False))
+                initializer=initialization.xavier_initializer(
+                    shape=self.u_shape,
+                    uniform=self.normal_initializer,
+                    mask=None)))
 
         # tuned summation: pooling in h, w dimensions
         #############################################

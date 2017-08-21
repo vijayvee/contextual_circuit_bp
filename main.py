@@ -162,8 +162,8 @@ def main(experiment_name, list_experiments=False):
                 'structs',
                 experiment_name).replace(os.path.sep, '.')
             )
-    except e:
-        raise RuntimeError('Could not find the specify model structure: %s' % e)
+    except IOError:
+        print 'Could not find the model structure: %s' % experiment_name
     with tf.device('/gpu:0'):
         with tf.variable_scope('cnn') as scope:
 

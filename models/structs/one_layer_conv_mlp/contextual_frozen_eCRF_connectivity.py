@@ -6,10 +6,10 @@ layer_structure = [
         'weights': [64],
         'names': ['conv1_1'],
         'filter_size': [3],
-        'normalization': ['contextual_rnn'],
+        'normalization': ['contextual_frozen_eCRF_connectivity'],
         'normalization_target': ['post'],
         'normalization_aux': {
-            'timesteps': 1,
+            'timesteps': 5,
             'regularization_type': 'l1',
             'regularization_strength': 1e-3,
         },
@@ -24,5 +24,5 @@ layer_structure = [
         'weights': [None],
         'names': ['pool1'],
         'filter_size': [None]
-    },
+    }
 ]

@@ -9,8 +9,8 @@ layer_structure = [
         'normalization': ['contextual_rnn'],
         'normalization_target': ['post'],
         'normalization_aux': {
-            'timesteps': 1,
-            'regularization_type': 'l1',
+            'timesteps': 2,
+            'regularization_type': 'l2',
             'regularization_strength': 1e-3,
         },
         'activation': ['relu'],

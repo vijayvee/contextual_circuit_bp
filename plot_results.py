@@ -14,7 +14,8 @@ def main(
         experiment_name,
         im_ext='.pdf',
         val_score='val accuracy',
-        log_transform_loss=True):
+        log_transform_loss=True,
+        colors='Greens_r'):
     """Plot results of provided experiment name."""
     config = Config()
 
@@ -73,14 +74,13 @@ def main(
     df['training iteration'] = pd.to_numeric(df['training iteration'])
     df['training loss'] = pd.to_numeric(df['training loss'])
     if log_transform_loss:
-        loss_label = 'Log transformed loss'
+        loss_label = 'Log loss'
         df['training loss'] = np.log(df['training loss'])
     else:
         loss_label = 'Normalized loss (x / max(x))'
         df['training loss'] /= df.groupby(
             'model parameters')['training loss'].transform(max)
     df['validation loss'] = pd.to_numeric(df[val_score]) * 100.
-    sns.set_palette(sns.color_palette("colorblind", 100))
     plt.rc('font', size=8)
     f, axs = plt.subplots(2, figsize=(20, 30))
     ax = sns.pointplot(
@@ -91,7 +91,8 @@ def main(
         estimator=np.sum,
         data=df,
         ax=axs[0],
-        scale=.25)
+        scale=.25,
+        pallette=colors)
     plt.setp(ax.xaxis.get_majorticklabels(), rotation=30)
     ax.xaxis.set_major_locator(MaxNLocator(integer=True))
     ax.set_title('Training')
@@ -104,7 +105,8 @@ def main(
         estimator=np.sum,
         data=df,
         ax=axs[1],
-        scale=.25)
+        scale=.25,
+        pallette=colors)
     plt.setp(ax.xaxis.get_majorticklabels(), rotation=30)
     ax.xaxis.set_major_locator(MaxNLocator(integer=True))
     ax.set_title('Validation')

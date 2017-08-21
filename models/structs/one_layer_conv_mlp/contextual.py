@@ -9,7 +9,7 @@ layer_structure = [
         'normalization': ['contextual'],
         'normalization_target': ['post'],
         'normalization_aux': {
-            'timesteps': 3,
+            'timesteps': 5,
             'regularization_type': 'l1',
             'regularization_strength': 1e-3,
         },
