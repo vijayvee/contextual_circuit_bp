@@ -172,19 +172,6 @@ class ContextualCircuit(object):
 
         }
 
-        self.xi = tf.get_variable(name='xi', initializer=1.)
-        self.alpha = tf.get_variable(name='alpha', initializer=1.)
-        self.beta = tf.get_variable(name='beta', initializer=1.)
-        self.mu = tf.get_variable(name='mu', initializer=1.)
-        self.nu = tf.get_variable(name='nu', initializer=1.)
-        self.zeta = tf.get_variable(name='zeta', initializer=1.)
-        self.gamma = tf.get_variable(name='gamma', initializer=1.)
-        self.delta = tf.get_variable(name='delta', initializer=1.)
-        self.eps = tf.get_variable(name='eps', initializer=1.)
-        self.eta = tf.get_variable(name='eta', initializer=1.)
-        self.sig = tf.get_variable(name='sig', initializer=1.)
-        self.tau = tf.get_variable(name='tau', initializer=1.)
-
         # tuned summation: pooling in h, w dimensions
         #############################################
         setattr(
@@ -335,8 +322,9 @@ class ContextualCircuit(object):
         weights = {}
         for k, v in self.weight_dict.iteritems():
             for wk, wv in v.iteritems():
-                if hasattr(self, wv[wak]):
+                if wak in wv.keys() and hasattr(self, wv[wak]):
                     weights['%s_%s' % (k, wk)] = self[wv[wak]]
+
         return weights
 
     def build(self, reduce_memory=False):

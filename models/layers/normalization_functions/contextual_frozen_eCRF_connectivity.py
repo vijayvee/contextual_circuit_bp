@@ -267,8 +267,9 @@ class ContextualCircuit(object):
         weights = {}
         for k, v in self.weight_dict.iteritems():
             for wk, wv in v.iteritems():
-                if hasattr(self, wv[wak]):
+                if wak in wv.keys() and hasattr(self, wv[wak]):
                     weights['%s_%s' % (k, wk)] = self[wv[wak]]
+
         return weights
 
     def build(self, reduce_memory=False):
