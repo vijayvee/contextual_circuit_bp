@@ -3,6 +3,7 @@ import tensorflow as tf
 from scipy import misc
 from tqdm import tqdm
 from skimage import transform
+from utils import image_processing
 
 
 def load_image(f, im_size):
@@ -27,12 +28,21 @@ def create_example(data_dict):
     )
 
 
+def preprocess_image(image, preprocess, im_size):
+    if 'crop_center' in preprocess:
+        image = image_processing.crop_center(image, im_size)
+    elif 'resize' in preprocess:
+        image = image_processing.resize(image, im_size)
+    return image
+
+
 def data_to_tfrecords(
         files,
         labels,
         targets,
         ds_name,
-        im_size):
+        im_size,
+        preprocess):
     """Convert dataset to tfrecords."""
     print 'Building dataset: %s' % ds_name
     for idx, ((fk, fv), (lk, lv)) in enumerate(
@@ -46,6 +56,7 @@ def data_to_tfrecords(
             for it_f, it_l in tqdm(
                     zip(fv, lv), total=len(fv), desc='Building %s' % fk):
                 image = load_image(it_f, im_size).astype(np.float32)
+                image = preprocess_image(image, preprocess, im_size)
                 means += image
                 data_dict = {
                     'image': targets['image'](image.tostring()),

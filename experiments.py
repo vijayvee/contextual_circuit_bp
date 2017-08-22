@@ -48,6 +48,7 @@ class experiments():
                 os.path.join(model_folder, 'contextual_div_norm_no_reg'),
                 os.path.join(model_folder, 'contextual_l2'),
                 os.path.join(model_folder, 'contextual_frozen_connectivity_l2'),
+                os.path.join(model_folder, 'contextual_frozen_connectivity_l2_10'),
                 os.path.join(model_folder, 'contextual_frozen_eCRF_connectivity_l2'),
                 os.path.join(model_folder, 'contextual_frozen_connectivity_l2'),
                 os.path.join(model_folder, 'contextual_frozen_eCRF_connectivity_l2'),

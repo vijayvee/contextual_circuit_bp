@@ -13,7 +13,6 @@ from matplotlib.ticker import MaxNLocator
 def main(
         experiment_name,
         im_ext='.pdf',
-        val_score='val accuracy',
         log_transform_loss=True,
         colors='Greens_r'):
     """Plot results of provided experiment name."""
@@ -29,8 +28,8 @@ def main(
     datasets = [x['dataset'] for x in perf]
     loss_funs = [x['loss_function'] for x in perf]
     optimizers = [x['optimizer'] for x in perf]
-    wd_types = [x['wd_type'] for x in perf]
-    wd_penalties = [x['wd_penalty'] for x in perf]
+    wd_types = [x['regularization_type'] for x in perf]
+    wd_penalties = [x['regularization_strength'] for x in perf]
     steps = [float(x['training_step']) for x in perf]
     training_loss = [float(x['training_loss']) for x in perf]
     validation_loss = [float(x['validation_loss']) for x in perf]
@@ -68,11 +67,11 @@ def main(
             'model parameters',
             'training iteration',
             'training loss',
-            val_score
+            'validation loss'
             ]
         )
-    df['training iteration'] = pd.to_numeric(df['training iteration'])
-    df['training loss'] = pd.to_numeric(df['training loss'])
+    df['training iteration'] = pd.to_numeric(df['training iteration'], errors='coerce')
+    df['training loss'] = pd.to_numeric(df['training loss'], errors='coerce')
     if log_transform_loss:
         loss_label = 'Log loss'
         df['training loss'] = np.log(df['training loss'])
@@ -80,7 +79,7 @@ def main(
         loss_label = 'Normalized loss (x / max(x))'
         df['training loss'] /= df.groupby(
             'model parameters')['training loss'].transform(max)
-    df['validation loss'] = pd.to_numeric(df[val_score]) * 100.
+    df['validation loss'] = pd.to_numeric(df['validation loss']) * 100.
     plt.rc('font', size=8)
     f, axs = plt.subplots(2, figsize=(20, 30))
     ax = sns.pointplot(
@@ -99,7 +98,7 @@ def main(
     ax.set_ylabel(loss_label)
     ax = sns.pointplot(
         x='training iteration',
-        y=val_score,
+        y='validation loss',
         hue='model parameters',
         ci=None,
         estimator=np.sum,
@@ -110,6 +109,7 @@ def main(
     plt.setp(ax.xaxis.get_majorticklabels(), rotation=30)
     ax.xaxis.set_major_locator(MaxNLocator(integer=True))
     ax.set_title('Validation')
+    ax.set_ylabel('Categorization accuracy (%)')
     out_name = os.path.join(
         config.plots,
         '%s_%s%s' % (

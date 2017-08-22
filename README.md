@@ -46,7 +46,8 @@
 	a. Run a model with `CUDA_VISIBLE_DEVICES=0 python main.py --experiment={experiment_name}`.
 	b. If you forgot what experiments you've created use `python main.py --list_experiments` to list all in the DB.
 	c. Run a worker with `bash start_gpu_worker.sh`. Specify a GPU, then worker will continue until there are no more experiments to run in the DB.
-	d. Every worker will save tensorflow model checkpoints, tensorflow summaries that can be viewed in tensorboard, update the DB with its progress, and after finishing, will produce plots of the training performance.
+	d
+	. Every worker will save tensorflow model checkpoints, tensorflow summaries that can be viewed in tensorboard, update the DB with its progress, and after finishing, will produce plots of the training performance.
 
 ## Model construction:
 

@@ -113,8 +113,77 @@ class ContextualCircuit(object):
                     'weight': 'o_r',
                     'activity': 'O_r'
                 }
-            }
+            },
+            'xi': {
+                'r': {  # Recurrent state
+                    'weight': 'xi',
+                }
+            },
+            'alpha': {
+                'r': {  # Recurrent state
+                    'weight': 'alpha',
+                }
+            },
+            'beta': {
+                'r': {  # Recurrent state
+                    'weight': 'beta',
+                }
+            },
+            'mu': {
+                'r': {  # Recurrent state
+                    'weight': 'nu',
+                }
+            },
+            'zeta': {
+                'r': {  # Recurrent state
+                    'weight': 'zeta',
+                }
+            },
+            'gamma': {
+                'r': {  # Recurrent state
+                    'weight': 'gamma',
+                }
+            },
+            'delta': {
+                'r': {  # Recurrent state
+                    'weight': 'delta',
+                }
+            },
+            'eps': {
+                'r': {  # Recurrent state
+                    'weight': 'eps',
+                }
+            },
+            'eta': {
+                'r': {  # Recurrent state
+                    'weight': 'eta',
+                }
+            },
+            'sig': {
+                'r': {  # Recurrent state
+                    'weight': 'sig',
+                }
+            },
+            'tau': {
+                'r': {  # Recurrent state
+                    'weight': 'tau',
+                }
+            },
+
         }
+
+        self.xi = tf.get_variable(name='xi', initializer=1.)
+        self.alpha = tf.get_variable(name='alpha', initializer=1.)
+        self.beta = tf.get_variable(name='beta', initializer=1.)
+        self.mu = tf.get_variable(name='mu', initializer=1.)
+        self.nu = tf.get_variable(name='nu', initializer=1.)
+        self.zeta = tf.get_variable(name='zeta', initializer=1.)
+        self.gamma = tf.get_variable(name='gamma', initializer=1.)
+        self.delta = tf.get_variable(name='delta', initializer=1.)
+        self.eps = tf.get_variable(name='eps', initializer=1.)
+        self.eta = tf.get_variable(name='eta', initializer=1.)
+        self.sig = tf.get_variable(name='sig', initializer=1.)
+        self.tau = tf.get_variable(name='tau', initializer=1.)
 
         # tuned summation: pooling in h, w dimensions
         #############################################

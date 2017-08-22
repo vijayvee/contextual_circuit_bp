@@ -12,13 +12,15 @@ def encode_dataset(dataset):
     files, labels = data_proc.get_data()
     targets = data_proc.targets
     im_size = data_proc.im_size
+    preproc_list = data_proc.preprocess
     ds_name = os.path.join(config.tf_records, data_proc.name)
     data_to_tfrecords(
         files=files,
         labels=labels,
         targets=targets,
         ds_name=ds_name,
-        im_size=im_size)
+        im_size=im_size,
+        preprocess=preproc_list)
 
 
 if __name__ == '__main__':
