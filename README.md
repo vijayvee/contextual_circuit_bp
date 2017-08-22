@@ -18,7 +18,13 @@
 
 
 ## Preparing and executing experiments:
-
+0. If you do not already have postgres, follow the installation instructions below (for Ubuntu 14.04):
+```
+	sudo add-apt-repository ppa:mc3man/trusty-media
+	sudo apt-get update
+	sudo apt-get install postgresql python-psycopg2 libpq-dev postgresql-client postgresql-client-common
+	sudo pip install --upgrade psycopg2 # Ubuntu14 version is outdated; we need some 2.7 features
+```
 1. Adjust the file `config.py` to point to directories containing your images and where you intend to save data.
 	a. Each image dataset should be in its own folder in the root directory `self.data_root` contained in the config.
 
