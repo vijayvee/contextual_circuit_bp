@@ -24,7 +24,7 @@ class data_processing(object):
         }
         self.output_size = [10, 1]
         self.im_size = [28, 28, 1]
-        self.preprocess = None
+        self.preprocess = [None]
         self.shuffle = True  # Preshuffle data?
 
     def get_data(self):

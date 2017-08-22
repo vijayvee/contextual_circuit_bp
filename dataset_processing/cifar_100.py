@@ -1,20 +1,19 @@
 import os
-import re
 from glob import glob
 from config import Config
 from ops import tf_fun
+from utils import py_utils
 import random
 
 
 class data_processing(object):
     def __init__(self):
-        self.name = 'cifar_10'
+        self.name = 'cifar_100'
         self.extension = '.png'
         self.config = Config()
         self.folds = {
             'train': 'train',
-            'test': 'test'
-        }
+            'test': 'test'}
         self.targets = {
             'image': tf_fun.bytes_feature,
             'label': tf_fun.int64_feature
@@ -23,10 +22,11 @@ class data_processing(object):
             'image': tf_fun.fixed_len_feature(dtype='string'),
             'label': tf_fun.fixed_len_feature(dtype='int64')
         }
-        self.output_size = [10, 1]
+        self.output_size = [100, 1]
         self.im_size = [32, 32, 3]
+        self.label_list = 'labels.txt'
         self.preprocess = [None]
-        self.shuffle = False  # Preshuffle data?
+        self.shuffle = True  # Preshuffle data?
 
     def get_data(self):
         files = self.get_files()
@@ -36,12 +36,19 @@ class data_processing(object):
     def get_files(self):
         files = {}
         for k, fold in self.folds.iteritems():
-            it_files = glob(
+            it_files = []
+            dirs = glob(
                 os.path.join(
                     self.config.data_root,
                     self.name,
                     fold,
-                    '*%s' % self.extension))
+                    '*'))
+            for d in dirs:
+                it_files += [glob(
+                    os.path.join(
+                        d,
+                        '*%s' % self.extension))]
+            it_files = py_utils.flatten_list(it_files)
             if self.shuffle:
                 random.shuffle(it_files)
             files[k] = it_files
@@ -49,9 +56,15 @@ class data_processing(object):
 
     def get_labels(self, files):
         labels = {}
+        with open(
+            os.path.join(
+                self.config.data_root,
+                self.name,
+                self.label_list)) as fp:
+            label_list = fp.read().split('\n')
         for k, v in files.iteritems():
             it_labels = []
             for f in v:
-                it_labels += [int(re.split('\.', f.split('_')[-1])[0])]
+                it_labels += [label_list.index(f.split('/')[-2])]
             labels[k] = it_labels
         return labels

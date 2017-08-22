@@ -15,8 +15,7 @@ class data_processing(object):
         self.config = Config()
         self.folds = {
             'train': 'train2014',
-            'val': 'val2014',
-            'test': 'test2014'
+            'val': 'val2014'
         }
         self.targets = {
             'image': tf_fun.bytes_feature,
@@ -26,9 +25,9 @@ class data_processing(object):
             'image': tf_fun.fixed_len_feature(dtype='string'),
             'label': tf_fun.fixed_len_feature(dtype='int64')
         }
-        self.output_size = [10, 1]
+        self.output_size = [89, 1]
         self.im_size = [256, 256, 3]
-        self.image_meta_file = 'coco_full_im_processed_labels.npz'
+        self.image_meta_file = '_annotations.npy'
         self.preprocess = ['center_crop']
         self.shuffle = False  # Preshuffle data?
 
@@ -54,18 +53,24 @@ class data_processing(object):
 
     def get_labels(self, files):
         labels = {}
-        meta_file = np.load(
-            os.path.join(
-                self.config.data_root,
-                self.name,
-                self.aux_dir,
-                self.image_meta_file))
-        image_map = meta_file['training_image_map']
-        mapped_labels = meta_file['training_image_category_id']
         for k, v in files.iteritems():
+            meta_file = np.load(
+                os.path.join(
+                    self.config.data_root,
+                    self.name,
+                    self.aux_dir,
+                    '%s%s' % (k, self.image_meta_file))).item()
             it_labels = []
-            for f in v:
-                it_labels += [mapped_labels[mapped_labels[image_map == '/%s' % f]]]
+            for idx, f in enumerate(v):
+                try:
+                    it_items = meta_file[f.split('/')[-1]]
+                    it_labels_item = np.zeros((self.output_size[0]))
+                    for il in it_items:
+                        it_labels_item[il] = 1
+                    it_labels += [it_labels_item]
+                except:
+                    pass
             labels[k] = it_labels
+        import ipdb;ipdb.set_trace()
         return labels
 
