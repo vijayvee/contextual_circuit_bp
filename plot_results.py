@@ -14,7 +14,8 @@ def main(
         experiment_name,
         im_ext='.pdf',
         log_transform_loss=True,
-        colors='Greens_r'):
+        colors='Greens_r',
+        exclude=None):
     """Plot results of provided experiment name."""
     config = Config()
 
@@ -80,6 +81,12 @@ def main(
         df['training loss'] /= df.groupby(
             'model parameters')['training loss'].transform(max)
     df['validation loss'] = pd.to_numeric(df['validation loss']) * 100.
+    if exclude is not None:
+        exclusion_search = df['model parameters'].str.contains(exclude)
+        df = df[exclusion_search == False]
+        print 'Removed %s rows.' % exclusion_search.sum()
+
+    # Start plotting
     plt.rc('font', size=8)
     f, axs = plt.subplots(2, figsize=(20, 30))
     ax = sns.pointplot(
@@ -126,5 +133,11 @@ if __name__ == '__main__':
         type=str,
         default=None,
         help='Name of the experiment.')
+    parser.add_argument(
+        '--exclude',
+        dest='exclude',
+        type=str,
+        default=None,
+        help='Experiment exclusion keyword.')
     args = parser.parse_args()
     main(**vars(args))

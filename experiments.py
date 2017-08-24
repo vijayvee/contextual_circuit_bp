@@ -28,7 +28,37 @@ class experiments():
             exp[k] = v
         return exp
 
-    def one_layer_conv_mlp(self):
+    def one_layer_conv_mlp_frozen(self):
+        """Each key in experiment_dict must be manually added to the schema."""
+        model_folder = 'one_layer_conv_mlp'
+        exp = {
+            'experiment_name': [model_folder],
+            'lr': [1e-5],
+            'loss_function': ['cce'],
+            'optimizer': ['adam'],
+            'regularization_type': [None],  # [None, 'l1', 'l2'],
+            'regularization_strength': [0.005],
+            'model_struct': [
+                os.path.join(model_folder, 'divisive'),
+                os.path.join(model_folder, 'batch'),
+                os.path.join(model_folder, 'layer'),
+                os.path.join(model_folder, 'lrn'),
+                os.path.join(model_folder, 'contextual_frozen_connectivity_l2_1'),
+                os.path.join(model_folder, 'contextual_frozen_connectivity_l2_2'),
+                os.path.join(model_folder, 'contextual_frozen_connectivity_l2_3'),
+                os.path.join(model_folder, 'contextual_frozen_connectivity_l2_4'),
+                os.path.join(model_folder, 'contextual_frozen_connectivity_l2_5'),
+                os.path.join(model_folder, 'contextual_frozen_connectivity_l2_6'),
+                os.path.join(model_folder, 'contextual_frozen_connectivity_l2_7'),
+                os.path.join(model_folder, 'contextual_frozen_connectivity_l2_8'),
+                os.path.join(model_folder, 'contextual_frozen_connectivity_l2_9'),
+                os.path.join(model_folder, 'contextual_frozen_connectivity_l2_10'),
+            ],
+            'dataset': ['cifar_10']
+        }
+        return self.add_globals(exp)  # Add globals to the experiment
+
+    def one_layer_conv_mlp_all_variants(self):
         """Each key in experiment_dict must be manually added to the schema."""
         model_folder = 'one_layer_conv_mlp'
         exp = {
@@ -62,6 +92,16 @@ class experiments():
                 os.path.join(model_folder, 'contextual_rnn_3_l2'),
                 os.path.join(model_folder, 'contextual_rnn_4_l2'),
                 os.path.join(model_folder, 'contextual_rnn_5_l2'),
+                os.path.join(model_folder, 'contextual_frozen_connectivity_l2_1'),
+                os.path.join(model_folder, 'contextual_frozen_connectivity_l2_2'),
+                os.path.join(model_folder, 'contextual_frozen_connectivity_l2_3'),
+                os.path.join(model_folder, 'contextual_frozen_connectivity_l2_4'),
+                os.path.join(model_folder, 'contextual_frozen_connectivity_l2_5'),
+                os.path.join(model_folder, 'contextual_frozen_connectivity_l2_6'),
+                os.path.join(model_folder, 'contextual_frozen_connectivity_l2_7'),
+                os.path.join(model_folder, 'contextual_frozen_connectivity_l2_8'),
+                os.path.join(model_folder, 'contextual_frozen_connectivity_l2_9'),
+                os.path.join(model_folder, 'contextual_frozen_connectivity_l2_10')
             ],
             'dataset': ['cifar_10']
         }
