@@ -28,12 +28,12 @@ class experiments():
             exp[k] = v
         return exp
 
-    def one_layer_conv_mlp_frozen(self):
+    def one_layer_conv_mlp(self):
         """Each key in experiment_dict must be manually added to the schema."""
         model_folder = 'one_layer_conv_mlp'
         exp = {
             'experiment_name': [model_folder],
-            'lr': [1e-5],
+            'lr': [1e-4],
             'loss_function': ['cce'],
             'optimizer': ['adam'],
             'regularization_type': [None],  # [None, 'l1', 'l2'],
@@ -54,7 +54,7 @@ class experiments():
                 os.path.join(model_folder, 'contextual_frozen_connectivity_l2_9'),
                 os.path.join(model_folder, 'contextual_frozen_connectivity_l2_10'),
             ],
-            'dataset': ['cifar_10']
+            'dataset': ['cifar_100']
         }
         return self.add_globals(exp)  # Add globals to the experiment
 
