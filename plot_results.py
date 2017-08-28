@@ -1,6 +1,7 @@
 import os
 import numpy as np
 from db import db
+from db import credentials
 from config import Config
 from argparse import ArgumentParser
 import pandas as pd
@@ -8,6 +9,7 @@ import seaborn as sns
 from main import get_dt_stamp
 from matplotlib import pyplot as plt
 from matplotlib.ticker import MaxNLocator
+import plotly.plotly as py
 
 
 def main(
@@ -18,6 +20,10 @@ def main(
         exclude=None):
     """Plot results of provided experiment name."""
     config = Config()
+    pl_creds = credentials.plotly_credentials()
+    py.sign_in(
+        pl_creds['username'],
+        pl_creds['api_key'])
 
     # Get experiment data
     perf = db.get_performance(experiment_name=experiment_name)
@@ -122,6 +128,9 @@ def main(
         '%s_%s%s' % (
             experiment_name, get_dt_stamp(), im_ext))
     plt.savefig(out_name)
+    print 'Saved to: %s' % out_name
+    plot_url = py.plot_mpl(f, auto_open=False)
+    print 'Uploaded to: %s' % plot_url
     plt.show()
 
 

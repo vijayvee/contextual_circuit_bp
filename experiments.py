@@ -33,7 +33,7 @@ class experiments():
         model_folder = 'one_layer_conv_mlp'
         exp = {
             'experiment_name': [model_folder],
-            'lr': [1e-4],
+            'lr': [1e-5],
             'loss_function': ['cce'],
             'optimizer': ['adam'],
             'regularization_type': [None],  # [None, 'l1', 'l2'],
@@ -43,6 +43,7 @@ class experiments():
                 os.path.join(model_folder, 'batch'),
                 os.path.join(model_folder, 'layer'),
                 os.path.join(model_folder, 'lrn'),
+                os.path.join(model_folder, 'contextual_div_norm_no_reg'),
                 os.path.join(model_folder, 'contextual_frozen_connectivity_l2_1'),
                 os.path.join(model_folder, 'contextual_frozen_connectivity_l2_2'),
                 os.path.join(model_folder, 'contextual_frozen_connectivity_l2_3'),
