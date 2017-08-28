@@ -10,13 +10,15 @@ from main import get_dt_stamp
 from matplotlib import pyplot as plt
 from matplotlib.ticker import MaxNLocator
 import plotly.plotly as py
+# from ggplot import ggplot, aes, geom_line
+# from altair import Chart
 
 
 def main(
         experiment_name,
         im_ext='.pdf',
         log_transform_loss=True,
-        colors='Greens_r',
+        colors='Paired',
         exclude=None):
     """Plot results of provided experiment name."""
     config = Config()
@@ -95,31 +97,42 @@ def main(
     # Start plotting
     plt.rc('font', size=8)
     f, axs = plt.subplots(2, figsize=(20, 30))
-    ax = sns.pointplot(
-        x='training iteration',
-        y='training loss',
-        hue='model parameters',
-        ci=None,
-        estimator=np.sum,
-        data=df,
-        ax=axs[0],
-        scale=.25,
-        pallette=colors)
-    plt.setp(ax.xaxis.get_majorticklabels(), rotation=30)
+    # ax = sns.regplot(
+    #     x='training iteration',
+    #     y='training loss',
+    #     hue='model parameters',
+    #     data=df,
+    #     ci=None,
+    #     fit_reg=False,
+    #     ax=axs[0])
+    # ax = ggplot(df, aes(x='training iteration', y='training loss', color='model parameters')) + geom_line()
+    ax = axs[0]
+    for k in df['model parameters'].unique():
+        tmp = df[df['model parameters'] == k]
+        ax = tmp.plot(x='training iteration', y='training loss', label=k, kind='line', ax=ax, logy=False)
+    # plt.setp(ax.xaxis.get_majorticklabels(), rotation=30)
     ax.xaxis.set_major_locator(MaxNLocator(integer=True))
     ax.set_title('Training')
     ax.set_ylabel(loss_label)
-    ax = sns.pointplot(
-        x='training iteration',
-        y='validation loss',
-        hue='model parameters',
-        ci=None,
-        estimator=np.sum,
-        data=df,
-        ax=axs[1],
-        scale=.25,
-        pallette=colors)
-    plt.setp(ax.xaxis.get_majorticklabels(), rotation=30)
+    # ax = sns.regplot(
+    #     x='training iteration',
+    #     y='validation loss',
+    #     hue='model parameters',
+    #     data=df,
+    #     ci=None,
+    #     fit_reg=False,
+    #     ax=axs[1])
+    #     estimator=np.sum,
+    #     data=df,
+    #     ax=axs[1],
+    #     scale=.25,
+    #     pallette=colors)
+    # ax = ggplot(df, aes(x='training iteration', y='validation loss', color='model parameters')) + geom_line()
+    ax = axs[1]
+    for k in df['model parameters'].unique():
+        tmp = df[df['model parameters'] == k]
+        ax = tmp.plot(x='training iteration', y='validation loss', label=k, kind='line', ax=ax, logy=False)
+    # plt.setp(ax.xaxis.get_majorticklabels(), rotation=30)
     ax.xaxis.set_major_locator(MaxNLocator(integer=True))
     ax.set_title('Validation')
     ax.set_ylabel('Categorization accuracy (%)')
@@ -132,6 +145,7 @@ def main(
     plot_url = py.plot_mpl(f, auto_open=False)
     print 'Uploaded to: %s' % plot_url
     plt.show()
+
 
 
 if __name__ == '__main__':
