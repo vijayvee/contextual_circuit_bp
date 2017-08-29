@@ -44,7 +44,7 @@
 	c. See "Model construction" below for details on model construction
 
 6. Populate database with experiments.
-	a. Running with the example laid out in (3), populate your postgres DB with all possible experiment combinations: `python prepare_experiments.py --initialize --experiment_name=two_layer_conv_mlp`.
+	a. Running with the example laid out in (3), populate your postgres DB with all possible experiment combinations: `python prepare_experiments.py --experiment_name=two_layer_conv_mlp --initialize`.
 	b. If you don't want to delete you entire DB every time, omit the `--initialize` flag.
 	c. I manually access the db with `psql contextual_DCN -h 127.0.0.1 -d contextual_DCN`.
 

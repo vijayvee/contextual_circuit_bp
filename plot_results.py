@@ -5,13 +5,11 @@ from db import credentials
 from config import Config
 from argparse import ArgumentParser
 import pandas as pd
-import seaborn as sns
 from main import get_dt_stamp
+import matplotlib
 from matplotlib import pyplot as plt
 from matplotlib.ticker import MaxNLocator
 import plotly.plotly as py
-# from ggplot import ggplot, aes, geom_line
-# from altair import Chart
 
 
 def main(
@@ -79,7 +77,9 @@ def main(
             'validation loss'
             ]
         )
-    df['training iteration'] = pd.to_numeric(df['training iteration'], errors='coerce')
+    df['training iteration'] = pd.to_numeric(
+        df['training iteration'],
+        errors='coerce')
     df['training loss'] = pd.to_numeric(df['training loss'], errors='coerce')
     if log_transform_loss:
         loss_label = 'Log loss'
@@ -95,44 +95,35 @@ def main(
         print 'Removed %s rows.' % exclusion_search.sum()
 
     # Start plotting
-    plt.rc('font', size=8)
+    matplotlib.style.use('ggplot')
+    plt.rc('font', size=6)
+    plt.rc('legend', fontsize=8, labelspacing=3)
     f, axs = plt.subplots(2, figsize=(20, 30))
-    # ax = sns.regplot(
-    #     x='training iteration',
-    #     y='training loss',
-    #     hue='model parameters',
-    #     data=df,
-    #     ci=None,
-    #     fit_reg=False,
-    #     ax=axs[0])
-    # ax = ggplot(df, aes(x='training iteration', y='training loss', color='model parameters')) + geom_line()
     ax = axs[0]
     for k in df['model parameters'].unique():
         tmp = df[df['model parameters'] == k]
-        ax = tmp.plot(x='training iteration', y='training loss', label=k, kind='line', ax=ax, logy=False)
-    # plt.setp(ax.xaxis.get_majorticklabels(), rotation=30)
+        ax = tmp.plot(
+            x='training iteration',
+            y='training loss',
+            label=k,
+            kind='line',
+            ax=ax,
+            logy=False)
+    plt.setp(ax.xaxis.get_majorticklabels(), rotation=30)
     ax.xaxis.set_major_locator(MaxNLocator(integer=True))
     ax.set_title('Training')
     ax.set_ylabel(loss_label)
-    # ax = sns.regplot(
-    #     x='training iteration',
-    #     y='validation loss',
-    #     hue='model parameters',
-    #     data=df,
-    #     ci=None,
-    #     fit_reg=False,
-    #     ax=axs[1])
-    #     estimator=np.sum,
-    #     data=df,
-    #     ax=axs[1],
-    #     scale=.25,
-    #     pallette=colors)
-    # ax = ggplot(df, aes(x='training iteration', y='validation loss', color='model parameters')) + geom_line()
     ax = axs[1]
     for k in df['model parameters'].unique():
         tmp = df[df['model parameters'] == k]
-        ax = tmp.plot(x='training iteration', y='validation loss', label=k, kind='line', ax=ax, logy=False)
-    # plt.setp(ax.xaxis.get_majorticklabels(), rotation=30)
+        ax = tmp.plot(
+            x='training iteration',
+            y='validation loss',
+            label=k,
+            kind='line',
+            ax=ax,
+            logy=False)
+    plt.setp(ax.xaxis.get_majorticklabels(), rotation=30)
     ax.xaxis.set_major_locator(MaxNLocator(integer=True))
     ax.set_title('Validation')
     ax.set_ylabel('Categorization accuracy (%)')
@@ -145,7 +136,6 @@ def main(
     plot_url = py.plot_mpl(f, auto_open=False)
     print 'Uploaded to: %s' % plot_url
     plt.show()
-
 
 
 if __name__ == '__main__':

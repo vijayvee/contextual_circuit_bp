@@ -113,63 +113,7 @@ class ContextualCircuit(object):
                     'weight': 'o_r',
                     'activity': 'O_r'
                 }
-            },
-            'xi': {
-                'r': {  # Recurrent state
-                    'weight': 'xi',
-                }
-            },
-            'alpha': {
-                'r': {  # Recurrent state
-                    'weight': 'alpha',
-                }
-            },
-            'beta': {
-                'r': {  # Recurrent state
-                    'weight': 'beta',
-                }
-            },
-            'mu': {
-                'r': {  # Recurrent state
-                    'weight': 'nu',
-                }
-            },
-            'zeta': {
-                'r': {  # Recurrent state
-                    'weight': 'zeta',
-                }
-            },
-            'gamma': {
-                'r': {  # Recurrent state
-                    'weight': 'gamma',
-                }
-            },
-            'delta': {
-                'r': {  # Recurrent state
-                    'weight': 'delta',
-                }
-            },
-            'eps': {
-                'r': {  # Recurrent state
-                    'weight': 'eps',
-                }
-            },
-            'eta': {
-                'r': {  # Recurrent state
-                    'weight': 'eta',
-                }
-            },
-            'sig': {
-                'r': {  # Recurrent state
-                    'weight': 'sig',
-                }
-            },
-            'tau': {
-                'r': {  # Recurrent state
-                    'weight': 'tau',
-                }
-            },
-
+            }
         }
 
         # tuned summation: pooling in h, w dimensions
@@ -183,19 +127,22 @@ class ContextualCircuit(object):
                 initializer=initialization.xavier_initializer(
                     shape=self.q_shape,
                     uniform=self.normal_initializer,
-                    mask=None)))
+                    mask=None),
+                trainable=True))
 
         # untuned suppression: reduction across feature axis
         ####################################################
-        u_array = 1.0/self.k * np.ones((1, 1, self.k, 1))
         setattr(
             self,
             self.weight_dict['U']['r']['weight'],
             tf.get_variable(
                 name=self.weight_dict['U']['r']['weight'],
                 dtype=self.dtype,
-                initializer=u_array.astype(np.float32),
-                trainable=False))
+                initializer=initialization.xavier_initializer(
+                    shape=self.u_shape,
+                    uniform=self.normal_initializer,
+                    mask=None),
+                trainable=True))
 
         # tuned summation: pooling in h, w dimensions
         #############################################
@@ -219,7 +166,7 @@ class ContextualCircuit(object):
                 name=self.weight_dict['P']['r']['weight'],
                 dtype=self.dtype,
                 initializer=p_array.astype(np.float32),
-                trainable=False))
+                trainable=True))
 
         # tuned suppression: pooling in h, w dimensions
         ###############################################
@@ -242,7 +189,7 @@ class ContextualCircuit(object):
                 name=self.weight_dict['T']['r']['weight'],
                 dtype=self.dtype,
                 initializer=t_array.astype(np.float32),
-                trainable=False))
+                trainable=True))
 
         # Scalar weights
         self.xi = tf.get_variable(name='xi', initializer=1.)

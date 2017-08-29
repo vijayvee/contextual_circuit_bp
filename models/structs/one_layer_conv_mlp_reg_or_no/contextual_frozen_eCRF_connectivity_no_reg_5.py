@@ -6,17 +6,11 @@ layer_structure = [
         'weights': [64],
         'names': ['conv1_1'],
         'filter_size': [3],
-        'normalization': ['contextual_frozen_eCRF_connectivity'],
+        'normalization': ['contextual_frozen_CRF_connectivity'],
         'normalization_target': ['post'],
         'normalization_aux': {
             'timesteps': 5,
         },
-        # 'activation': ['relu'],
-        # 'activation_target': ['post'],
-        'regularization_target': ['post'],
-        'regularization_type': ['l1'],
-        'regularization_strength': [1e-5],
-        'regularization_activities_or_weights': 'activities',
     },
     {
         'layers': ['pool'],

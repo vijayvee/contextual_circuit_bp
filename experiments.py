@@ -29,7 +29,10 @@ class experiments():
         return exp
 
     def one_layer_conv_mlp(self):
-        """Each key in experiment_dict must be manually added to the schema."""
+        """Each key in experiment_dict must be manually added to the schema.
+        
+        Results 8/29/17: L2 regulariaztion sucks. No reg CM does pretty well.
+        """
         model_folder = 'one_layer_conv_mlp'
         exp = {
             'experiment_name': [model_folder],
@@ -59,9 +62,9 @@ class experiments():
         }
         return self.add_globals(exp)  # Add globals to the experiment
 
-    def one_layer_conv_mlp_all_variants(self):
+    def one_layer_conv_mlp_reg_or_no(self):
         """Each key in experiment_dict must be manually added to the schema."""
-        model_folder = 'one_layer_conv_mlp'
+        model_folder = 'one_layer_conv_mlp_reg_or_no'
         exp = {
             'experiment_name': [model_folder],
             'lr': [1e-5],
@@ -74,37 +77,18 @@ class experiments():
                 os.path.join(model_folder, 'batch'),
                 os.path.join(model_folder, 'layer'),
                 os.path.join(model_folder, 'lrn'),
-                os.path.join(model_folder, 'contextual'),
                 os.path.join(model_folder, 'contextual_div_norm'),
                 os.path.join(model_folder, 'contextual_div_norm_no_reg'),
-                os.path.join(model_folder, 'contextual_l2'),
-                os.path.join(model_folder, 'contextual_frozen_connectivity_l2'),
-                os.path.join(model_folder, 'contextual_frozen_connectivity_l2_10'),
-                os.path.join(model_folder, 'contextual_frozen_eCRF_connectivity_l2'),
-                os.path.join(model_folder, 'contextual_frozen_connectivity_l2'),
-                os.path.join(model_folder, 'contextual_frozen_eCRF_connectivity_l2'),
-                os.path.join(model_folder, 'contextual_rnn_1'),
-                os.path.join(model_folder, 'contextual_rnn_2'),
-                os.path.join(model_folder, 'contextual_rnn_3'),
-                os.path.join(model_folder, 'contextual_rnn_4'),
-                os.path.join(model_folder, 'contextual_rnn_5'),
-                os.path.join(model_folder, 'contextual_rnn_1_l2'),
-                os.path.join(model_folder, 'contextual_rnn_2_l2'),
-                os.path.join(model_folder, 'contextual_rnn_3_l2'),
-                os.path.join(model_folder, 'contextual_rnn_4_l2'),
-                os.path.join(model_folder, 'contextual_rnn_5_l2'),
-                os.path.join(model_folder, 'contextual_frozen_connectivity_l2_1'),
-                os.path.join(model_folder, 'contextual_frozen_connectivity_l2_2'),
-                os.path.join(model_folder, 'contextual_frozen_connectivity_l2_3'),
-                os.path.join(model_folder, 'contextual_frozen_connectivity_l2_4'),
-                os.path.join(model_folder, 'contextual_frozen_connectivity_l2_5'),
-                os.path.join(model_folder, 'contextual_frozen_connectivity_l2_6'),
-                os.path.join(model_folder, 'contextual_frozen_connectivity_l2_7'),
-                os.path.join(model_folder, 'contextual_frozen_connectivity_l2_8'),
-                os.path.join(model_folder, 'contextual_frozen_connectivity_l2_9'),
-                os.path.join(model_folder, 'contextual_frozen_connectivity_l2_10')
+                os.path.join(model_folder, 'contextual_5'),
+                os.path.join(model_folder, 'contextual_no_reg_5'),
+                os.path.join(model_folder, 'contextual_frozen_connectivity_5'),
+                os.path.join(model_folder, 'contextual_frozen_connectivity_no_reg_5'),
+                os.path.join(model_folder, 'contextual_frozen_CRF_connectivity_5'),
+                os.path.join(model_folder, 'contextual_frozen_CRF_connectivity_no_reg_5'),
+                os.path.join(model_folder, 'contextual_frozen_eCRF_connectivity_5'),
+                os.path.join(model_folder, 'contextual_frozen_eCRF_connectivity_no_reg_5')
             ],
-            'dataset': ['cifar_10']
+            'dataset': ['cifar_100']
         }
         return self.add_globals(exp)  # Add globals to the experiment
 

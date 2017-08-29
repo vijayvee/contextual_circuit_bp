@@ -6,8 +6,8 @@ from models.layers.normalization_functions import layer_norm
 from models.layers.normalization_functions import contextual
 from models.layers.normalization_functions import contextual_rnn
 from models.layers.normalization_functions import contextual_frozen_connectivity
-from models.layers.normalization_functions import contextual_frozen_connectivity_gates
 from models.layers.normalization_functions import contextual_frozen_eCRF_connectivity
+from models.layers.normalization_functions import contextual_frozen_CRF_connectivity
 from models.layers.normalization_functions import contextual_div_norm
 
 
@@ -116,11 +116,11 @@ class normalizations(object):
             padding=self.padding)
         return contextual_layer.build()
 
-    def contextual_frozen_connectivity_gates(self, x, layer, eRF, aux):
-        """Contextual model from paper with frozen U & eCRFs."""
+    def contextual_frozen_eCRF_connectivity(self, x, layer, eRF, aux):
+        """Contextual model from paper with frozen eCRFs."""
         self.update_params(aux)
         self.set_RFs(layer=layer, eRF=eRF)
-        contextual_layer = contextual_frozen_connectivity_gates.ContextualCircuit(
+        contextual_layer = contextual_frozen_eCRF_connectivity.ContextualCircuit(
             X=x,
             timesteps=self.timesteps,
             lesions=self.lesions,
@@ -131,11 +131,11 @@ class normalizations(object):
             padding=self.padding)
         return contextual_layer.build()
 
-    def contextual_frozen_eCRF_connectivity(self, x, layer, eRF, aux):
+    def contextual_frozen_CRF_connectivity(self, x, layer, eRF, aux):
         """Contextual model from paper with frozen eCRFs."""
         self.update_params(aux)
         self.set_RFs(layer=layer, eRF=eRF)
-        contextual_layer = contextual_frozen_eCRF_connectivity.ContextualCircuit(
+        contextual_layer = contextual_frozen_CRF_connectivity.ContextualCircuit(
             X=x,
             timesteps=self.timesteps,
             lesions=self.lesions,

@@ -2,13 +2,13 @@ import os
 import re
 import numpy as np
 import tensorflow as tf
+import experiments
 from db import db
 from config import Config
 from argparse import ArgumentParser
 from datetime import datetime
 from utils import logger
 from utils import py_utils
-from models import experiments
 from ops import data_loader
 from ops import model_utils
 from ops import loss_utils
