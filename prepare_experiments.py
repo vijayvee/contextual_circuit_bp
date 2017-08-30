@@ -58,7 +58,7 @@ if __name__ == '__main__':
         action='store_true',
         help='Recreate your database of experiments.')
     parser.add_argument(
-        "--experiment_name",
+        "--experiment",
         dest="experiment_name",
         default=None,
         type=str,

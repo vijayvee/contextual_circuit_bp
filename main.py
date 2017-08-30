@@ -84,7 +84,7 @@ def main(experiment_name, list_experiments=False):
             print l.values()[0]
         print '_' * 30
         print 'You can add to the DB with: '\
-            'python prepare_experiments.py --experiment_name=%s' % \
+            'python prepare_experiments.py --experiment=%s' % \
             exps[0].values()[0]
         return
     if experiment_name is None:

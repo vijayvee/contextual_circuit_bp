@@ -10,6 +10,7 @@ import matplotlib
 from matplotlib import pyplot as plt
 from matplotlib.ticker import MaxNLocator
 import plotly.plotly as py
+import plotly.tools as tls
 
 
 def main(
@@ -99,7 +100,7 @@ def main(
     plt.rc('font', size=6)
     plt.rc('legend', fontsize=8, labelspacing=3)
     f, axs = plt.subplots(2, figsize=(20, 30))
-    ax = axs[0]
+    ax = axs[1]
     for k in df['model parameters'].unique():
         tmp = df[df['model parameters'] == k]
         ax = tmp.plot(
@@ -113,7 +114,8 @@ def main(
     ax.xaxis.set_major_locator(MaxNLocator(integer=True))
     ax.set_title('Training')
     ax.set_ylabel(loss_label)
-    ax = axs[1]
+    ax.legend_.remove()
+    ax = axs[0]
     for k in df['model parameters'].unique():
         tmp = df[df['model parameters'] == k]
         ax = tmp.plot(
@@ -127,13 +129,17 @@ def main(
     ax.xaxis.set_major_locator(MaxNLocator(integer=True))
     ax.set_title('Validation')
     ax.set_ylabel('Categorization accuracy (%)')
+    ax.legend_.remove()
     out_name = os.path.join(
         config.plots,
         '%s_%s%s' % (
             experiment_name, get_dt_stamp(), im_ext))
     plt.savefig(out_name)
     print 'Saved to: %s' % out_name
-    plot_url = py.plot_mpl(f, auto_open=False)
+    plotly_fig = tls.mpl_to_plotly(f)
+    plotly_fig['layout']['autosize'] = True
+    plotly_fig['layout']['showlegend'] = True
+    plot_url = py.plot(plotly_fig, auto_open=False)
     print 'Uploaded to: %s' % plot_url
     plt.show()
 
