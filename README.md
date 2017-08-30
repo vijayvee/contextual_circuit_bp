@@ -55,6 +55,11 @@
 	d
 	. Every worker will save tensorflow model checkpoints, tensorflow summaries that can be viewed in tensorboard, update the DB with its progress, and after finishing, will produce plots of the training performance.
 
+8. Running models on the cluster.
+	a. Build your workers on the cluster with `sh docker_deploy_workers.sh`
+	b. Kill your processes with `docker rm $(docker stop $(docker ps -a -q --filter ancestor=serrep3.services.brown.edu:5000/contextual_circuit_bp --format="{{.ID}}"))`
+
+
 ## Model construction:
 
 - Models are constructed similarly to caffe, as lists of layers.
