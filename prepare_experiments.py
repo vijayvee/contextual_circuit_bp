@@ -20,7 +20,7 @@ def package_parameters(parameter_dict, log):
     return combos
 
 
-def main(reset_process, initialize_db, experiment_name):
+def main(reset_process, initialize_db, experiment_name, remove=None):
     """Populate db with experiments to run."""
     main_config = Config()
     log = logger.get(os.path.join(main_config.log_dir, 'prepare_experiments'))
@@ -38,6 +38,11 @@ def main(reset_process, initialize_db, experiment_name):
             db_conn.populate_db(exp_combos)
             db_conn.return_status('CREATE')
         log.info('Added new experiments.')
+    if remove is not None:
+        db_config = credentials.postgresql_connection()
+        with db.db(db_config) as db_conn:
+            db_conn.remove_experiment(remove)
+        log.info('Removed %s.' % remove)
 
 
 if __name__ == '__main__':
@@ -58,5 +63,11 @@ if __name__ == '__main__':
         default=None,
         type=str,
         help='Experiment to add to the database.')
+    parser.add_argument(
+        "--remove",
+        dest="remove",
+        default=None,
+        type=str,
+        help='Experiment to remove from the database.')
     args = parser.parse_args()
     main(**vars(args))

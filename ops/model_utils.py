@@ -231,23 +231,41 @@ def attach_regularizations(
                 'regularization_type': wd_type,
                 'regularization_strength': reg_strength
             }
-    if aux is not None and 'regularization_type' in aux.keys():
+    if aux is not None and (
+        'regularization_type' in aux.keys() or
+            'regularization_targets' in aux.keys()):
         # Auxillary regularizations
-        wd_type = aux['regularization_type']
-        reg_strength = aux['regularization_strength']
-        if 'regularization_activities_or_weights' in aux.keys():
-            a_or_w = aux['regularization_activities_or_weights']
-        if a_or_w == 'weights':
-            pass
+        if 'regularization_targets' in aux.keys():
+            # Target specific weights
+            filter_dict = aux['regularization_targets']
+            new_weights, wd_type_dict, reg_strength_dict = {}, {}, {}
+            for k, v in filter_dict.iteritems():
+                new_weights[k] = weights[k]
+                wd_type_dict[k] = v['regularization_type']
+                reg_strength_dict[k] = v['regularization_strength']
+            weights = new_weights
         else:
-            weights = activities
+            # Uniformly apply across weights
+            wd_type = aux['regularization_type']
+            reg_strength = aux['regularization_strength']
+            if 'regularization_activities_or_weights' in aux.keys():
+                a_or_w = aux['regularization_activities_or_weights']
+            if a_or_w == 'weights':
+                pass
+            else:
+                weights = activities
+            wd_type_dict, reg_strength_dict = {}, {}
+            for k, v in weights.keys():
+                wd_type_dict[k] = wd_type
+                reg_strength_dict[k] = reg_strength
         for k, v in weights.iteritems():
             it_key = '%s_%s' % (layer_name, k)
             self.regularizations[it_key] = {
                 'weight': v,
-                'regularization_type': wd_type,
-                'regularization_strength': reg_strength
+                'regularization_type': wd_type_dict[k],
+                'regularization_strength': reg_strength_dict[k]
             }
+        print self.regularizations
     return self
 
 

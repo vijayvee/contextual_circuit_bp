@@ -66,9 +66,9 @@ def wd_loss(
 
 
 def interpret_reg_loss(weight, loss_type):
-    if loss_type == 'l2':
+    if loss_type == 'l2' or loss_type == 'L2':
         return tf.nn.l2_loss(weight)
-    elif loss_type == 'l1':
+    elif loss_type == 'l1' or loss_type == 'L1':
         return tf.reduce_sum(tf.abs(weight))
     else:
         raise RuntimeError('Cannot understand regularization type.')

@@ -159,7 +159,7 @@ class db(object):
     def get_performance(self, experiment_name):
         self.cur.execute(
             """
-            SELECT * FROM PERFORMANCE AS P
+            SELECT * FROM performance AS P
             INNER JOIN experiments ON experiments._id = P.experiment_id
             WHERE P.experiment_name=%(experiment_name)s
             """,
@@ -170,6 +170,20 @@ class db(object):
         if self.status_message:
             self.return_status('SELECT')
         return self.cur.fetchall()
+
+    def remove_experiment(self, experiment_name):
+        self.cur.execute(
+            """
+            DELETE FROM experiments WHERE experiment_name=%(experiment_name)s;
+            DELETE FROM performance WHERE experiment_name=%(experiment_name)s;
+            DELETE FROM in_process WHERE experiment_name=%(experiment_name)s;
+            """,
+            {
+                'experiment_name': experiment_name
+            }
+        )
+        if self.status_message:
+            self.return_status('DELETE')
 
     def reset_in_process(self):
         self.cur.execute(
