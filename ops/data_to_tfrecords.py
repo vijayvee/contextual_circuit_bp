@@ -2,16 +2,12 @@ import numpy as np
 import tensorflow as tf
 from scipy import misc
 from tqdm import tqdm
-from skimage import transform
 from utils import image_processing
 
 
 def load_image(f, im_size):
     """Load image and convert it to a 4D tensor."""
     image = misc.imread(f).astype(np.float32)
-    it_im_size = image.shape
-    if im_size != it_im_size:
-        image = transform.resize(image, im_size[:2], preserve_range=True)
     if len(image.shape) < 3:  # Force H/W/C
         image = np.repeat(image[:, :, None], im_size[-1], axis=-1)
     return image
@@ -32,6 +28,9 @@ def preprocess_image(image, preprocess, im_size):
     if 'crop_center' in preprocess:
         image = image_processing.crop_center(image, im_size)
     elif 'resize' in preprocess:
+        image = image_processing.resize(image, im_size)
+    elif 'pad_resize' in preprocess:
+        image = image_processing.pad_square(image)
         image = image_processing.resize(image, im_size)
     return image
 

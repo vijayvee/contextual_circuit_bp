@@ -1,5 +1,4 @@
 import os
-import re
 import numpy as np
 from glob import glob
 from config import Config
@@ -28,7 +27,7 @@ class data_processing(object):
         self.output_size = [89, 1]
         self.im_size = [256, 256, 3]
         self.image_meta_file = '_annotations.npy'
-        self.preprocess = ['center_crop']
+        self.preprocess = ['pad_resize']
         self.shuffle = False  # Preshuffle data?
 
     def get_data(self):
@@ -64,13 +63,13 @@ class data_processing(object):
             for idx, f in enumerate(v):
                 try:
                     it_items = meta_file[f.split('/')[-1]]
-                    it_labels_item = np.zeros((self.output_size[0]))
+                    it_labels_item = np.zeros(
+                        (self.output_size[0]),
+                        dtype=np.int64)
                     for il in it_items:
                         it_labels_item[il] = 1
-                    it_labels += [it_labels_item]
+                    it_labels += [list(it_labels_item)]
                 except:
                     pass
             labels[k] = it_labels
-        import ipdb;ipdb.set_trace()
         return labels
-
