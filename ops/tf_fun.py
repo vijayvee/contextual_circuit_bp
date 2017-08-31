@@ -16,3 +16,15 @@ def fixed_len_feature(length=[], dtype='int64'):
         return tf.FixedLenFeature(length, tf.int64)
     elif dtype == 'string':
         return tf.FixedLenFeature(length, tf.string)
+
+
+def float32():
+    return tf.float32
+
+
+def int64():
+    return tf.int64
+
+
+def int32():
+    return tf.int32

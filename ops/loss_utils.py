@@ -111,7 +111,7 @@ def l2(logits, labels):
 
 def l1(logits, labels):
     """Wrapper for l2 loss."""
-    l1_loss = tf.nn.reduce_sum(
+    l1_loss = tf.reduce_sum(
         tf.abs(logits - labels))
     return l1_loss, l1_loss
 
@@ -130,7 +130,7 @@ def sigmoid_ce(logits, labels, weights):
     """Wrapper for sigmoid cross entropy loss."""
     if weights is None:
         weights = 1.
-    sig_loss = tf.nn.reduce_mean(
+    sig_loss = tf.reduce_mean(
         tf.nn.sigmoid_cross_entropy_with_logits(
             labels=labels,
             logits=logits) * weights)

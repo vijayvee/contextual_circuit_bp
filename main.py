@@ -124,21 +124,21 @@ def main(experiment_name, list_experiments=False):
         train_images, train_labels = data_loader.inputs(
             dataset=train_data,
             batch_size=config.batch_size,
-            true_image_size=dataset_module.im_size,
-            model_input_image_size=dataset_module.im_size,
+            model_input_image_size=dataset_module.model_input_image_size,
             tf_dict=dataset_module.tf_dict,
             data_augmentations=config.data_augmentations,
             num_epochs=config.epochs,
+            tf_reader_settings=dataset_module.tf_reader,
             shuffle=config.shuffle
         )
         val_images, val_labels = data_loader.inputs(
             dataset=val_data,
             batch_size=config.batch_size,
-            true_image_size=dataset_module.im_size,
-            model_input_image_size=dataset_module.im_size,
+            model_input_image_size=dataset_module.model_input_image_size,
             tf_dict=dataset_module.tf_dict,
             data_augmentations=config.data_augmentations,
             num_epochs=config.epochs,
+            tf_reader_settings=dataset_module.tf_reader,
             shuffle=config.shuffle
         )
     log.info('Created tfrecord dataloader tensors.')

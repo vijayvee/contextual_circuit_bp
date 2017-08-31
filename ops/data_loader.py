@@ -18,8 +18,10 @@ def image_augmentations(
         data_augmentations,
         model_input_image_size):
     """Coordinating image augmentations for both image and heatmap."""
+    im_size = [int(x) for x in image.get_shape()]
+    im_size_check = any(np.less_equal(im_size[:2], model_input_image_size[:2]))
     if data_augmentations is not None:
-        if 'random_crop' in data_augmentations:
+        if 'random_crop' in data_augmentations and im_size_check:
             image = tf.random_crop(image, model_input_image_size)
         else:
             image = tf.image.resize_image_with_crop_or_pad(
@@ -40,9 +42,9 @@ def image_augmentations(
 
 def read_and_decode(
         filename_queue,
-        true_image_size,
         model_input_image_size,
         tf_dict,
+        tf_reader_settings,
         data_augmentations):
     """Read and decode tensors from tf_records and apply augmentations."""
     reader = tf.TFRecordReader()
@@ -50,11 +52,18 @@ def read_and_decode(
     features = tf.parse_single_example(serialized_example, features=tf_dict)
 
     # Handle decoding of each element
-    image = tf.decode_raw(features['image'], tf.float32)
-    label = tf.cast(features['label'], tf.int32)
+    import ipdb;ipdb.set_trace()
+    image = tf.decode_raw(
+        features['image'],
+        tf_reader_settings['image']['dtype'])
+    label = tf.cast(
+        features['label'],
+        tf_reader_settings['label']['dtype'])
 
     # Reshape each element
-    image = tf.reshape(image, true_image_size)
+    image = tf.reshape(image, tf_reader_settings['image']['reshape'])
+    if tf_reader_settings['label']['reshape'] is not None:
+        label = tf.reshape(label, tf_reader_settings['label']['reshape'])
 
     # Preprocess images and heatmaps
     image = image_augmentations(
@@ -67,11 +76,11 @@ def read_and_decode(
 def inputs(
         dataset,
         batch_size,
-        true_image_size,
         model_input_image_size,
         tf_dict,
         data_augmentations,
         num_epochs,
+        tf_reader_settings,
         shuffle):
     """Read tfrecords and prepare them for queueing."""
     min_after_dequeue = 1000
@@ -84,9 +93,9 @@ def inputs(
         # queue.
         batch_data = read_and_decode(
             filename_queue=filename_queue,
-            true_image_size=true_image_size,
             model_input_image_size=model_input_image_size,
             tf_dict=tf_dict,
+            tf_reader_settings=tf_reader_settings,
             data_augmentations=data_augmentations)
 
         # Shuffle the examples and collect them into batch_size batches.

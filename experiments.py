@@ -14,7 +14,7 @@ class experiments():
         """Globals."""
         return {
             'batch_size': 64,  # Train/val batch size.
-            'data_augmentations': [None],  # Random_crop, etc.
+            'data_augmentations': ['random_crop', 'left_right'],  # Random_crop, etc.
             'epochs': 200,
             'shuffle': True,  # Shuffle data.
             'validation_iters': 500,  # How often to evaluate validation.
@@ -142,7 +142,7 @@ class experiments():
 
     def cluster_two_layer_rnns_no_regularization(self):
         """Each key in experiment_dict must be manually added to the schema."""
-        model_folder = 'cluster_one_layer_rnns_no_regularization'
+        model_folder = 'cluster_two_layer_rnns_no_regularization'
         exp = {
             'experiment_name': [model_folder],
             'lr': [1e-4],
@@ -160,7 +160,7 @@ class experiments():
                 os.path.join(model_folder, 'learn_transition_weak_eCRF_vector'),
                 os.path.join(model_folder, 'learn_transition_untuned_eCRF_vector'),
             ],
-            'dataset': ['cifar_100', 'coco_2014']
+            'dataset': ['coco_2014']  # ['cifar_100', 'coco_2014']
         }
         return self.add_globals(exp)  # Add globals to the experiment
 

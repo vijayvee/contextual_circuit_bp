@@ -12,6 +12,13 @@ class data_processing(object):
         self.aux_dir = 'coco_images'
         self.extension = '.jpg'
         self.config = Config()
+        self.output_size = [89, 1]
+        self.im_size = [256, 256, 3]
+        self.model_input_image_size = [224, 224, 3]
+        self.default_loss_function = 'sigmoid'
+        self.image_meta_file = '_annotations.npy'
+        self.preprocess = ['pad_resize']
+        self.shuffle = False  # Preshuffle data?
         self.folds = {
             'train': 'train2014',
             'val': 'val2014'
@@ -24,12 +31,16 @@ class data_processing(object):
             'image': tf_fun.fixed_len_feature(dtype='string'),
             'label': tf_fun.fixed_len_feature(dtype='int64')
         }
-        self.output_size = [89, 1]
-        self.im_size = [256, 256, 3]
-        self.default_loss_function = 'sigmoid'
-        self.image_meta_file = '_annotations.npy'
-        self.preprocess = ['pad_resize']
-        self.shuffle = False  # Preshuffle data?
+        self.tf_reader = {
+            'image': {
+                'dtype': tf_fun.float32,
+                'reshape': self.im_size
+            },
+            'label': {
+                'dtype': tf_fun.int32,
+                'reshape': self.output_size[0]
+            }
+        }
 
     def get_data(self):
         files = self.get_files()
