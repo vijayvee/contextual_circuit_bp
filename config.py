@@ -32,10 +32,10 @@ class Config:
         self.dataset_info = 'dataset_processing'  # local dataset classes
 
         # DB
-        self.db_ssh_forward = False
-        # machine_name = os.uname()[1]
-        # if len(machine_name) == 12:  # Docker container
-        #     self.db_ssh_forward = True
+        self.db_ssh_forward = True
+        machine_name = os.uname()[1]
+        if len(machine_name) == 12:  # Docker container
+            self.db_ssh_forward = True
 
         # Create directories if they do not exist
         check_dirs = [
