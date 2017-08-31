@@ -1,4 +1,5 @@
 import os
+import tensorflow as tf
 from glob import glob
 from config import Config
 from ops import tf_fun
@@ -11,6 +12,14 @@ class data_processing(object):
         self.name = 'cifar_100'
         self.extension = '.png'
         self.config = Config()
+        self.output_size = [100, 1]
+        self.im_size = [32, 32, 3]
+        self.model_input_image_size = [32, 32, 3]
+        self.label_list = 'labels.txt'
+        self.default_loss_function = 'cce'
+        self.score_metric = 'accuracy'
+        self.preprocess = [None]
+        self.shuffle = True  # Preshuffle data?
         self.folds = {
             'train': 'train',
             'test': 'test'}
@@ -22,12 +31,16 @@ class data_processing(object):
             'image': tf_fun.fixed_len_feature(dtype='string'),
             'label': tf_fun.fixed_len_feature(dtype='int64')
         }
-        self.output_size = [100, 1]
-        self.im_size = [32, 32, 3]
-        self.label_list = 'labels.txt'
-        self.default_loss_function = 'cce'
-        self.preprocess = [None]
-        self.shuffle = True  # Preshuffle data?
+        self.tf_reader = {
+            'image': {
+                'dtype': tf.float32,
+                'reshape': self.im_size
+            },
+            'label': {
+                'dtype': tf.int64,
+                'reshape': None
+            }
+        }
 
     def get_data(self):
         files = self.get_files()

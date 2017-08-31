@@ -1,5 +1,6 @@
 import os
 import numpy as np
+import tensorflow as tf
 from glob import glob
 from config import Config
 from ops import tf_fun
@@ -17,6 +18,7 @@ class data_processing(object):
         self.model_input_image_size = [224, 224, 3]
         self.default_loss_function = 'sigmoid'
         self.image_meta_file = '_annotations.npy'
+        self.score_metric = 'mean'
         self.preprocess = ['pad_resize']
         self.shuffle = False  # Preshuffle data?
         self.folds = {
@@ -29,16 +31,18 @@ class data_processing(object):
         }
         self.tf_dict = {
             'image': tf_fun.fixed_len_feature(dtype='string'),
-            'label': tf_fun.fixed_len_feature(dtype='int64')
+            'label': tf_fun.fixed_len_feature(
+                length=self.output_size[0],
+                dtype='int64')
         }
         self.tf_reader = {
             'image': {
-                'dtype': tf_fun.float32,
+                'dtype': tf.float32,
                 'reshape': self.im_size
             },
             'label': {
-                'dtype': tf_fun.int32,
-                'reshape': self.output_size[0]
+                'dtype': tf.int64,
+                'reshape': None
             }
         }
 

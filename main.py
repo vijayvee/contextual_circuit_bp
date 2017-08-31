@@ -196,7 +196,8 @@ def main(experiment_name, list_experiments=False):
                 optimizer=config.optimizer)
             log.info('Built training loss function.')
 
-            train_accuracy = eval_metrics.class_accuracy(
+            train_accuracy = eval_metrics.metric_interpreter(
+                metric=dataset_module.score_metric,
                 pred=train_scores,
                 labels=train_labels)  # training accuracy
             tf.summary.image('train images', train_images)
@@ -219,8 +220,10 @@ def main(experiment_name, list_experiments=False):
             val_loss, val_scores = loss_utils.loss_interpreter(
                 logits=val_output_scores,
                 labels=val_labels,
-                loss_type=config.loss_function)
-            val_accuracy = eval_metrics.class_accuracy(
+                loss_type=config.loss_function,
+                dataset_module=dataset_module)
+            val_accuracy = eval_metrics.metric_interpreter(
+                metric=dataset_module.score_metric,
                 pred=val_scores,
                 labels=val_labels)  # training accuracy
             tf.summary.image('val images', val_images)

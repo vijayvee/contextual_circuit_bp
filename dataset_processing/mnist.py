@@ -1,4 +1,5 @@
 import os
+import tensorflow as tf
 from glob import glob
 from config import Config
 from ops import tf_fun
@@ -11,9 +12,16 @@ class data_processing(object):
         self.name = 'mnist'
         self.extension = '.png'
         self.config = Config()
+        self.output_size = [10, 1]
+        self.im_size = [28, 28, 1]
+        self.model_input_image_size = [28, 28, 1]
+        self.default_loss_function = 'cce'
+        self.score_metric = 'accuracy'
+        self.preprocess = [None]
+        self.shuffle = True  # Preshuffle data?
         self.folds = {
-            'train': 'training',
-            'test': 'testing'}
+            'train': 'train',
+            'test': 'test'}
         self.targets = {
             'image': tf_fun.bytes_feature,
             'label': tf_fun.int64_feature
@@ -22,11 +30,16 @@ class data_processing(object):
             'image': tf_fun.fixed_len_feature(dtype='string'),
             'label': tf_fun.fixed_len_feature(dtype='int64')
         }
-        self.output_size = [10, 1]
-        self.im_size = [28, 28, 1]
-        self.default_loss_function = 'cce'
-        self.preprocess = [None]
-        self.shuffle = True  # Preshuffle data?
+        self.tf_reader = {
+            'image': {
+                'dtype': tf.float32,
+                'reshape': self.im_size
+            },
+            'label': {
+                'dtype': tf.int64,
+                'reshape': None
+            }
+        }
 
     def get_data(self):
         files = self.get_files()

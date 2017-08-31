@@ -3,6 +3,28 @@ import tensorflow as tf
 from tensorflow.python.ops import math_ops
 
 
+def metric_interpreter(metric, pred, labels):
+    if metric == 'accuracy':
+        return class_accuracy(
+            pred=pred,
+            labels=labels)
+    elif metric == 'mean':
+        return mean_score(
+            pred=pred,
+            labels=labels)
+    else:
+        raise RuntimeError('Cannot understand the dataset metric.')
+
+
+def mean_score(pred, labels, force_dtype=tf.float32):
+    if force_dtype:
+        if pred.dtype != force_dtype:
+            pred = tf.cast(pred, force_dtype)
+        if labels.dtype != force_dtype:
+            labels = tf.cast(labels, force_dtype)
+    return tf.reduce_mean(tf.cast(tf.equal(pred, labels), tf.float32))
+
+
 def class_accuracy(pred, labels):
     """Accuracy of 1/n*sum(pred_i == label_i)."""
     return tf.reduce_mean(

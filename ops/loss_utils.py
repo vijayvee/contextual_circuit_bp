@@ -126,8 +126,13 @@ def huber(logits, labels, weights):
         weights=weights), tf.nn.l2_loss(logits - labels)
 
 
-def sigmoid_ce(logits, labels, weights):
+def sigmoid_ce(logits, labels, weights, force_dtype=tf.float32):
     """Wrapper for sigmoid cross entropy loss."""
+    if force_dtype:
+        if logits.dtype != force_dtype:
+            logits = tf.cast(logits, force_dtype)
+        if labels.dtype != force_dtype:
+            labels = tf.cast(labels, force_dtype)
     if weights is None:
         weights = 1.
     sig_loss = tf.reduce_mean(

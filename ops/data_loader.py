@@ -1,3 +1,4 @@
+import numpy as np
 import tensorflow as tf
 
 
@@ -52,7 +53,6 @@ def read_and_decode(
     features = tf.parse_single_example(serialized_example, features=tf_dict)
 
     # Handle decoding of each element
-    import ipdb;ipdb.set_trace()
     image = tf.decode_raw(
         features['image'],
         tf_reader_settings['image']['dtype'])
