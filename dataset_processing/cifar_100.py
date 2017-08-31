@@ -25,6 +25,7 @@ class data_processing(object):
         self.output_size = [100, 1]
         self.im_size = [32, 32, 3]
         self.label_list = 'labels.txt'
+        self.default_loss_function = 'cce'
         self.preprocess = [None]
         self.shuffle = True  # Preshuffle data?
 

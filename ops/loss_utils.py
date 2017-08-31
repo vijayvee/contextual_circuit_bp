@@ -27,8 +27,11 @@ def loss_interpreter(
         logits,
         labels,
         loss_type,
-        weights=None):
+        weights=None,
+        dataset_module=None):
     """Router for loss functions."""
+    if loss_type is None:
+        loss_type = dataset_module.default_loss_function
     if loss_type == 'cce':
         return cce(
             logits=logits,
@@ -44,6 +47,11 @@ def loss_interpreter(
             labels=labels)
     elif loss_type == 'huber':
         return huber(
+            logits=logits,
+            labels=labels,
+            weights=weights)
+    elif loss_type == 'sigmoid':
+        return sigmoid_ce(
             logits=logits,
             labels=labels,
             weights=weights)
@@ -96,16 +104,16 @@ def cce(logits, labels, weights=None):
 
 def l2(logits, labels):
     """Wrapper for l2 loss."""
-    return tf.nn.l2_loss(
-        logits - labels), tf.nn.l2_loss(
+    l2_loss = tf.nn.l2_loss(
         logits - labels)
+    return l2_loss, l2_loss
 
 
 def l1(logits, labels):
     """Wrapper for l2 loss."""
-    return tf.nn.reduce_sum(
-        tf.abs(logits - labels)), tf.nn.reduce_sum(
+    l1_loss = tf.nn.reduce_sum(
         tf.abs(logits - labels))
+    return l1_loss, l1_loss
 
 
 def huber(logits, labels, weights):
@@ -116,3 +124,14 @@ def huber(logits, labels, weights):
         predictions=logits,
         labels=labels,
         weights=weights), tf.nn.l2_loss(logits - labels)
+
+
+def sigmoid_ce(logits, labels, weights):
+    """Wrapper for sigmoid cross entropy loss."""
+    if weights is None:
+        weights = 1.
+    sig_loss = tf.nn.reduce_mean(
+        tf.nn.sigmoid_cross_entropy_with_logits(
+            labels=labels,
+            logits=logits) * weights)
+    return sig_loss, sig_loss

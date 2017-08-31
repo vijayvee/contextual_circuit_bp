@@ -6,18 +6,19 @@ layer_structure = [
         'weights': [64],
         'names': ['conv1_1'],
         'filter_size': [3],
-        'normalization': ['divisive_2d'],
+        'normalization': ['layer'],
         'normalization_target': ['post'],
-        'activation': ['relu'],
-        'activation_target': ['post'],
-        'wd_target': ['pre'],
-        'wd_type': [None],
-        'wd_strength': [1e-5]
+    },
+    {
+        'layers': ['conv'],
+        'weights': [64],
+        'names': ['conv2_1'],
+        'filter_size': [3],
     },
     {
         'layers': ['pool'],
         'weights': [None],
-        'names': ['pool1'],
+        'names': ['pool2'],
         'filter_size': [None]
-    },
+    }
 ]

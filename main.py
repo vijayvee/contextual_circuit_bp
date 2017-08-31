@@ -1,5 +1,4 @@
 import os
-import re
 import numpy as np
 import tensorflow as tf
 import experiments
@@ -182,7 +181,8 @@ def main(experiment_name, list_experiments=False):
             train_loss, train_scores = loss_utils.loss_interpreter(
                 logits=output_scores,
                 labels=train_labels,
-                loss_type=config.loss_function)
+                loss_type=config.loss_function,
+                dataset_module=dataset_module)
 
             # Add weight decay if requested
             if len(model.regularizations) > 0:

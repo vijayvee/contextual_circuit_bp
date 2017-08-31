@@ -26,6 +26,7 @@ class data_processing(object):
         }
         self.output_size = [89, 1]
         self.im_size = [256, 256, 3]
+        self.default_loss_function = 'sigmoid'
         self.image_meta_file = '_annotations.npy'
         self.preprocess = ['pad_resize']
         self.shuffle = False  # Preshuffle data?

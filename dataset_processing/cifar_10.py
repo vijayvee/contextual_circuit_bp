@@ -25,6 +25,7 @@ class data_processing(object):
         }
         self.output_size = [10, 1]
         self.im_size = [32, 32, 3]
+        self.default_loss_function = 'cce'
         self.preprocess = [None]
         self.shuffle = False  # Preshuffle data?
 

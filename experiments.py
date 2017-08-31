@@ -121,7 +121,7 @@ class experiments():
         model_folder = 'cluster_one_layer_rnns'
         exp = {
             'experiment_name': [model_folder],
-            'lr': [1e-2, 1e-3, 1e-4],
+            'lr': [1e-4],
             'loss_function': ['cce'],
             'optimizer': ['adam'],
             'regularization_type': [None],  # [None, 'l1', 'l2'],
@@ -131,18 +131,36 @@ class experiments():
                 os.path.join(model_folder, 'batch'),
                 os.path.join(model_folder, 'layer'),
                 os.path.join(model_folder, 'lrn'),
-                os.path.join(model_folder, 'contextual_frozen_connectivity_learned_transition_untuned_eCRF'),
-                os.path.join(model_folder, 'contextual_frozen_connectivity_learned_transition_weak_eCRF'),
-                os.path.join(model_folder, 'contextual_frozen_connectivity_learned_transition_weak_eCRF_no_reg'),
-                os.path.join(model_folder, 'contextual_frozen_connectivity_learned_transition_untuned_eCRF_vector_modulation'),
-                os.path.join(model_folder, 'contextual_frozen_connectivity_learned_transition_untuned_eCRF_10'),
-                os.path.join(model_folder, 'contextual_frozen_connectivity_learned_transition_weak_eCRF_vector_modulation'),
-                os.path.join(model_folder, 'contextual_frozen_connectivity_learned_transition_weak_eCRF_vector_modulation_3'),
-                os.path.join(model_folder, 'contextual_frozen_connectivity_learned_transition_weak_eCRF_vector_modulation_10'),
-                os.path.join(model_folder, 'contextual_frozen_connectivity_learned_transition_weak_eCRF_vector_modulation_2'),
-                os.path.join(model_folder, 'contextual_frozen_connectivity_learned_transition_weak_eCRF_vector_modulation_no_reg'),
+                os.path.join(model_folder, 'learn_transition_weak_eCRF'),
+                os.path.join(model_folder, 'learn_transition_untuned_eCRF'),
+                os.path.join(model_folder, 'learn_transition_untuned_eCRF_vector'),
+                os.path.join(model_folder, 'learn_transition_untuned_eCRF_vector'),
             ],
-            'dataset': ['cifar_100', 'mnist', 'cifar_10']
+            'dataset': ['cifar_100', 'coco_2014']
+        }
+        return self.add_globals(exp)  # Add globals to the experiment
+
+    def cluster_two_layer_rnns_no_regularization(self):
+        """Each key in experiment_dict must be manually added to the schema."""
+        model_folder = 'cluster_one_layer_rnns_no_regularization'
+        exp = {
+            'experiment_name': [model_folder],
+            'lr': [1e-4],
+            'loss_function': [None],  # Leave as None to use dataset default
+            'optimizer': ['adam'],
+            'regularization_type': [None],  # [None, 'l1', 'l2'],
+            'regularization_strength': [0.005],
+            'model_struct': [
+                os.path.join(model_folder, 'divisive'),
+                os.path.join(model_folder, 'batch'),
+                os.path.join(model_folder, 'layer'),
+                os.path.join(model_folder, 'lrn'),
+                os.path.join(model_folder, 'learn_transition_weak_eCRF'),
+                os.path.join(model_folder, 'learn_transition_untuned_eCRF'),
+                os.path.join(model_folder, 'learn_transition_weak_eCRF_vector'),
+                os.path.join(model_folder, 'learn_transition_untuned_eCRF_vector'),
+            ],
+            'dataset': ['cifar_100', 'coco_2014']
         }
         return self.add_globals(exp)  # Add globals to the experiment
 
