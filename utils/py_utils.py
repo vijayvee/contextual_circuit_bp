@@ -1,5 +1,18 @@
 import os
+import re
+from datetime import datetime
 import numpy as np
+
+
+def get_dt_stamp():
+    return re.split(
+        '\.', str(datetime.now()))[0].replace(
+        ' ',
+        '_').replace(
+        ':',
+        '_').replace(
+        '-',
+        '_')
 
 
 def flatten_list(l):

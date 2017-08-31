@@ -5,7 +5,7 @@ from db import credentials
 from config import Config
 from argparse import ArgumentParser
 import pandas as pd
-from main import get_dt_stamp
+from utils.py_utils import get_dt_stamp
 import matplotlib
 from matplotlib import pyplot as plt
 from matplotlib.ticker import MaxNLocator

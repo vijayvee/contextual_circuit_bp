@@ -6,7 +6,6 @@ import experiments
 from db import db
 from config import Config
 from argparse import ArgumentParser
-from datetime import datetime
 from utils import logger
 from utils import py_utils
 from ops import data_loader
@@ -62,17 +61,6 @@ def get_data_pointers(dataset, base_dir, cv, log):
     return data_pointer, data_means
 
 
-def get_dt_stamp():
-    return re.split(
-        '\.', str(datetime.now()))[0].replace(
-        ' ',
-        '_').replace(
-        ':',
-        '_').replace(
-        '-',
-        '_')
-
-
 def main(experiment_name, list_experiments=False):
     """Create a tensorflow worker to run experiments in your DB."""
     if list_experiments:
@@ -93,7 +81,7 @@ def main(experiment_name, list_experiments=False):
 
     # Prepare to run the model
     config = Config()
-    condition_label = '%s_%s' % (experiment_name, get_dt_stamp())
+    condition_label = '%s_%s' % (experiment_name, py_utils.get_dt_stamp())
     experiment_label = '%s' % (experiment_name)
     log = logger.get(os.path.join(config.log_dir, condition_label))
     experiment_dict = experiments.experiments()[experiment_name]()
