@@ -13,6 +13,14 @@ import plotly.plotly as py
 import plotly.tools as tls
 
 
+def plot_with_plotly(plotly_fig, chart):
+    try:
+        plot_url = py.plot(plotly_fig, auto_open=False)
+        print 'Uploaded %s chart to: %s' % (chart, plot_url)
+    except:
+        pass
+
+
 def main(
         experiment_name,
         im_ext='.pdf',
@@ -139,9 +147,29 @@ def main(
     plotly_fig = tls.mpl_to_plotly(f)
     plotly_fig['layout']['autosize'] = True
     # plotly_fig['layout']['showlegend'] = True
-    plot_url = py.plot(plotly_fig, auto_open=False)
-    print 'Uploaded to: %s' % plot_url
-    plt.show()
+    plot_with_plotly(plotly_fig, 'bar')
+    plt.close(f)
+
+    # Plot max performance bar graph
+    f = plt.figure()
+    max_perf = df.groupby(
+        ['model parameters'], as_index=False)['validation loss'].max()
+    max_perf['model parameters'] = max_perf['model parameters'].str.replace(
+        '|', '\n')
+    ax = max_perf.plot.bar(x='model parameters', y='validation loss', legend=True)
+    plt.rc('xtick', labelsize=3)
+    plt.tight_layout()
+    ax.set_title('Max validation value')
+    ax.set_ylabel('Categorization accuracy (%)')
+    out_name = os.path.join(
+        config.plots,
+        '%s_%s_bar%s' % (
+            experiment_name, get_dt_stamp(), im_ext))
+    plt.savefig(out_name)
+    print 'Saved to: %s' % out_name
+    plotly_fig = tls.mpl_to_plotly(f)
+    plot_with_plotly(plotly_fig, chart='bar')
+    plt.close(f)
 
 
 if __name__ == '__main__':

@@ -44,7 +44,7 @@
 	c. See "Model construction" below for details on model construction
 
 6. Populate database with experiments.
-	a. Running with the example laid out in (3), populate your postgres DB with all possible experiment combinations: `python prepare_experiments.py --experiment_name=two_layer_conv_mlp --initialize`.
+	a. Running with the example laid out in (3), populate your postgres DB with all possible experiment combinations: `python prepare_experiments.py --experiment=two_layer_conv_mlp --initialize`.
 	b. If you don't want to delete you entire DB every time, omit the `--initialize` flag.
 	c. I manually access the db with `psql contextual_DCN -h 127.0.0.1 -d contextual_DCN`.
 
@@ -117,16 +117,7 @@
 	]
 ```
 
-TODO
+TODO:
 
-- Expose normalization layers to main model API. For accessing through sess.run()
-- Add "aux" options to FF and normalization layers.
 - Add multiply and concat(add, multiply) ops to the residual layer.
-- Add ability to have regularization in normalization layers.
-- Build a contextual model off of the div_norm framework.
-
-
-1) Pull from DB for visualizations
-2) Evaluation script: Visualizations w/ LRP + plotting loss curves + plotting accuracy curves across multiple models.
-3) Fix tests
-4) Fix the contextual model implementation. A) Think about optimal bio CRF/eCRF sizes. B) Add the ability to automatically learn these from the data
+- Evaluation script: Visualizations w/ LRP.
