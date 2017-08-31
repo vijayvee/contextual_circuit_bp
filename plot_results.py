@@ -154,10 +154,10 @@ def main(
     f = plt.figure()
     max_perf = df.groupby(
         ['model parameters'], as_index=False)['validation loss'].max()
-    max_perf['model parameters'] = max_perf['model parameters'].str.replace(
-        '|', '\n')
-    ax = max_perf.plot.bar(x='model parameters', y='validation loss', legend=True)
-    plt.rc('xtick', labelsize=3)
+    # max_perf['model parameters'] = max_perf['model parameters'].str.replace(
+    #     '|', '\n')
+    plt.rc('xtick', labelsize=2)
+    ax = max_perf.plot.bar(x='model parameters', y='validation loss', legend=False)
     plt.tight_layout()
     ax.set_title('Max validation value')
     ax.set_ylabel('Categorization accuracy (%)')
