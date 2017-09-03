@@ -6,7 +6,7 @@ layer_structure = [
         'weights': [64],
         'names': ['conv1_1'],
         'filter_size': [3],
-        'normalization': ['contextual_frozen_connectivity_learned_transition_weak_eCRF'],
+        'normalization': ['contextual_frozen_connectivity_learned_transition_weak_eCRF_vector_modulation'],
         'normalization_target': ['post'],
         'normalization_aux': {
             'timesteps': 5,
@@ -27,9 +27,15 @@ layer_structure = [
         },
     },
     {
+        'layers': ['conv'],
+        'weights': [64],
+        'names': ['conv2_1'],
+        'filter_size': [3],
+    },
+    {
         'layers': ['pool'],
         'weights': [None],
-        'names': ['pool1'],
+        'names': ['pool2'],
         'filter_size': [None]
     }
 ]

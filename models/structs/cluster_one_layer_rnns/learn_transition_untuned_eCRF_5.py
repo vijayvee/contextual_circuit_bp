@@ -15,7 +15,7 @@ layer_structure = [
     {
         'layers': ['pool'],
         'weights': [None],
-        'names': ['pool1'],
+        'names': ['pool2'],
         'filter_size': [None]
     }
 ]
