@@ -9,3 +9,5 @@ CREATE TABLE performance (_id bigserial primary key, experiment_name varchar, ex
 CREATE TABLE in_process (experiment_id int, experiment_name varchar)
 
 ALTER TABLE  experiments ADD CONSTRAINT unique_exp UNIQUE (experiment_name, model_struct, loss_function, regularization_type, regularization_strength, optimizer, lr, dataset)
+
+ALTER TABLE  in_process ADD CONSTRAINT unique_process UNIQUE (experiment_id, experiment_name)

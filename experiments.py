@@ -157,10 +157,21 @@ class experiments():
                 os.path.join(model_folder, 'lrn'),
                 os.path.join(model_folder, 'learn_transition_weak_eCRF'),
                 os.path.join(model_folder, 'learn_transition_untuned_eCRF'),
+                os.path.join(model_folder, 'learn_transition_untuned_eCRF_10'),
+                os.path.join(model_folder, 'learn_transition_untuned_eCRF_vector_10'),
+                os.path.join(model_folder, 'learn_transition_scalar_weak_eCRF_scalar'),
+                os.path.join(model_folder, 'learn_transition_scalar_weak_eCRF_scalar_10'),
+                os.path.join(model_folder, 'learn_transition_scalar_weak_eCRF_scalar_no_reg'),
+                os.path.join(model_folder, 'learn_transition_weak_eCRF_scalar'),
+                os.path.join(model_folder, 'learn_transition_weak_eCRF_scalar_10'),
+                os.path.join(model_folder, 'learn_transition_weak_eCRF_scalar_no_reg'),
                 os.path.join(model_folder, 'learn_transition_weak_eCRF_vector'),
+                os.path.join(model_folder, 'learn_transition_weak_eCRF_vector_10'),
+                os.path.join(model_folder, 'learn_transition_weak_eCRF_vector_no_reg'),
                 os.path.join(model_folder, 'learn_transition_untuned_eCRF_vector'),
+                os.path.join(model_folder, 'learn_transition_weak_eCRF_vector_no_reg')
             ],
-            'dataset': ['coco_2014']  # ['cifar_100', 'coco_2014']
+            'dataset': ['cifar_100']
         }
         return self.add_globals(exp)  # Add globals to the experiment
 

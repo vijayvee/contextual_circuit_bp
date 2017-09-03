@@ -131,6 +131,44 @@ class db(object):
             self.return_status('SELECT')
         return self.cur.fetchone()
 
+    def get_parameters_and_reserve(self, experiment_name=None, random=True):
+        if experiment_name is not None:
+            exp_string = """experiment_name='%s' and""" % experiment_name
+        else:
+            exp_string = """"""
+        if random:
+            rand_string = """ORDER BY random()"""
+        else:
+            rand_string = """"""
+        self.cur.execute(
+            """
+            INSERT INTO in_process (experiment_id, experiment_name)
+            (SELECT _id, experiment_name FROM experiments h
+            WHERE %s NOT EXISTS (
+                SELECT 1
+                FROM in_process i
+                WHERE h._id = i.experiment_id
+                )
+            %s LIMIT 1)
+            RETURNING experiment_id
+            """ % (
+                exp_string,
+                rand_string,
+                )
+        )
+        self.cur.execute(
+            """
+            SELECT * FROM experiments
+            WHERE _id=%(_id)s
+            """,
+            {
+                '_id': self.cur.fetchone()['experiment_id']
+            }
+        )
+        if self.status_message:
+            self.return_status('SELECT')
+        return self.cur.fetchone()
+
     def list_experiments(self):
         self.cur.execute(
             """
@@ -220,15 +258,15 @@ def get_experiment_name():
 def get_parameters(experiment_name, log, random=False):
     config = credentials.postgresql_connection()
     with db(config) as db_conn:
-        param_dict = db_conn.get_parameters(
+        param_dict = db_conn.get_parameters_and_reserve(
             experiment_name=experiment_name,
             random=random)
         log.info('Using parameters: %s' % param_dict)
         if param_dict is not None:
             experiment_id = param_dict['_id']
-            db_conn.update_in_process(
-                experiment_id=experiment_id,
-                experiment_name=experiment_name)
+            # db_conn.update_in_process(
+            #     experiment_id=experiment_id,
+            #     experiment_name=experiment_name)
         else:
             experiment_id = None
     if param_dict is None:

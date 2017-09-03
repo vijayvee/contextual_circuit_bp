@@ -41,14 +41,14 @@ class ContextualCircuit(object):
         self.u_shape = [self.SRF, self.SRF, self.k, 1]
         self.p_shape = [self.SSN_ext, self.SSN_ext, self.k, self.k]
         self.t_shape = [self.SSF_ext, self.SSF_ext, self.k, self.k]
-        self.i_shape = self.q_shape
-        self.o_shape = self.q_shape
+        self.i_shape = [1, 1, self.k, self.k]
+        self.o_shape = [1, 1, self.k, self.k]
         self.u_nl = tf.identity
         self.t_nl = tf.identity
         self.q_nl = tf.identity
         self.p_nl = tf.identity
-        self.tuning_nl = tf.nn.relu
         self.tuning_shape = [1, 1, self.k, self.k]
+        self.tuning_nl = tf.nn.relu
         self.tuning_params = ['Q', 'P', 'T']  # Learned connectivity
         self.recurrent_nl = tf.nn.relu
         self.gate_nl = tf.nn.sigmoid
