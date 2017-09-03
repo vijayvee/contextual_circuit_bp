@@ -250,3 +250,4 @@ class experiments():
             'dataset': ['mnist', 'cifar_10']
         }
         return self.add_globals(exp)  # Add globals to the experiment
+
