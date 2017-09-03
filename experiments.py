@@ -14,7 +14,7 @@ class experiments():
         """Globals."""
         return {
             'batch_size': 64,  # Train/val batch size.
-            'data_augmentations': ['random_crop', 'left_right'],  # Random_crop, etc.
+            'data_augmentations': [['random_crop', 'left_right']],  # Random_crop, etc.
             'epochs': 200,
             'shuffle': True,  # Shuffle data.
             'validation_iters': 500,  # How often to evaluate validation.

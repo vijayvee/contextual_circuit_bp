@@ -120,6 +120,7 @@ def main(experiment_name, list_experiments=False):
     [py_utils.make_dir(v) for v in dir_list.values()]
 
     # Prepare data loaders on the cpu
+    config.data_augmentations = py_utils.flatten_list(config.data_augmentations) 
     with tf.device('/cpu:0'):
         train_images, train_labels = data_loader.inputs(
             dataset=train_data,
