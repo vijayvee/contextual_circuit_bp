@@ -8,6 +8,7 @@ import pandas as pd
 from utils.py_utils import get_dt_stamp
 import matplotlib
 from matplotlib import pyplot as plt
+from matplotlib import cm
 from matplotlib.ticker import MaxNLocator
 import plotly.plotly as py
 import plotly.tools as tls
@@ -109,6 +110,9 @@ def main(
     plt.rc('legend', fontsize=8, labelspacing=3)
     f, axs = plt.subplots(2, figsize=(20, 30))
     ax = axs[1]
+    NUM_COLORS = len(df['model parameters'].unique())
+    cm = plt.get_cmap('gist_rainbow')
+    ax.set_color_cycle([cm(1.*i/NUM_COLORS) for i in range(NUM_COLORS)])
     for k in df['model parameters'].unique():
         tmp = df[df['model parameters'] == k]
         ax = tmp.plot(
@@ -124,6 +128,7 @@ def main(
     ax.set_ylabel(loss_label)
     # ax.legend_.remove()
     ax = axs[0]
+    ax.set_color_cycle([cm(1.*i/NUM_COLORS) for i in range(NUM_COLORS)])
     for k in df['model parameters'].unique():
         tmp = df[df['model parameters'] == k]
         ax = tmp.plot(
