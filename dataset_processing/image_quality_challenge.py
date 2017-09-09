@@ -14,15 +14,15 @@ class data_processing(object):
         self.name = 'ChallengeDB_release'
         self.config = Config()
         self.output_size = [100, 1]
-        self.im_size = [32, 32, 3]
-        self.model_input_image_size = [32, 32, 3]
+        self.im_size = [500, 500, 3]
+        self.model_input_image_size = [256, 256, 3]
         self.data_file = 'processed_scores.npz'
         self.file_key = 'im_files'
         self.label_key = 'im_scores'
         self.default_loss_function = 'mse'
         self.score_metric = 'accuracy'
         self.crossval_split = 0.1
-        self.preprocess = [None]
+        self.preprocess = ['resize']
         self.shuffle = True  # Preshuffle data?
         self.folds = {
             'train': 'train',
