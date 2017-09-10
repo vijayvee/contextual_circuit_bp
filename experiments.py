@@ -217,6 +217,36 @@ class experiments():
         }
         return self.add_globals(exp)  # Add globals to the experiment
 
+    def seven_px_one_layer_rnns_selective(self):
+        """Each key in experiment_dict must be manually added to the schema."""
+        model_folder = 'seven_px_one_layer_rnns_selective'
+        exp = {
+            'experiment_name': [model_folder],
+            'lr': [1e-4],
+            'loss_function': [None],  # Leave as None to use dataset default
+            'optimizer': ['adam'],
+            'regularization_type': [None],  # [None, 'l1', 'l2'],
+            'regularization_strength': [0.005],
+            'model_struct': [
+                os.path.join(model_folder, 'divisive'),
+                os.path.join(model_folder, 'batch'),
+                os.path.join(model_folder, 'layer'),
+                os.path.join(model_folder, 'learn_transition_weak_eCRF_1'),
+                os.path.join(model_folder, 'learn_transition_untuned_eCRF_1'),
+                os.path.join(model_folder, 'learn_transition_untuned_eCRF_vector_1'),  # 
+                os.path.join(model_folder, 'learn_transition_untuned_eCRF_vector_3'),  # 
+                os.path.join(model_folder, 'learn_transition_weak_eCRF_scalar_5'),  # 
+                os.path.join(model_folder, 'learn_transition_weak_eCRF_scalar_no_reg'),
+                os.path.join(model_folder, 'learn_transition_weak_eCRF_vector_1'),  # 
+                os.path.join(model_folder, 'learn_transition_weak_eCRF_vector_3'),  # 
+                os.path.join(model_folder, 'learn_transition_weak_eCRF_vector_5'),
+                os.path.join(model_folder, 'learn_transition_weak_eCRF_vector_no_reg'),  # 
+            ],
+            'dataset': ['cifar_100']
+        }
+        return self.add_globals(exp)  # Add globals to the experiment
+
+
     def cluster_two_layer_rnns_no_regularization(self):
         """Each key in experiment_dict must be manually added to the schema."""
         model_folder = 'cluster_two_layer_rnns_no_regularization'
