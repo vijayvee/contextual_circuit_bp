@@ -12,6 +12,10 @@ def metric_interpreter(metric, pred, labels):
         return mean_score(
             pred=pred,
             labels=labels)
+    elif metric == 'l2':
+        return l2_score(
+            pred=pred,
+            labels=labels)
     else:
         raise RuntimeError('Cannot understand the dataset metric.')
 
@@ -30,6 +34,10 @@ def class_accuracy(pred, labels):
     return tf.reduce_mean(
         tf.to_float(tf.equal(tf.argmax(pred, 1), tf.cast(
             labels, dtype=tf.int64))))
+
+
+def l2_score(pred, labels):
+    return tf.nn.l2_loss(pred - labels)
 
 
 def tf_confusion_matrix(pred, targets):

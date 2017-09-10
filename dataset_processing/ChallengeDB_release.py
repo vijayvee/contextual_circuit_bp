@@ -13,14 +13,14 @@ class data_processing(object):
     def __init__(self):
         self.name = 'ChallengeDB_release'
         self.config = Config()
-        self.output_size = [100, 1]
+        self.output_size = [1, 1]
         self.im_size = [500, 500, 3]
         self.model_input_image_size = [256, 256, 3]
         self.data_file = 'processed_scores.npz'
         self.file_key = 'im_files'
         self.label_key = 'im_scores'
         self.default_loss_function = 'l2'
-        self.score_metric = 'accuracy'
+        self.score_metric = 'l2'
         self.crossval_split = 0.1
         self.ignore_ims = ['t%s.bmp' % x for x in range(1, 8)]
         self.preprocess = ['resize']
@@ -42,7 +42,7 @@ class data_processing(object):
                 'reshape': self.im_size
             },
             'label': {
-                'dtype': tf.int64,
+                'dtype': tf.float32,
                 'reshape': None
             }
         }

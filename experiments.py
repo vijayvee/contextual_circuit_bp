@@ -266,7 +266,7 @@ class experiments():
                 os.path.join(model_folder, 'learn_transition_weak_eCRF_vector_5'),
                 os.path.join(model_folder, 'learn_transition_weak_eCRF_vector_8'),
             ],
-            'dataset': ['image_quality_challenge']
+            'dataset': ['ChallengeDB_release']
         }
         return self.add_globals(exp)  # Add globals to the experiment
 
