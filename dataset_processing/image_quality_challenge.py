@@ -1,5 +1,5 @@
 import os
-import shutils
+import shutil
 import numpy as np
 import tensorflow as tf
 from glob import glob
@@ -19,9 +19,10 @@ class data_processing(object):
         self.data_file = 'processed_scores.npz'
         self.file_key = 'im_files'
         self.label_key = 'im_scores'
-        self.default_loss_function = 'mse'
+        self.default_loss_function = 'l2'
         self.score_metric = 'accuracy'
         self.crossval_split = 0.1
+        self.ignore_ims = ['t%s.bmp' % x for x in range(1, 8)]
         self.preprocess = ['resize']
         self.shuffle = True  # Preshuffle data?
         self.folds = {
@@ -29,11 +30,11 @@ class data_processing(object):
             'test': 'test'}
         self.targets = {
             'image': tf_fun.bytes_feature,
-            'label': tf_fun.int64_feature
+            'label': tf_fun.float_feature
         }
         self.tf_dict = {
             'image': tf_fun.fixed_len_feature(dtype='string'),
-            'label': tf_fun.fixed_len_feature(dtype='int64')
+            'label': tf_fun.fixed_len_feature(dtype='float')
         }
         self.tf_reader = {
             'image': {
@@ -56,29 +57,44 @@ class data_processing(object):
         all_ims = np.load(os.path.join(
             self.config.data_root,
             self.name,
-            self.data_file))))[self.file_key]
+            self.data_file))[self.file_key]
+        all_ims = np.asarray([x for x in all_ims if x not in self.ignore_ims])
 
         # Create folders for training/validation splits
-        self.rand_order = np.random.permutations(len(all_ims))]
-        self.test_split = np.round(len(all_ims) * self.crossval_split)
+        self.rand_order = np.random.permutation(len(all_ims))
+        self.test_split = np.round(len(all_ims) * self.crossval_split).astype(int)
         shuffled_ims = all_ims[self.rand_order]
         test_ims = shuffled_ims[:self.test_split]
         train_ims = shuffled_ims[self.test_split:]
-        test_ims = [os.path.join(
+        target_test_ims = [os.path.join(
             self.config.data_root,
             self.name,
             self.folds['test'],
-            f) for f in split_test_ims]
-        train_ims = [os.path.join(
+            f) for f in test_ims]
+        target_train_ims = [os.path.join(
             self.config.data_root,
             self.name,
             self.folds['train'],
-            f) for f in split_train_ims]
+            f) for f in train_ims]
+        test_ims = [os.path.join(
+            self.config.data_root,
+            self.name,
+            f) for f in test_ims]
+        train_ims = [os.path.join(
+            self.config.data_root,
+            self.name,
+            f) for f in train_ims]
 
-        py_utils.make_dir(self.folds['test'])
-        [shutils.copyfile(f) for f in test_ims]
-        py_utils.make_dir(self.folds['train'])
-        [shutils.copyfile(f) for f in train_ims]
+        py_utils.make_dir(os.path.join(
+            self.config.data_root,
+            self.name,
+            self.folds['test']))
+        py_utils.make_dir(os.path.join(
+            self.config.data_root,
+            self.name,
+            self.folds['train']))
+        [shutil.copyfile(s, t) for s, t in zip(test_ims, target_test_ims)]
+        [shutil.copyfile(s, t) for s, t in zip(train_ims, target_train_ims)]
         files = {
             self.folds['test']: test_ims,
             self.folds['train']: train_ims
@@ -89,7 +105,7 @@ class data_processing(object):
         label_dict = np.load(os.path.join(
             self.config.data_root,
             self.name,
-            self.data_file))))
+            self.data_file))
         all_labels = label_dict[self.label_key][self.rand_order]
         labels = {
             self.folds['test']: all_labels[:self.test_split],
