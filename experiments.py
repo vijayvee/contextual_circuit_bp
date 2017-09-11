@@ -265,6 +265,10 @@ class experiments():
                 os.path.join(model_folder, 'learn_transition_weak_eCRF_vector_3'),
                 os.path.join(model_folder, 'learn_transition_weak_eCRF_vector_5'),
                 os.path.join(model_folder, 'learn_transition_weak_eCRF_vector_8'),
+                os.path.join(model_folder, 'bn_learn_transition_weak_eCRF_vector_1'),
+                os.path.join(model_folder, 'bn_learn_transition_weak_eCRF_vector_3'),
+                os.path.join(model_folder, 'bn_learn_transition_weak_eCRF_vector_5'),
+                os.path.join(model_folder, 'bn_learn_transition_weak_eCRF_vector_8'),
             ],
             'dataset': ['ChallengeDB_release']
         }

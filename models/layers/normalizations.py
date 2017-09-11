@@ -152,11 +152,27 @@ class normalizations(object):
             padding=self.padding)
         return contextual_layer.build()
 
-    def contextual_frozen_connectivity_learned_transition_weak_eCRF(self, x, layer, eRF, aux):
+    def bn_contextual_frozen_connectivity_learned_transition_weak_eCRF_vector_modulation(self, x, layer, eRF, aux):
         """Contextual model from paper with frozen U & eCRFs."""
         self.update_params(aux)
         self.set_RFs(layer=layer, eRF=eRF)
         contextual_layer = contextual_frozen_connectivity_learned_transition_weak_eCRF_vector_modulation.ContextualCircuit(
+            X=x,
+            timesteps=self.timesteps,
+            lesions=self.lesions,
+            SRF=self.SRF,
+            SSN=self.SSN,
+            SSF=self.SSF,
+            strides=self.strides,
+            padding=self.padding)
+        context_mod = contextual_layer.build()
+        return self.batch(x, context_mod, eRF, aux)
+
+    def contextual_frozen_connectivity_learned_transition_weak_eCRF(self, x, layer, eRF, aux):
+        """Contextual model from paper with frozen U & eCRFs."""
+        self.update_params(aux)
+        self.set_RFs(layer=layer, eRF=eRF)
+        contextual_layer = contextual_frozen_connectivity_learned_transition_weak_eCRF.ContextualCircuit(
             X=x,
             timesteps=self.timesteps,
             lesions=self.lesions,
