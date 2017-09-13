@@ -15,7 +15,7 @@ from models.layers.normalization_functions import contextual_frozen_connectivity
 from models.layers.normalization_functions import contextual_frozen_connectivity_learned_transition_untuned_eCRF_vector_modulation
 from models.layers.normalization_functions import contextual_frozen_connectivity_learned_transition_weak_eCRF_vector_modulation
 from models.layers.normalization_functions import contextual_frozen_connectivity_learned_transition_vector_weak_eCRF_vector_modulation
-
+from models.layers.normalization_functions import contextual_frozen_connectivity_learned_transition_vector_weak_eCRF_vector_modulation_late_I
 
 class normalizations(object):
     """Wrapper class for activation functions."""
@@ -218,6 +218,21 @@ class normalizations(object):
         self.update_params(aux)
         self.set_RFs(layer=layer, eRF=eRF)
         contextual_layer = contextual_frozen_connectivity_learned_transition_vector_weak_eCRF_vector_modulation.ContextualCircuit(
+            X=x,
+            timesteps=self.timesteps,
+            lesions=self.lesions,
+            SRF=self.SRF,
+            SSN=self.SSN,
+            SSF=self.SSF,
+            strides=self.strides,
+            padding=self.padding)
+        return contextual_layer.build()
+
+    def contextual_frozen_connectivity_learned_transition_vector_weak_eCRF_vector_modulation_late_I(self, x, layer, eRF, aux):
+        """Contextual model from paper with frozen U & eCRFs."""
+        self.update_params(aux)
+        self.set_RFs(layer=layer, eRF=eRF)
+        contextual_layer = contextual_frozen_connectivity_learned_transition_vector_weak_eCRF_vector_modulation_late_I.ContextualCircuit(
             X=x,
             timesteps=self.timesteps,
             lesions=self.lesions,

@@ -9,6 +9,7 @@ import random
 
 class data_processing(object):
     def __init__(self):
+        """MNIST init function."""
         self.name = 'mnist'
         self.extension = '.png'
         self.config = Config()
@@ -21,7 +22,8 @@ class data_processing(object):
         self.shuffle = True  # Preshuffle data?
         self.folds = {
             'train': 'train',
-            'test': 'test'}
+            'test': 'test'
+        }
         self.targets = {
             'image': tf_fun.bytes_feature,
             'label': tf_fun.int64_feature

@@ -3,6 +3,7 @@ from setuptools import setup, find_packages
 from db import credentials
 from utils import logger as log
 
+"""e.g. python setup.py install"""
 
 setup(
     name="Contextual_DCN",

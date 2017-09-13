@@ -12,9 +12,11 @@ from ops import model_utils
 from ops import loss_utils
 from ops import eval_metrics
 from ops import training
+from ops import hp_opt_utils
 
 
 def print_model_architecture(model_summary):
+    """Print a list fancy."""
     print '_' * 20
     print 'Model architecture:'
     print '_' * 20
@@ -24,16 +26,24 @@ def print_model_architecture(model_summary):
 
 
 def add_to_config(d, config):
+    """Add attributes to config class."""
     for k, v in d.iteritems():
         setattr(config, k, v)
     return config
 
 
 def process_DB_exps(experiment_name, log, config):
-    # TODO: Add bayesian optimization here.
+    """Interpret and prepare hyperparams at runtime."""
     exp_params, exp_id = db.get_parameters(
         experiment_name=experiment_name,
         log=log)
+    if 'hp_optim' in exp_params.keys() and exp_params['hp_optim'] is not None:
+        hp_hist, performance_history = db.query_hp_hist(exp_params)
+        exp_params = hp_opt_utils.hp_optim_interpreter(
+            hp_hist=hp_hist,
+            exp_params=exp_params,
+            performance_history=performance_history
+        )
     if exp_id is None:
         err = 'No empty experiments found.' + \
             'Did you select the correct experiment name?'
@@ -47,6 +57,7 @@ def process_DB_exps(experiment_name, log, config):
 
 
 def get_data_pointers(dataset, base_dir, cv, log):
+    """Get data file pointers."""
     data_pointer = os.path.join(base_dir, '%s_%s.tfrecords' % (dataset, cv))
     data_means = os.path.join(base_dir, '%s_%s_means.npy' % (dataset, cv))
     log.info(

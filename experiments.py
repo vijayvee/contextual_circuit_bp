@@ -24,6 +24,7 @@ class experiments():
         }
 
     def add_globals(self, exp):
+        """Add attributes to this class."""
         for k, v in self.globals().iteritems():
             exp[k] = v
         return exp
@@ -312,6 +313,35 @@ class experiments():
                 os.path.join(model_folder, 'learn_transition_weak_eCRF_vector_no_reg'),
             ],
             'dataset': ['cifar_100']
+        }
+        return self.add_globals(exp)  # Add globals to the experiment
+
+    def perceptual_iq_hp_optimization(self):
+        """Each key in experiment_dict must be manually added to the schema.
+
+        If using grid-search -- put hps in lists.
+        If using hp-optim, do not use lists except for domains.
+        """
+        model_folder = 'perceptual_iq_hp_optimization'
+        exp = {
+            'experiment_name': model_folder,
+            'hp_optim': 'gpyopt',
+            'hp_multiple': 10,
+            'lr': 1e-4,
+            'lr_domain': [1e-1, 1e-5],
+            'loss_function': None,  # Leave as None to use dataset default
+            'optimizer': 'adam',
+            'regularization_type': None,  # [None, 'l1', 'l2'],
+            'regularization_strength': 1e-5,
+            'regularization_strength_domain': [1e-1, 1e-7],
+            # 'timesteps': True,
+            'model_struct': [
+                os.path.join(model_folder, 'divisive_1l'),
+                os.path.join(model_folder, 'layer_1l'),
+                os.path.join(model_folder, 'divisive_2l'),
+                os.path.join(model_folder, 'layer_2l'),
+            ],
+            'dataset': 'ChallengeDB_release'
         }
         return self.add_globals(exp)  # Add globals to the experiment
 

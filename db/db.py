@@ -1,18 +1,22 @@
 #!/usr/bin/env python
 import sys
+import json
 import sshtunnel
 import argparse
 import psycopg2
 import psycopg2.extras
 import psycopg2.extensions
 import credentials
+import numpy as np
 from config import Config
+from ops import hp_opt_utils
 sshtunnel.DAEMON = True  # Prevent hanging process due to forward thread
 main_config = Config()
 
 
 class db(object):
     def __init__(self, config):
+        """Init global variables."""
         self.status_message = False
         self.db_schema_file = 'db/db_schema.txt'
         # Pass config -> this class
@@ -20,6 +24,7 @@ class db(object):
             setattr(self, k, v)
 
     def __enter__(self):
+        """Enter method."""
         if main_config.db_ssh_forward:
             forward = sshtunnel.SSHTunnelForwarder(
                 credentials.machine_credentials()['ssh_address'],
@@ -42,6 +47,7 @@ class db(object):
         return self
 
     def __exit__(self, exc_type, exc_value, traceback):
+        """Exit method."""
         if exc_type is not None:
             print exc_type, exc_value, traceback
             self.close_db(commit=False)
@@ -52,19 +58,62 @@ class db(object):
         return self
 
     def close_db(self, commit=True):
+        """Commit changes and exit the DB."""
         self.conn.commit()
         self.cur.close()
         self.conn.close()
 
+    def experiment_fields(self):
+        """Dict of fields in experiments & hp_combo_history tables. DEPRECIATED."""
+        return {
+            'experiment_name': ['experiments', 'hp_combo_history'],
+            'model_struct': ['experiments', 'hp_combo_history'],
+            'loss_function': ['experiments', 'hp_combo_history'],
+            'regularization_type': ['experiments', 'hp_combo_history'],
+            'regularization_strength': ['experiments', 'hp_combo_history'],
+            'optimizer': ['experiments', 'hp_combo_history'],
+            'lr': ['experiments', 'hp_combo_history'],
+            'dataset': ['experiments', 'hp_combo_history'],
+            'regularization_type_domain': ['experiments', 'hp_combo_history'],
+            'regularization_strength_domain': ['experiments', 'hp_combo_history'],
+            'optimizer_domain': ['experiments', 'hp_combo_history'],
+            'lr_domain': ['experiments', 'hp_combo_history'],
+            'timesteps_domain': ['experiments', 'hp_combo_history'],
+            'tuning_u_domain': ['experiments', 'hp_combo_history'],
+            'tuning_t_domain': ['experiments', 'hp_combo_history'],
+            'tuning_q_domain': ['experiments', 'hp_combo_history'],
+            'tuning_p_domain': ['experiments', 'hp_combo_history'],
+            'tuning_u': ['experiments', 'hp_combo_history'],
+            'tuning_t': ['experiments', 'hp_combo_history'],
+            'tuning_q': ['experiments', 'hp_combo_history'],
+            'tuning_p': ['experiments', 'hp_combo_history'],
+            'hp_optim': ['experiments', 'hp_combo_history'],
+            'hp_multiple': ['experiments', 'hp_combo_history'],
+            'hp_current_iteration': ['experiments', 'hp_combo_history'],
+            'experiment_iteration': ['experiments', 'hp_combo_history']
+        }
+
+    def fix_namedict(self, namedict, table):
+        """Insert empty fields in dictionary where keys are absent."""
+        experiment_fields = self.experiment_fields()
+        for idx, entry in enumerate(namedict):
+            for k, v in experiment_fields.iteritems():
+                if k == 'experiment_iteration':
+                    # Initialize iterations at 0
+                    entry[k] = 0
+                elif k not in entry.keys():
+                    entry[k] = None
+            namedict[idx] = entry
+        return namedict
+
     def recreate_db(self, run=False):
+        """Initialize the DB from the schema file."""
         if run:
             db_schema = open(self.db_schema_file).read().splitlines()
             for s in db_schema:
                 t = s.strip()
                 if len(t):
                     self.cur.execute(t)
-            # self.cur.execute(open(self.db_schema_file).read())
-            # self.conn.commit()
 
     def return_status(
             self,
@@ -93,18 +142,79 @@ class db(object):
         experiment_name: name of experiment to add
         parent_experiment: linking a child (e.g. clickme) -> parent (ILSVRC12)
         """
+        namedict = self.fix_namedict(namedict, 'experiments')
         self.cur.executemany(
             """
             INSERT INTO experiments
-            (experiment_name, model_struct, loss_function, regularization_type, regularization_strength, optimizer, lr, dataset)
+            (
+            experiment_name,
+            model_struct,
+            loss_function,
+            regularization_type,
+            regularization_strength,
+            optimizer,
+            lr,
+            dataset,
+            regularization_type_domain,
+            regularization_strength_domain,
+            optimizer_domain,
+            lr_domain,
+            timesteps_domain,
+            tuning_u_domain,
+            tuning_t_domain,
+            tuning_q_domain,
+            tuning_p_domain,
+            tuning_u,
+            tuning_t,
+            tuning_q,
+            tuning_p,
+            hp_optim,
+            hp_multiple,
+            hp_current_iteration,
+            experiment_iteration
+            )
             VALUES
-            (%(experiment_name)s, %(model_struct)s, %(loss_function)s, %(regularization_type)s, %(regularization_strength)s, %(optimizer)s, %(lr)s, %(dataset)s)
+            (
+            %(experiment_name)s,
+            %(model_struct)s,
+            %(loss_function)s,
+            %(regularization_type)s,
+            %(regularization_strength)s,
+            %(optimizer)s,
+            %(lr)s,
+            %(dataset)s,
+            %(regularization_type_domain)s,
+            %(regularization_strength_domain)s,
+            %(optimizer_domain)s,
+            %(lr_domain)s,
+            %(timesteps_domain)s,
+            %(tuning_u_domain)s,
+            %(tuning_t_domain)s,
+            %(tuning_q_domain)s,
+            %(tuning_p_domain)s,
+            %(tuning_u)s,
+            %(tuning_t)s,
+            %(tuning_q)s,
+            %(tuning_p)s,
+            %(hp_optim)s,
+            %(hp_multiple)s,
+            %(hp_current_iteration)s,
+            %(experiment_iteration)s
+            )
             """,
             namedict)
+        self.cur.execute(
+            """
+            UPDATE experiments
+            SET experiment_link=_id
+            WHERE experiment_name=%(experiment_name)s
+            """,
+            namedict[0])
         if self.status_message:
             self.return_status('INSERT')
 
     def get_parameters(self, experiment_name=None, random=True):
+        """Pull parameters DEPRECIATED."""
         if experiment_name is not None:
             exp_string = """experiment_name='%s' and""" % experiment_name
         else:
@@ -132,6 +242,7 @@ class db(object):
         return self.cur.fetchone()
 
     def get_parameters_and_reserve(self, experiment_name=None, random=True):
+        """Pull parameters and update the in process table."""
         if experiment_name is not None:
             exp_string = """experiment_name='%s' and""" % experiment_name
         else:
@@ -170,6 +281,7 @@ class db(object):
         return self.cur.fetchone()
 
     def list_experiments(self):
+        """List all experiments."""
         self.cur.execute(
             """
             SELECT distinct(experiment_name) from experiments
@@ -180,6 +292,7 @@ class db(object):
         return self.cur.fetchall()
 
     def update_in_process(self, experiment_id, experiment_name):
+        """Update the in_process table."""
         self.cur.execute(
             """
              INSERT INTO in_process
@@ -195,6 +308,7 @@ class db(object):
             self.return_status('INSERT')
 
     def get_performance(self, experiment_name):
+        """Get experiment performance."""
         self.cur.execute(
             """
             SELECT * FROM performance AS P
@@ -210,6 +324,7 @@ class db(object):
         return self.cur.fetchall()
 
     def remove_experiment(self, experiment_name):
+        """Delete an experiment from all tables."""
         self.cur.execute(
             """
             DELETE FROM experiments WHERE experiment_name=%(experiment_name)s;
@@ -224,6 +339,7 @@ class db(object):
             self.return_status('DELETE')
 
     def reset_in_process(self):
+        """Reset in process table."""
         self.cur.execute(
             """
             DELETE FROM in_process
@@ -233,6 +349,7 @@ class db(object):
             self.return_status('DELETE')
 
     def update_performance(self, namedict):
+        """Update performance in database."""
         self.cur.execute(
             """
             INSERT INTO performance
@@ -246,6 +363,7 @@ class db(object):
 
 
 def get_experiment_name():
+    """Get names of experiments."""
     config = credentials.postgresql_connection()
     with db(config) as db_conn:
         param_dict = db_conn.get_parameters()
@@ -256,12 +374,13 @@ def get_experiment_name():
 
 
 def get_parameters(experiment_name, log, random=False):
+    """Get parameters for a given experiment."""
     config = credentials.postgresql_connection()
     with db(config) as db_conn:
         param_dict = db_conn.get_parameters_and_reserve(
             experiment_name=experiment_name,
             random=random)
-        log.info('Using parameters: %s' % param_dict)
+        log.info('Using parameters: %s' % json.dumps(param_dict, indent=4))
         if param_dict is not None:
             experiment_id = param_dict['_id']
             # db_conn.update_in_process(
@@ -275,6 +394,7 @@ def get_parameters(experiment_name, log, random=False):
 
 
 def initialize_database():
+    """Initialize and recreate the database."""
     config = credentials.postgresql_connection()
     with db(config) as db_conn:
         db_conn.recreate_db(run=True)
@@ -282,6 +402,7 @@ def initialize_database():
 
 
 def reset_in_process():
+    """Reset the in_process table."""
     config = credentials.postgresql_connection()
     with db(config) as db_conn:
         db_conn.reset_in_process()
@@ -289,6 +410,7 @@ def reset_in_process():
 
 
 def list_experiments():
+    """List all experiments in the database."""
     config = credentials.postgresql_connection()
     with db(config) as db_conn:
         experiments = db_conn.list_experiments()
@@ -304,6 +426,7 @@ def update_performance(
         validation_loss,
         time_elapsed,
         training_step):
+    """Update performance table for an experiment."""
     config = credentials.postgresql_connection()
     perf_dict = {
         'experiment_id': experiment_id,
@@ -320,10 +443,41 @@ def update_performance(
 
 
 def get_performance(experiment_name):
+    """Get performance for an experiment."""
     config = credentials.postgresql_connection()
     with db(config) as db_conn:
         perf = db_conn.get_performance(experiment_name=experiment_name)
     return perf
+
+
+def query_hp_hist(exp_params, eval_on='validation_loss'):
+    """Query an experiment's history of hyperparameters and performance."""
+    config = credentials.postgresql_connection()
+    domain_param_map = hp_opt_utils.hp_opt_dict()
+    experiment_name = exp_params['experiment_name']
+    with db(config) as db_conn:
+        perf = db_conn.get_performance(experiment_name=experiment_name)
+        if len(perf) == 0:
+            # First step of hp-optim. Set performance to 0.
+            perf = [0.]
+
+            # And set hp history to initial values.
+            hp_history = {}
+            for k, v in domain_param_map.iteritems():
+                if exp_params[k] is not None:  # If searching this domain.
+                    hp_history[v] = exp_params[v]
+            hp_history = [hp_history]
+        else:
+            # Sort performance by time elapsed
+            times = [x['time_elapsed'] for x in perf]
+            time_idx = np.argsort(times)
+            perf = [perf[idx][eval_on] for idx in time_idx]
+
+            # Sort hp parameters by history
+            times = [x['experiment_iteration'] for x in exp_params]
+            time_idx = np.argsort(times)
+            hp_history = [exp_params[idx] for idx in time_idx]
+    return perf, hp_history
 
 
 def main(

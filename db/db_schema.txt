@@ -1,13 +1,12 @@
 DROP TABLE IF EXISTS experiments
 DROP TABLE IF EXISTS performance
+DROP TABLE IF EXISTS hp_combo_history
 DROP TABLE IF EXISTS in_process
 
-CREATE TABLE experiments (_id bigserial primary key, experiment_name varchar, model_struct varchar, loss_function varchar, regularization_type varchar, regularization_strength float, optimizer varchar, lr float, dataset varchar)
+CREATE TABLE experiments (_id bigserial primary key, experiment_name varchar, model_struct varchar, loss_function varchar, regularization_type varchar, regularization_strength float, optimizer varchar, lr float, dataset varchar, regularization_type_domain json, regularization_strength_domain json, optimizer_domain json, lr_domain json, timesteps_domain json, tuning_u float, tuning_t float, tuning_q float, tuning_p float, tuning_u_domain json, tuning_t_domain json, tuning_q_domain json, tuning_p_domain json, hp_optim varchar, hp_multiple int, hp_current_iteration int, experiment_link int, experiment_iteration int)
 
 CREATE TABLE performance (_id bigserial primary key, experiment_name varchar, experiment_id int, summary_dir varchar, ckpt_file varchar, time_elapsed float, training_step int, validation_loss float, training_loss float)
 
 CREATE TABLE in_process (experiment_id int, experiment_name varchar)
 
-ALTER TABLE  experiments ADD CONSTRAINT unique_exp UNIQUE (experiment_name, model_struct, loss_function, regularization_type, regularization_strength, optimizer, lr, dataset)
-
-ALTER TABLE  in_process ADD CONSTRAINT unique_process UNIQUE (experiment_id, experiment_name)
+ALTER TABLE in_process ADD CONSTRAINT unique_process UNIQUE (experiment_id, experiment_name)

@@ -14,7 +14,7 @@ class ContextualCircuit(object):
     def __init__(
             self,
             X,
-            model_version='full',
+            model_version='full_late_I',
             timesteps=1,
             lesions=None,
             SRF=1,

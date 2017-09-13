@@ -1,0 +1,130 @@
+import GPyOpt
+import numpy as np
+from utils import py_utils
+
+
+def hp_optim_interpreter(hp_hist, performance_history, exp_params):
+    """Pass hyperparameter and performance history to HP optimization alg."""
+    if isinstance(exp_params, list):
+        exp_params = exp_params[-1]
+    hp_type = exp_params['hp_optim']
+    domain = gather_domains(exp_params=exp_params, hp_type=hp_type)
+    if hp_type == 'gpyopt':
+        return gpyopt_wrapper(
+            X=hp_hist,
+            Y=performance_history,
+            domain=domain)
+    else:
+        raise RuntimeError('Hp-optimizer not implemented.')
+
+
+def package_domain(hp_dict):
+    """Package sql domain params into dict."""
+    domains = {}
+    for k, v in hp_dict.iteritems():
+        if '_domain' in k:
+            domains[k] = v
+    return domains
+
+
+def gather_domains(exp_params, hp_type):
+    """Convert experiment params to a hp-optim ready domain dict."""
+    hps = hp_opt_dict()
+    dlist = []
+    for k, v in hps.iteritems():
+        if exp_params[k] is not None:
+            # If we are searching this domain.
+            if hp_type == 'gpyopt':
+                dlist += [
+                    {
+                        'name': v,
+                        'type': gpyopt_interpret_type(exp_params[v]),
+                        'domain': py_utils.convert_to_tuple(exp_params[k])
+                    }
+                ]
+            else:
+                raise RuntimeError('Hp-optimizer not implemented.')
+    return dlist
+
+
+def gpyopt_interpret_type(v):
+    """Interpret data type for gpyopt optimization."""
+    if isinstance(v, float):
+        return 'continuous'
+    elif isinstance(v, int):
+        return 'discrete'
+    else:
+        raise RuntimeError('Cannot handle non-numeric values')
+
+
+def gpyopt_wrapper(
+        X,
+        Y,
+        domain,
+        f=None,
+        bs=1,
+        cores=1,
+        evaluator_type='local_penalization',
+        hp_type='bayesian'):
+    """Wrapper for gpyopt optimization."""
+    my_prob = GPyOpt.methods.BayesianOptimization(
+        f=f,
+        X=X,
+        Y=Y,
+        domain=domain,
+        evaluator_type=evaluator_type,
+        batch_size=bs,
+        num_cores=cores)
+    if hp_type == 'bayesian':
+        return my_prob.suggested_sample
+    else:
+        raise RuntimeError('Gpyopt optimization not implemented.')
+
+
+def hp_opt_dict():
+    return {
+        'regularization_type_domain': 'regularization_type',
+        'regularization_strength_domain': 'regularization_strength',
+        'optimizer_domain': 'optimizer',
+        'lr_domain': 'lr',
+        'timesteps_domain': 'timesteps',
+        'tuning_u_domain': 'tuning_u',
+        'tuning_t_domain': 'tuning_t',
+        'tuning_q_domain': 'tuning_q',
+        'tuning_p_domain': 'tuning_p',
+    }
+
+
+def nate_test():
+    """Nate's gpyopt tester script."""
+    # Function that takes in data and makes a suggested next parameter combo
+    def next_hyps(x_dat, y_dat, vars_dom):
+        my_prob = GPyOpt.methods.BayesianOptimization(
+            f=None, X=x_dat, Y=y_dat, domain=vars_dom,
+            evaluator_type='local_penalization', batch_size=2,
+            num_cores=2)
+        return my_prob.suggested_sample
+
+    # Input parameter combos
+    x_init = np.array([[1, 2, -2],
+                       [2, 3, -1],
+                       [-1, 5, -4],
+                       [-5, 6, 9]])
+    # Output of model evaluated at inputs
+    y_init = np.array([[5],
+                       [6],
+                       [-2],
+                       [-1]])
+    # Details about the domain of variables. It seems like continuos variables
+    # should be listed first for some reason
+    bds = [{'name': 'var_1', 'type': 'continuous', 'domain': (-10, 10)},
+           {'name': 'var_2', 'type': 'continuous', 'domain': (-10, 10)},
+           {'name': 'var_3', 'type': 'discrete', 'domain': tuple(
+            range(-10, 11))}]
+
+    # Display output
+    print next_hyps(x_init, y_init, bds)
+
+
+if __name__ == '__main__':
+    nate_test()

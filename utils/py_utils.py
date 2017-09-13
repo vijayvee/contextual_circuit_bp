@@ -5,6 +5,7 @@ import numpy as np
 
 
 def get_dt_stamp():
+    """Get date-timestamp."""
     return re.split(
         '\.', str(datetime.now()))[0].replace(
         ' ',
@@ -43,13 +44,24 @@ def save_npys(data, model_name, output_string):
 
 
 def check_path(data_pointer, log, msg):
+    """Check that the path exists."""
     if not os.path.exists(data_pointer):
         log.error(msg)
 
 
 def ifloor(x):
+    """Floor as an integer."""
     return np.floor(x).astype(np.int)
 
 
 def iceil(x):
+    """Ceiling as an integer."""
     return np.ceil(x).astype(np.int)
+
+
+def convert_to_tuple(v):
+    """Convert v to a tuple."""
+    if not isinstance(v, tuple):
+        return tuple(v)
+    else:
+        return v

@@ -2,11 +2,9 @@ import os
 import shutil
 import numpy as np
 import tensorflow as tf
-from glob import glob
 from config import Config
 from ops import tf_fun
 from utils import py_utils
-import random
 
 
 class data_processing(object):
