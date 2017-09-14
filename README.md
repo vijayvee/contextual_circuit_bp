@@ -25,11 +25,19 @@
 	sudo apt-get install postgresql python-psycopg2 libpq-dev postgresql-client postgresql-client-common
 	sudo pip install --upgrade psycopg2 # Ubuntu14 version is outdated; we need some 2.7 features
 ```
-1. Adjust the file `config.py` to point to directories containing your images and where you intend to save data.
+1. Create a copy of `config.py.template` as `config.py` and adjust its attributes to point to directories containing your images and where you intend to save data.
 	a. Each image dataset should be in its own folder in the root directory `self.data_root` contained in the config.
 
 2. Setup your python environment and install postgres if you haven't already.
-	a. Execute the command: `python setup.py install`
+	a. For Ubuntu 14 or later, execute the command: `python setup.py install`.
+        b. For Mac OS X 10.10 or later:
+```
+      psql postgres
+      create role <database user> WITH LOGIN superuser password '<database user password>';
+      alter role <database user> superuser;
+      create database <database name> with owner <database user>;
+      \q
+```
 
 3. Fix your credentials file.
 	a. `cp db/credentials.py.template db/credentials.py` then edit the file to match your system and preferences.

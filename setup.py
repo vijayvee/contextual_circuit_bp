@@ -1,7 +1,9 @@
 import os
 from setuptools import setup, find_packages
 from db import credentials
-from utils import logger as log
+from utils import logger
+from config import Config
+
 
 """e.g. python setup.py install"""
 
@@ -21,4 +23,6 @@ os.popen(
         params['database'],
         params['user']), 'w').write(sys_password)
 
+config = Config()
+log = logger.get(os.path.join(config.log_dir, 'setup'))
 log.info('Installed required packages and created DB.')

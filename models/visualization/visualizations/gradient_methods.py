@@ -11,7 +11,7 @@ def gauss_noise(x, mu=0, std=0.15):
     return tf.random_normal(shape=shape, mean=mu, stddev=std, dtype=tf.float32)
 
 
-def np_gauss_noise(x, mu, std=0.15
+def np_gauss_noise(x, mu, std=0.15):
     return np.random.normal(mu, std, x_value.shape)
 
 
