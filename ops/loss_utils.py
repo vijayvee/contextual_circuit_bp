@@ -140,3 +140,4 @@ def sigmoid_ce(logits, labels, weights, force_dtype=tf.float32):
             labels=labels,
             logits=logits) * weights)
     return sig_loss, sig_loss
+
