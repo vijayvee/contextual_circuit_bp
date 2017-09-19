@@ -6,9 +6,11 @@ from ops import initialization
 
 class ContextualCircuit(object):
     def __getitem__(self, name):
+        """Method for getting class attribute."""
         return getattr(self, name)
 
     def __contains__(self, name):
+        """Method for checking class contents."""
         return hasattr(self, name)
 
     def __init__(
@@ -24,7 +26,7 @@ class ContextualCircuit(object):
             padding='SAME',
             dtype=tf.float32,
             return_weights=True):
-
+        """Contextual circuit layer global variable init."""
         self.X = X
         self.n, self.h, self.w, self.k = [int(x) for x in X.get_shape()]
         self.model_version = model_version
@@ -61,35 +63,35 @@ class ContextualCircuit(object):
             self.SSF = self.SRF * 5
 
     def prepare_tensors(self):
-        """ Prepare recurrent/forward weight matrices."""
+        """Prepare recurrent/forward weight matrices."""
         self.weight_dict = {  # Weights lower/activity upper
             'U': {
                 'r': {
                     'weight': 'u_r',
                     'activity': 'U_r'
-                    }
-                },
+                }
+            },
             'T': {
                 'r': {
                     'weight': 't_r',
                     'activity': 'T_r',
                     'tuning': 't_t'
-                    }
-                },
+                }
+            },
             'P': {
                 'r': {
                     'weight': 'p_r',
                     'activity': 'P_r',
                     'tuning': 'p_t'
-                    }
-                },
+                }
+            },
             'Q': {
                 'r': {
                     'weight': 'q_r',
                     'activity': 'Q_r',
                     'tuning': 'q_t'
-                    }
-                },
+                }
+            },
             'I': {
                 'r': {  # Recurrent state
                     'weight': 'i_r',
@@ -158,7 +160,7 @@ class ContextualCircuit(object):
                 dtype=self.dtype,
                 initializer=q_array.astype(np.float32),
                 trainable=False)
-            )
+        )
 
         # untuned suppression: reduction across feature axis
         ####################################################
@@ -171,7 +173,7 @@ class ContextualCircuit(object):
                 dtype=self.dtype,
                 initializer=u_array.astype(np.float32),
                 trainable=False)
-            )
+        )
 
         # weakly tuned summation: pooling in h, w dimensions
         #############################################
@@ -312,10 +314,10 @@ class ContextualCircuit(object):
         else:
             weights = self[weight_key]
         activities = tf.nn.conv2d(
-                data,
-                weights,
-                self.strides,
-                padding=self.padding)
+            data,
+            weights,
+            self.strides,
+            padding=self.padding)
         if out_key is None:
             return activities
         else:
@@ -325,12 +327,13 @@ class ContextualCircuit(object):
                 activities)
 
     def apply_tuning(self, data, wm, nl=True):
+        """Apply learnable feature-wise weights to connectivity matrices."""
         for k in self.tuning_params:
             if wm == k:
                 data = self.conv_2d_op(
                     data=data,
                     weight_key=self.weight_dict[wm]['r']['tuning']
-                    )
+                )
                 if nl:
                     return self.tuning_nl(data)
                 else:
@@ -346,7 +349,6 @@ class ContextualCircuit(object):
         # sig_tau is O forget gate
         # tau is O input gate
         """
-
         # Connectivity convolutions
         U = self.conv_2d_op(
             data=self.apply_tuning(O, 'U'),
@@ -408,7 +410,6 @@ class ContextualCircuit(object):
         # sig_tau is O forget gate
         # tau is O input gate
         """
-
         # Connectivity convolutions
         U = self.conv_2d_op(
             data=self.apply_tuning(O, 'U'),

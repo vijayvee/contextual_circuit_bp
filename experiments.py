@@ -1,20 +1,29 @@
+"""Class to specify all DNN experiments."""
 import os
 import numpy as np
 
 
 class experiments():
     """Class for experiments."""
+
     def __getitem__(self, name):
+        """Method for addressing class methods."""
         return getattr(self, name)
 
     def __contains__(self, name):
+        """Method for checking class contents."""
         return hasattr(self, name)
 
     def globals(self):
-        """Globals."""
+        """Global variables for all experiments."""
         return {
             'batch_size': 64,  # Train/val batch size.
-            'data_augmentations': [['random_crop', 'left_right']],  # Random_crop, etc.
+            'data_augmentations': [
+                [
+                    'random_crop',
+                    'left_right'
+                ]
+            ],  # TODO: document all data augmentations.
             'epochs': 200,
             'shuffle': True,  # Shuffle data.
             'validation_iters': 500,  # How often to evaluate validation.
@@ -31,7 +40,6 @@ class experiments():
 
     def one_layer_conv_mlp(self):
         """Each key in experiment_dict must be manually added to the schema.
-        
         Results 8/29/17: L2 regulariaztion sucks. No reg CM does pretty well.
         """
         model_folder = 'one_layer_conv_mlp'
@@ -421,3 +429,21 @@ class experiments():
         }
         return self.add_globals(exp)  # Add globals to the experiment
 
+    def ALLEN_selected_cells_1(self):
+        """Each key in experiment_dict must be manually added to the schema."""
+        model_folder = 'ALLEN_selected_cells_1'
+        exp = {
+            'experiment_name': [model_folder],
+            'lr': [1e-4],
+            'loss_function': ['l2'],  # Leave as None to use dataset default
+            'optimizer': ['adam'],
+            'regularization_type': [None],  # [None, 'l1', 'l2'],
+            'regularization_strength': [0.005],
+            'model_struct': [
+                os.path.join(model_folder, 'conv2d'),
+                os.path.join(model_folder, 'conv3d'),
+                os.path.join(model_folder, 'DoG'),
+            ],
+            'dataset': ['ALLEN_selected_cells_1']
+        }
+        return self.add_globals(exp)  # Add globals to the experiment

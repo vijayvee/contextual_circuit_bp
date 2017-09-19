@@ -1,3 +1,4 @@
+"""Build DNN models from python dictionaries."""
 import numpy as np
 import tensorflow as tf
 from models.layers import ff
@@ -13,10 +14,13 @@ eRF = eRF_calculator()
 
 class model_class(object):
     """Default model class that is generated with a layer_structure dict."""
+
     def __getitem__(self, name):
+        """Get class attributes."""
         return getattr(self, name)
 
     def __contains__(self, name):
+        """Check class attributes."""
         return hasattr(self, name)
 
     def __init__(self, mean, training, output_size, **kwargs):
@@ -73,6 +77,7 @@ class model_class(object):
         return output, layer_summary
 
     def default_output_layer(self):
+        """Apply a default output layer if none is specified."""
         return [
             {
                 'layers': ['fc'],
@@ -335,8 +340,26 @@ def create_conv_tower(
                 act = pool.max_pool(
                     bottom=act,
                     name=it_name)
+            elif it_neuron_op == 'dog' or it_neuron_op == 'DoG':
+                act = ff.dog_layer(
+                    self=self,
+                    bottom=act,
+                    in_channels=int(act.get_shape()[-1]),
+                    out_channels=it_dict['weights'][0],
+                    name=it_name,
+                    filter_size=it_dict['filter_size'][0]
+                )
             elif it_neuron_op == 'conv':
                 act = ff.conv_layer(
+                    self=self,
+                    bottom=act,
+                    in_channels=int(act.get_shape()[-1]),
+                    out_channels=it_dict['weights'][0],
+                    name=it_name,
+                    filter_size=it_dict['filter_size'][0]
+                )
+            elif it_neuron_op == 'conv3d':
+                act = ff.conv_3d_layer(
                     self=self,
                     bottom=act,
                     in_channels=int(act.get_shape()[-1]),

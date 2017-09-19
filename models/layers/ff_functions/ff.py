@@ -1,7 +1,11 @@
+"""Functions for feedforward DNN operations."""
 import tensorflow as tf
 from models.layers.activations import activations
 from models.layers.normalizations import normalizations
 
+
+# TODO: Merge the DoG layer here.
+# TODO: Also merge the logistic activation function.
 
 def resnet_layer(
         self,
@@ -10,14 +14,15 @@ def resnet_layer(
         name,
         activation=None,
         normalization=None):
+    """Residual convolutional layer."""
     ln = '%s_branch' % name
     in_layer = conv_layer(
-            self,
-            bottom,
-            int(bottom.get_shape()[-1]),
-            layer_weights[0],
-            batchnorm=[ln],
-            name=ln)
+        self,
+        bottom,
+        int(bottom.get_shape()[-1]),
+        layer_weights[0],
+        batchnorm=[ln],
+        name=ln)
     rlayer = tf.identity(bottom)
     if normalization is not None:
         nm = normalizations()[normalization]
@@ -44,6 +49,7 @@ def conv_layer(
         filter_size=3,
         stride=[1, 1, 1, 1],
         padding='SAME'):
+    """2D convolutional layer."""
     with tf.variable_scope(name):
         if in_channels is None:
             in_channels = int(bottom.get_shape()[-1])
@@ -58,7 +64,33 @@ def conv_layer(
         return bias
 
 
+def conv_3d_layer(
+        self,
+        bottom,
+        out_channels,
+        name,
+        in_channels=None,
+        filter_size=3,
+        stride=[1, 1, 1, 1],
+        padding='SAME'):
+    """3D convolutional layer."""
+    # TODO: Test this script.
+    with tf.variable_scope(name):
+        if in_channels is None:
+            in_channels = int(bottom.get_shape()[-1])
+        filt, conv_biases = get_conv_var(
+            self=self,
+            filter_size=filter_size,
+            in_channels=in_channels,
+            out_channels=out_channels,
+            name=name)
+        conv = tf.nn.conv3d(bottom, filt, stride, padding=padding)
+        bias = tf.nn.bias_add(conv, conv_biases)
+        return bias
+
+
 def fc_layer(self, bottom, out_channels, name, in_channels=None):
+    """Fully connected layer (MLP) layer."""
     with tf.variable_scope(name):
         if in_channels is None:
             in_channels = int(bottom.get_shape()[-1])
@@ -81,6 +113,7 @@ def get_conv_var(
         out_channels,
         name,
         init_type='xavier'):
+    """Initialize convolutional kernels."""
     if init_type == 'xavier':
         weight_init = [
             [filter_size, filter_size, in_channels, out_channels],
@@ -111,6 +144,7 @@ def get_fc_var(
         out_size,
         name,
         init_type='xavier'):
+    """Initialize FC weight matrices."""
     if init_type == 'xavier':
         weight_init = [
             [in_size, out_size],
@@ -142,6 +176,7 @@ def get_var(
         var_name,
         in_size=None,
         out_size=None):
+    """Handle variable initialization."""
     if self.data_dict is not None and name in self.data_dict:
         value = self.data_dict[name][idx]
     else:
