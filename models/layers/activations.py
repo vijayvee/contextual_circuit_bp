@@ -38,7 +38,6 @@ class activations(object):
         """Concatenated +/- relu."""
         return tf.nn.crelu(x)
 
-    def logistic_loss(self, x, coef=1.0, t=0.0, **kwargs):
+    def logistic(self, x, coef=1.0, t=0.0, **kwargs):
         """Antilok et al., 2016 logistic loss function."""
         return coef * tf.log(1 + tf.exp(coef * (x - t)))
-
