@@ -1,5 +1,6 @@
 *.pyc
 db/credentials.py
+ALLEN_*
 build/
 dist/
 *egg-info

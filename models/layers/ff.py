@@ -3,6 +3,79 @@ from models.layers.activations import activations
 from models.layers.normalizations import normalizations
 
 
+def dog_layer(
+        self,
+        bottom,
+        layer_weights,
+        name,
+        model_dtype=tf.float32,
+        init_bounds=):
+    """Antilok et al 2016 difference of gaussians."""
+   
+    def DoG(self, x, y, sc, ss, rc, rs):
+        """DoG operation."""
+        pi = tf.constant(np.pi, dtype=self.model_dtype)
+        pos = ((self.grid_xx - x)**2 + (self.grid_yy - y)**2)
+        center = tf.exp(-pos/2/sc) / (2*(sc)*pi)
+        surround = tf.exp(-pos/2/(sc + ss)) / (2*(sc + ss)*pi)
+        weight_vec = tf.reshape((rc*(center)) - (rs*(surround)), [-1, 1])
+        return tf.matmul(self.images, weight_vec)
+
+    self['%s_num_lgn'] = layer_weights
+    act_size = [int(x) for x in bottom.get_shape()]
+    initializers = [
+        'x_pos': np.linspace(0., act_size[1], layer_weights),
+        'y_pos': np.linspace(0., act_size[2], layer_weights),
+        'size_center': np.linspace(0.1, act_size[1], layer_weights),
+        'size_surround': np.linspace(0., act_size[1] // 3, layer_weights),
+        'center_weight': np.linspace(0., act_size[1] // 3, layer_weights),
+        'surround_weight': np.linspace(0., act_size[1] // 3, layer_weights)
+    ]
+    lgn_x = tf.get_variable(
+        name='%s_x_pos' % name,
+        dtype=model_dtype,
+        initializer=initializers['x_pos'],
+        trainable=True)
+    lgn_y = tf.get_variable(
+        name='%s_y_pos' % name,
+        dtype=model_dtype,
+        initializer=initializers['y_pos'],
+        trainable=True)
+    lgn_sc = tf.get_variable(
+        name='%s_size_center' % name,
+        dtype=model_dtype,
+        initializer=initializers['size_center'],
+        trainable=True)
+    lgn_ss = tf.get_variable(
+        name='%s_size_surround' % name,
+        dtype=model_dtype,
+        initializer=initializers['size_surround'],
+        trainable=True) 
+    lgn_rc = tf.get_variable(
+        name='%s_center_weight',
+        dtype=model_dtype,
+        initializer=initializers['center_weight'],
+        trainable=True)
+    lgn_rs = tf.get_variable(
+        name='%s_surround_weight',
+        dtype=model_dtype,
+        initializer=initializers['surround_weight'],
+        trainable=True)
+
+    output = []    
+    for i in range(layer_weights):
+        output += [
+            DoG(
+                x=x_pos[i],
+                y=y_pos[i],
+                sc=lgn_sc[i],
+                ss=lgn_ss[i],
+                rc=lgn_rc[i],
+                rs=lgn_rs[i])
+            ]
+    return tf.concat(axis=1, values=output)
+
+
 def resnet_layer(
         self,
         bottom,
