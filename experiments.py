@@ -434,7 +434,7 @@ class experiments():
         model_folder = 'ALLEN_all_neurons'
         exp = {
             'experiment_name': [model_folder],
-            'lr': [1e-4],
+            'lr': [1e-5],
             'loss_function': ['l2'],  # Leave as None to use dataset default
             'optimizer': ['adam'],
             'regularization_type': [None],  # [None, 'l1', 'l2'],
@@ -447,7 +447,7 @@ class experiments():
             'dataset': ['ALLEN_all_neurons']
         }
         exp = self.add_globals(exp)  # Add globals to the experiment'
-        exp['data_augmentations'] = [None]
+        exp['data_augmentations'] = [['resize']]
         return exp
 
     def ALLEN_selected_cells_1(self):
@@ -455,7 +455,7 @@ class experiments():
         model_folder = 'ALLEN_selected_cells_1'
         exp = {
             'experiment_name': [model_folder],
-            'lr': [1e-4],
+            'lr': [1e-5],
             'loss_function': ['l2'],  # Leave as None to use dataset default
             'optimizer': ['adam'],
             'regularization_type': [None],  # [None, 'l1', 'l2'],
@@ -468,5 +468,5 @@ class experiments():
             'dataset': ['ALLEN_selected_cells_1']
         }
         exp = self.add_globals(exp)  # Add globals to the experiment'
-        exp['data_augmentations'] = [None]
+        exp['data_augmentations'] = [['resize']]
         return exp

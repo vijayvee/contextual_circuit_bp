@@ -347,7 +347,6 @@ def create_conv_tower(
                     in_channels=int(act.get_shape()[-1]),
                     out_channels=it_dict['weights'][0],
                     name=it_name,
-                    filter_size=it_dict['filter_size'][0]
                 )
             elif it_neuron_op == 'conv':
                 act = ff.conv_layer(

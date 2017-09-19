@@ -125,6 +125,29 @@ def conv_layer(
         return bias
 
 
+def conv_3d_layer(
+        self,
+        bottom,
+        out_channels,
+        name,
+        in_channels=None,
+        filter_size=3,
+        stride=[1, 1, 1, 1],
+        padding='SAME'):
+    with tf.variable_scope(name):
+        if in_channels is None:
+            in_channels = int(bottom.get_shape()[-1])
+        filt, conv_biases = get_conv_var(
+            self=self,
+            filter_size=filter_size,
+            in_channels=in_channels,
+            out_channels=out_channels,
+            name=name)
+        conv = tf.nn.conv3d(bottom, filt, stride, padding=padding)
+        bias = tf.nn.bias_add(conv, conv_biases)
+        return bias
+
+
 def fc_layer(self, bottom, out_channels, name, in_channels=None):
     with tf.variable_scope(name):
         if in_channels is None:

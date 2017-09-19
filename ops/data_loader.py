@@ -24,6 +24,13 @@ def image_augmentations(
     if data_augmentations is not None:
         if 'random_crop' in data_augmentations and im_size_check:
             image = tf.random_crop(image, model_input_image_size)
+        elif 'resize' in data_augmentations and im_size_check:
+            if len(model_input_image_size) > 2:
+                model_input_image_size = model_input_image_size[:2]
+            image = tf.image.resize_images(
+                tf.expand_dims(image, axis=0), model_input_image_size)
+            image = tf.squeeze(image, axis=0)
+            import ipdb;ipdb.set_trace()
         else:
             image = tf.image.resize_image_with_crop_or_pad(
                 image, model_input_image_size[0], model_input_image_size[1])
