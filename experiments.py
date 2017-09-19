@@ -429,6 +429,27 @@ class experiments():
         }
         return self.add_globals(exp)  # Add globals to the experiment
 
+    def ALLEN_all_neurons(self):
+        """Each key in experiment_dict must be manually added to the schema."""
+        model_folder = 'ALLEN_all_neurons'
+        exp = {
+            'experiment_name': [model_folder],
+            'lr': [1e-4],
+            'loss_function': ['l2'],  # Leave as None to use dataset default
+            'optimizer': ['adam'],
+            'regularization_type': [None],  # [None, 'l1', 'l2'],
+            'regularization_strength': [0.005],
+            'model_struct': [
+                os.path.join(model_folder, 'conv2d'),
+                # os.path.join(model_folder, 'conv3d'),
+                os.path.join(model_folder, 'DoG'),
+            ],
+            'dataset': ['ALLEN_all_neurons']
+        }
+        exp = self.add_globals(exp)  # Add globals to the experiment'
+        exp['data_augmentations'] = [None]
+        return exp
+
     def ALLEN_selected_cells_1(self):
         """Each key in experiment_dict must be manually added to the schema."""
         model_folder = 'ALLEN_selected_cells_1'
@@ -441,9 +462,11 @@ class experiments():
             'regularization_strength': [0.005],
             'model_struct': [
                 os.path.join(model_folder, 'conv2d'),
-                os.path.join(model_folder, 'conv3d'),
+                # os.path.join(model_folder, 'conv3d'),
                 os.path.join(model_folder, 'DoG'),
             ],
             'dataset': ['ALLEN_selected_cells_1']
         }
-        return self.add_globals(exp)  # Add globals to the experiment
+        exp = self.add_globals(exp)  # Add globals to the experiment'
+        exp['data_augmentations'] = [None]
+        return exp

@@ -16,9 +16,17 @@ def get_dt_stamp():
         '_')
 
 
-def flatten_list(l):
+def flatten_list(l, log):
     """Flatten a list of lists."""
-    return [val for sublist in l for val in sublist]
+    warning_msg = 'Warning: returning None.'
+    if l is None or l[0] is None:
+        if log is not None:
+            log.info(warning_msg)
+        else:
+            print warning_msg
+        return [None]
+    else:
+        return [val for sublist in l for val in sublist]
 
 
 def import_module(dataset, model_dir='dataset_processing'):
@@ -47,6 +55,7 @@ def check_path(data_pointer, log, msg):
     """Check that the path exists."""
     if not os.path.exists(data_pointer):
         log.error(msg)
+        return False
 
 
 def ifloor(x):

@@ -65,9 +65,19 @@ def get_data_pointers(dataset, base_dir, cv, log):
             cv,
             data_pointer)
         )
-    py_utils.check_path(data_pointer, log, '%s not found.' % data_pointer)
-    py_utils.check_path(data_means, log, '%s not found.' % data_means)
-    data_means = np.load(data_means)
+    py_utils.check_path(
+        data_pointer, log, '%s not found.' % data_pointer)
+    mean_loc = py_utils.check_path(
+        data_means, log, '%s not found.' % data_means)
+    if not mean_loc:
+        # Try the ALLEN DATA path format
+        log.info('Trying hardcoded alternative allen path.')
+        # TODO: Fix this API and make it more flexible. Kill npzs in Allen?
+        data_means = data_means.replace('.npy', '.npz')
+        data_means = np.load(data_means)
+        data_means = data_means[data_means.keys()[0]].item()['image']
+    else:
+        data_means = np.load(data_means)
     return data_pointer, data_means
 
 
@@ -131,7 +141,7 @@ def main(experiment_name, list_experiments=False):
     [py_utils.make_dir(v) for v in dir_list.values()]
 
     # Prepare data loaders on the cpu
-    config.data_augmentations = py_utils.flatten_list(config.data_augmentations) 
+    config.data_augmentations = py_utils.flatten_list(config.data_augmentations, log) 
     with tf.device('/cpu:0'):
         train_images, train_labels = data_loader.inputs(
             dataset=train_data,
