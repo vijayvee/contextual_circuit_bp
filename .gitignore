@@ -1,6 +1,6 @@
 *.pyc
 db/credentials.py
-ALLEN_*
+# ALLEN_*
 build/
 dist/
 *egg-info
