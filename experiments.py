@@ -434,11 +434,11 @@ class experiments():
         model_folder = 'ALLEN_all_neurons'
         exp = {
             'experiment_name': [model_folder],
-            'lr': [1e-5],
+            'lr': [1e-3, 1e-4],
             'loss_function': ['l2'],  # Leave as None to use dataset default
             'optimizer': ['adam'],
-            'regularization_type': [None],  # [None, 'l1', 'l2'],
-            'regularization_strength': [0.005],
+            'regularization_type': [None, 'l2'],  # [None, 'l1', 'l2'],
+            'regularization_strength': [1e-5],
             'model_struct': [
                 os.path.join(model_folder, 'conv2d'),
                 # os.path.join(model_folder, 'conv3d'),
@@ -455,11 +455,11 @@ class experiments():
         model_folder = 'ALLEN_selected_cells_1'
         exp = {
             'experiment_name': [model_folder],
-            'lr': [1e-5],
+            'lr': [1e-3, 1e-4],
             'loss_function': ['l2'],  # Leave as None to use dataset default
             'optimizer': ['adam'],
-            'regularization_type': [None],  # [None, 'l1', 'l2'],
-            'regularization_strength': [0.005],
+            'regularization_type': [None, 'l2'],  # [None, 'l1', 'l2'],
+            'regularization_strength': [1e-5],
             'model_struct': [
                 os.path.join(model_folder, 'conv2d'),
                 # os.path.join(model_folder, 'conv3d'),
