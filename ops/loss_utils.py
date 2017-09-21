@@ -41,8 +41,8 @@ def loss_interpreter(
         return l2(
             logits=logits,
             labels=labels)
-    elif loss_type == 'l1':
-        return l1(
+    elif loss_type == 'log_loss':
+        return log_loss(
             logits=logits,
             labels=labels)
     elif loss_type == 'huber':
@@ -55,6 +55,10 @@ def loss_interpreter(
             logits=logits,
             labels=labels,
             weights=weights)
+    elif loss_type == 'pearson':
+        return pearson_loss(
+            logits=logits,
+            labels=labels)
     else:
         raise RuntimeError('Cannot understand your loss function.')
 
@@ -124,6 +128,46 @@ def huber(logits, labels, weights):
         predictions=logits,
         labels=labels,
         weights=weights), tf.nn.l2_loss(logits - labels)
+
+
+def log_loss(logits, labels):
+    """Wrapper for log loss."""
+    return tf.losses.log_loss(
+        predictions=logits,
+        labels=labels)
+
+
+def pearson_loss(logits, labels, eps=1e-12):
+    """Pearson loss function."""
+    x1_flat = tf.contrib.layers.flatten(logits)
+    x2_flat = tf.contrib.layers.flatten(labels)
+    x1_mean = tf.reduce_mean(x1_flat, keep_dims=True, axis=[-1]) + eps
+    x2_mean = tf.reduce_mean(x2_flat, keep_dims=True, axis=[-1]) + eps
+
+    x1_flat_normed = x1_flat - x1_mean
+    x2_flat_normed = x2_flat - x2_mean
+
+    count = int(x2_flat.get_shape()[-1])
+    cov = tf.div(
+        tf.reduce_sum(
+            tf.multiply(
+                x1_flat_normed, x2_flat_normed),
+            -1),
+        count)
+    x1_std = tf.sqrt(
+        tf.div(
+            tf.reduce_sum(
+                tf.square(x1_flat - x1_mean),
+                -1),
+            count))
+    x2_std = tf.sqrt(
+        tf.div(
+            tf.reduce_sum(
+                tf.square(x2_flat - x2_mean),
+                -1),
+            count))
+    corr = cov / (tf.multiply(x1_std, x2_std) + eps)
+    return corr
 
 
 def sigmoid_ce(logits, labels, weights, force_dtype=tf.float32):

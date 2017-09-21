@@ -49,7 +49,8 @@ def training_loop(
         train_dict,
         val_dict,
         train_model,
-        val_model):
+        val_model,
+        exp_params):
     step, time_elapsed = 0, 0
     train_losses, train_accs, timesteps = {}, {}, {}
     val_losses, val_accs = {}, {}
@@ -160,4 +161,9 @@ def training_loop(
         coord.request_stop()
     coord.join(threads)
     sess.close()
+
+    # If using hp optimization, store performance here
+    if hasattr(config, 'hp_optim'):
+        exp_params['hp_current_iteration'] += 1
+
     return train_losses, val_losses, train_accs, val_accs, timesteps

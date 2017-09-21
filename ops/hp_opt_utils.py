@@ -10,10 +10,12 @@ def hp_optim_interpreter(hp_hist, performance_history, exp_params):
     hp_type = exp_params['hp_optim']
     domain = gather_domains(exp_params=exp_params, hp_type=hp_type)
     if hp_type == 'gpyopt':
-        return gpyopt_wrapper(
-            X=hp_hist,
-            Y=performance_history,
+        hp_hist_values = np.asarray([v.values() for v in hp_hist])
+        next_step = gpyopt_wrapper(
+            X=hp_hist_values,
+            Y=np.asarray(performance_history),
             domain=domain)
+        return {k: v for k, v in zip(hp_hist[0].keys(), next_step.ravel())}
     else:
         raise RuntimeError('Hp-optimizer not implemented.')
 
@@ -101,26 +103,26 @@ def nate_test():
     def next_hyps(x_dat, y_dat, vars_dom):
         my_prob = GPyOpt.methods.BayesianOptimization(
             f=None, X=x_dat, Y=y_dat, domain=vars_dom,
-            evaluator_type='local_penalization', batch_size=2,
-            num_cores=2)
+            evaluator_type='local_penalization', batch_size=1,
+            num_cores=1)
         return my_prob.suggested_sample
 
     # Input parameter combos
-    x_init = np.array([[1, 2, -2],
-                       [2, 3, -1],
-                       [-1, 5, -4],
-                       [-5, 6, 9]])
+    x_init = np.array([
+        [1e-5, 1e-7],
+        [1e-5, 1e-7]
+        ])
     # Output of model evaluated at inputs
-    y_init = np.array([[5],
-                       [6],
-                       [-2],
-                       [-1]])
+    y_init = np.array([
+        [10000],
+        [10002]
+        ])
     # Details about the domain of variables. It seems like continuos variables
     # should be listed first for some reason
-    bds = [{'name': 'var_1', 'type': 'continuous', 'domain': (-10, 10)},
-           {'name': 'var_2', 'type': 'continuous', 'domain': (-10, 10)},
-           {'name': 'var_3', 'type': 'discrete', 'domain': tuple(
-            range(-10, 11))}]
+    bds = [
+        {'name': 'var_1', 'type': 'continuous', 'domain': (1e-1, 1e-10)},
+        {'name': 'var_2', 'type': 'continuous', 'domain': (1e-1, 1e-10)},
+    ]
 
     # Display output
     print next_hyps(x_init, y_init, bds)

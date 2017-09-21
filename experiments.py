@@ -434,13 +434,13 @@ class experiments():
         model_folder = 'ALLEN_all_neurons'
         exp = {
             'experiment_name': [model_folder],
-            'lr': [1e-3, 1e-4],
+            'lr': [1e-6],
             'loss_function': ['l2'],  # Leave as None to use dataset default
             'optimizer': ['adam'],
             'regularization_type': [None, 'l2'],  # [None, 'l1', 'l2'],
             'regularization_strength': [1e-5],
             'model_struct': [
-                os.path.join(model_folder, 'conv2d'),
+                # os.path.join(model_folder, 'conv2d'),
                 # os.path.join(model_folder, 'conv3d'),
                 os.path.join(model_folder, 'DoG'),
             ],
@@ -456,10 +456,10 @@ class experiments():
         exp = {
             'experiment_name': [model_folder],
             'lr': [1e-3, 1e-4],
-            'loss_function': ['l2'],  # Leave as None to use dataset default
+            'loss_function': ['l2', 'pearson'],
             'optimizer': ['adam'],
             'regularization_type': [None, 'l2'],  # [None, 'l1', 'l2'],
-            'regularization_strength': [1e-5],
+            'regularization_strength': [1e-6],
             'model_struct': [
                 os.path.join(model_folder, 'conv2d'),
                 # os.path.join(model_folder, 'conv3d'),
@@ -469,4 +469,51 @@ class experiments():
         }
         exp = self.add_globals(exp)  # Add globals to the experiment'
         exp['data_augmentations'] = [['resize']]
+        return exp
+
+    def ALLEN_all_neurons_hp_conv(self):
+        """Each key in experiment_dict must be manually added to the schema."""
+        model_folder = 'ALLEN_all_neurons_hp_conv'
+        exp = {
+            'experiment_name': model_folder,
+            'hp_optim': 'gpyopt',
+            'hp_multiple': 10,
+            'lr': 1e-4,
+            'lr_domain': [1e-5, 1e-1],
+            'loss_function': None,  # Leave as None to use dataset default
+            'optimizer': 'adam',
+            'regularization_type': 'l2',  # [None, 'l1', 'l2'],
+            'regularization_strength': 1e-5,
+            'regularization_strength_domain': [1e-7, 1e-1],
+            # 'timesteps': True,
+            'model_struct': os.path.join(model_folder, 'conv2d'),
+            'dataset': 'ALLEN_all_neurons',
+            'early_stop': True
+        }
+        exp = self.add_globals(exp)  # Add globals to the experiment'
+        exp['data_augmentations'] = [['resize']]
+        return exp
+
+    def ALLEN_all_neurons_hp_dog(self):
+        """Each key in experiment_dict must be manually added to the schema."""
+        model_folder = 'ALLEN_all_neurons_hp_dog'
+        exp = {
+            'experiment_name': model_folder,
+            'hp_optim': 'gpyopt',
+            'hp_multiple': 10,
+            'lr': 1e-4,
+            'lr_domain': [1e-5, 1e-1],
+            'loss_function': None,  # Leave as None to use dataset default
+            'optimizer': 'adam',
+            'regularization_type': 'l2',  # [None, 'l1', 'l2'],
+            'regularization_strength': 1e-5,
+            'regularization_strength_domain': [1e-7, 1e-1],
+            # 'timesteps': True,
+            'model_struct': os.path.join(model_folder, 'dog'),
+            'dataset': 'ALLEN_all_neurons'
+        }
+        exp = self.add_globals(exp)  # Add globals to the experiment'
+        exp['early_stop'] = True
+        exp['data_augmentations'] = [['resize']]
+        exp['epochs'] = 1
         return exp

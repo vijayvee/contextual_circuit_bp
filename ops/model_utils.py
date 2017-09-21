@@ -40,16 +40,30 @@ class model_class(object):
             layer_structure,
             output_layer_structure=None,
             output_size=None,
+            log=None,
             tower_name='cnn'):
         """Main model creation method."""
-        # data -= (self.mean[None, :, :, :]).astype(np.float32)  # H/W/C mean
+        try:
+            if isinstance(self.mean, dict):
+                # data -= (
+                #     np.expand_dims(
+                #         self.mean['mean'], axis=0)).astype(np.float32)
+                data /= (
+                    np.expand_dims(
+                        self.mean['max'], axis=0)).astype(np.float32)
+            else:
+                data -= (np.expand_dims(self.mean, axis=0)).astype(np.float32)
+        except:
+            log.debug('Failed to mean-center data.')
         input_data = tf.identity(data, name="lrp_input")
+        assert log is not None, 'You must pass a logger.'
 
         # Calculate eRF info for main tower
         tower_eRFs = eRF.calculate(
             layer_structure,
             data,
             verbose=True)
+        log.info('Creating main model tower.')
         self, features, layer_summary = create_conv_tower(
             self=self,
             act=input_data,
@@ -60,11 +74,16 @@ class model_class(object):
         if output_layer_structure is None:
             assert self.output_size is not None, 'Give model an output shape.'
             output_layer_structure = self.default_output_layer()
-        output_eRFs = eRF.calculate(
-            output_layer_structure,
-            features,
-            r_i=tower_eRFs.items()[-1][1],
-            verbose=True)
+        if tower_eRFs is not None:
+            output_eRFs = eRF.calculate(
+                output_layer_structure,
+                features,
+                r_i=tower_eRFs.items()[-1][1],
+                verbose=True)
+        else:
+            output_eRFs = [None] * len(output_layer_structure)
+            log.debug('Could not calculate effective RFs of units.')
+        log.info('Creating output tower.')
         self, output, layer_summary = create_conv_tower(
             self=self,
             act=features,
@@ -337,19 +356,19 @@ def create_conv_tower(
                 eRFs=eRFs,
                 target='pre')
             if it_neuron_op == 'pool':  # TODO create wrapper for FF ops.
-                act = pool.max_pool(
+                self, act = pool.max_pool(
+                    self=self,
                     bottom=act,
                     name=it_name)
             elif it_neuron_op == 'dog' or it_neuron_op == 'DoG':
-                act = ff.dog_layer(
+                self, act = ff.dog_layer(
                     self=self,
                     bottom=act,
-                    in_channels=int(act.get_shape()[-1]),
-                    out_channels=it_dict['weights'][0],
+                    layer_weights=it_dict['weights'],
                     name=it_name,
                 )
             elif it_neuron_op == 'conv':
-                act = ff.conv_layer(
+                self, act = ff.conv_layer(
                     self=self,
                     bottom=act,
                     in_channels=int(act.get_shape()[-1]),
@@ -358,7 +377,7 @@ def create_conv_tower(
                     filter_size=it_dict['filter_size'][0]
                 )
             elif it_neuron_op == 'conv3d':
-                act = ff.conv_3d_layer(
+                self, act = ff.conv_3d_layer(
                     self=self,
                     bottom=act,
                     in_channels=int(act.get_shape()[-1]),
@@ -367,14 +386,14 @@ def create_conv_tower(
                     filter_size=it_dict['filter_size'][0]
                 )
             elif it_neuron_op == 'fc':
-                act = ff.fc_layer(
+                self, act = ff.fc_layer(
                     self=self,
                     bottom=act,
                     in_channels=int(act.get_shape()[-1]),
                     out_channels=it_dict['weights'][0],
                     name=it_name)
             elif it_neuron_op == 'res':
-                act = ff.resnet_layer(
+                self, act = ff.resnet_layer(
                     self=self,
                     bottom=act,
                     layer_weights=it_dict['weights'],

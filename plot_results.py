@@ -27,6 +27,7 @@ def main(
         im_ext='.pdf',
         log_transform_loss=True,
         colors='Paired',
+        flip_axis=False,
         exclude=None):
     """Plot results of provided experiment name."""
     config = Config()
@@ -91,6 +92,7 @@ def main(
         df['training iteration'],
         errors='coerce')
     df['training loss'] = pd.to_numeric(df['training loss'], errors='coerce')
+
     if log_transform_loss:
         loss_label = 'Log loss'
         df['training loss'] = np.log(df['training loss'])
@@ -99,6 +101,7 @@ def main(
         df['training loss'] /= df.groupby(
             'model parameters')['training loss'].transform(max)
     df['validation loss'] = pd.to_numeric(df['validation loss']) * 100.
+
     if exclude is not None:
         exclusion_search = df['model parameters'].str.contains(exclude)
         df = df[exclusion_search == False]
@@ -152,7 +155,7 @@ def main(
     plotly_fig = tls.mpl_to_plotly(f)
     plotly_fig['layout']['autosize'] = True
     # plotly_fig['layout']['showlegend'] = True
-    plot_with_plotly(plotly_fig, 'bar')
+    plot_with_plotly(plotly_fig, 'line')
     plt.close(f)
 
     # Plot max performance bar graph
@@ -162,7 +165,8 @@ def main(
     # max_perf['model parameters'] = max_perf['model parameters'].str.replace(
     #     '|', '\n')
     plt.rc('xtick', labelsize=2)
-    ax = max_perf.plot.bar(x='model parameters', y='validation loss', legend=False)
+    ax = max_perf.plot.bar(
+        x='model parameters', y='validation loss', legend=False)
     plt.tight_layout()
     ax.set_title('Max validation value')
     ax.set_ylabel('Categorization accuracy (%)')
@@ -172,8 +176,11 @@ def main(
             experiment_name, get_dt_stamp(), im_ext))
     plt.savefig(out_name)
     print 'Saved to: %s' % out_name
-    plotly_fig = tls.mpl_to_plotly(f)
-    plot_with_plotly(plotly_fig, chart='bar')
+    try:
+        plotly_fig = tls.mpl_to_plotly(f)
+        plot_with_plotly(plotly_fig, chart='bar')
+    except Exception as e:
+        print 'Failed to plot bar chart in plotly: %s' % e
     plt.close(f)
 
 
@@ -191,5 +198,11 @@ if __name__ == '__main__':
         type=str,
         default=None,
         help='Experiment exclusion keyword.')
+    parser.add_argument(
+        '--flip_axis',
+        dest='flip_axis',
+        type=str,
+        default=None,
+        help='Flip x axis.')
     args = parser.parse_args()
     main(**vars(args))

@@ -1,4 +1,5 @@
 import os
+import json
 import numpy as np
 import tensorflow as tf
 import experiments
@@ -38,12 +39,14 @@ def process_DB_exps(experiment_name, log, config):
         experiment_name=experiment_name,
         log=log)
     if 'hp_optim' in exp_params.keys() and exp_params['hp_optim'] is not None:
-        hp_hist, performance_history = db.query_hp_hist(exp_params)
-        exp_params = hp_opt_utils.hp_optim_interpreter(
+        performance_history, hp_hist = db.query_hp_hist(exp_params)
+        proc_exp_params = hp_opt_utils.hp_optim_interpreter(
             hp_hist=hp_hist,
             exp_params=exp_params,
             performance_history=performance_history
         )
+    else:
+        proc_exp_params = exp_params
     if exp_id is None:
         err = 'No empty experiments found.' + \
             'Did you select the correct experiment name?'
@@ -53,7 +56,9 @@ def process_DB_exps(experiment_name, log, config):
         if isinstance(v, basestring) and '{' in v and '}' in v:
             v = v.strip('{').strip('}').split(',')
         setattr(config, k, v)
-    return config
+    if not hasattr(config, '_id'):
+        config._id = exp_id
+    return config, proc_exp_params
 
 
 def get_data_pointers(dataset, base_dir, cv, log):
@@ -106,7 +111,7 @@ def main(experiment_name, list_experiments=False):
     log = logger.get(os.path.join(config.log_dir, condition_label))
     experiment_dict = experiments.experiments()[experiment_name]()
     config = add_to_config(d=experiment_dict, config=config)  # Globals
-    config = process_DB_exps(
+    config, exp_params = process_DB_exps(
         experiment_name=experiment_name,
         log=log,
         config=config)  # Update config w/ DB params
@@ -196,9 +201,12 @@ def main(experiment_name, list_experiments=False):
             output_scores, model_summary = model.build(
                 data=train_images,
                 layer_structure=model_dict.layer_structure,
+                log=log,
                 tower_name='cnn')
             log.info('Built training model.')
-            log.debug(model_summary, verbose=0)
+            log.debug(
+                json.dumps(model_summary, indent=4),
+                verbose=0)
             print_model_architecture(model_summary)
 
             # Prepare the loss function
@@ -238,6 +246,7 @@ def main(experiment_name, list_experiments=False):
             val_output_scores, _ = val_model.build(  # Ignore summary
                 data=val_images,
                 layer_structure=model_dict.layer_structure,
+                log=log,
                 tower_name='cnn')
             log.info('Built validation model.')
 
@@ -309,7 +318,8 @@ def main(experiment_name, list_experiments=False):
         train_dict=train_dict,
         val_dict=val_dict,
         train_model=model,
-        val_model=val_model)
+        val_model=val_model,
+        exp_params=exp_params)
     log.info('Finished training.')
 
     files_to_save = {

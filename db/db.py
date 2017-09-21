@@ -353,8 +353,27 @@ class db(object):
         self.cur.execute(
             """
             INSERT INTO performance
-            (experiment_id, experiment_name, summary_dir, ckpt_file, training_loss, validation_loss, time_elapsed, training_step)
-            VALUES (%(experiment_id)s, %(experiment_name)s, %(summary_dir)s, %(ckpt_file)s, %(training_loss)s, %(validation_loss)s, %(time_elapsed)s, %(training_step)s)
+            (
+            experiment_id,
+            experiment_name,
+            summary_dir,
+            ckpt_file,
+            training_loss,
+            validation_loss,
+            time_elapsed,
+            training_step
+            )
+            VALUES
+            (
+            %(experiment_id)s,
+            %(experiment_name)s,
+            %(summary_dir)s,
+            %(ckpt_file)s,
+            %(training_loss)s,
+            %(validation_loss)s,
+            %(time_elapsed)s,
+            %(training_step)s
+            )
             RETURNING _id""",
             namedict
             )
@@ -450,7 +469,7 @@ def get_performance(experiment_name):
     return perf
 
 
-def query_hp_hist(exp_params, eval_on='validation_loss'):
+def query_hp_hist(exp_params, eval_on='validation_loss', init_top=1e10):
     """Query an experiment's history of hyperparameters and performance."""
     config = credentials.postgresql_connection()
     domain_param_map = hp_opt_utils.hp_opt_dict()
@@ -458,15 +477,21 @@ def query_hp_hist(exp_params, eval_on='validation_loss'):
     with db(config) as db_conn:
         perf = db_conn.get_performance(experiment_name=experiment_name)
         if len(perf) == 0:
-            # First step of hp-optim. Set performance to 0.
-            perf = [0.]
-
             # And set hp history to initial values.
             hp_history = {}
             for k, v in domain_param_map.iteritems():
                 if exp_params[k] is not None:  # If searching this domain.
                     hp_history[v] = exp_params[v]
-            hp_history = [hp_history]
+
+            # First step of hp-optim. Requires > 1 entry for X/Y.
+            perf = [
+                [init_top + ((np.random.rand() - 0.5) * init_top / 10)],
+                [init_top + ((np.random.rand() - 0.5) * init_top / 10)]
+            ]
+            hp_history = [
+                hp_history,
+                hp_history
+            ]
         else:
             # Sort performance by time elapsed
             times = [x['time_elapsed'] for x in perf]

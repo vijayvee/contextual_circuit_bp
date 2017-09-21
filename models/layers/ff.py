@@ -9,28 +9,84 @@ def dog_layer(
         bottom,
         layer_weights,
         name,
+        init_weight=10.,
         model_dtype=tf.float32):
     """Antilok et al 2016 difference of gaussians."""
+    tshape = [int(x) for x in bottom.get_shape()]  # Flatten input
+    rows = tshape[0]
+    cols = np.prod(tshape[1:])
+    flat_bottom = tf.reshape(bottom, [rows, cols])
+    hw = tshape[1:3][::-1]
+    min_dim = np.min(hw)
+    act_size = [int(x) for x in flat_bottom.get_shape()]  # Use flattened input
+    len_act = len(act_size)
+    assert len_act == 2, 'DoG layer needs 2D matrix not %sD tensor.' % len_act
+    grid_xx, grid_yy = tf.meshgrid(
+        tf.range(hw[0]),
+        tf.range(hw[1]))
+    grid_xx = tf.cast(grid_xx, tf.float32)
+    grid_yy = tf.cast(grid_yy, tf.float32)
+    pi = tf.constant(np.pi, dtype=model_dtype)
 
-    def DoG(self, x, y, sc, ss, rc, rs):
+    def randomize_init(
+            bounds,
+            layer_weights,
+            d1=4.0,
+            d2=2.0,
+            dtype=np.float32):
+        """Initialize starting positions of DoG parameters as uniform rand."""
+        init_dict = {}
+        for k, v in bounds.iteritems():
+            it_inits = []
+            r = v[1] - v[0]
+            for idx in range(layer_weights):
+                it_inits += [v[0] + (r / d1) + np.random.rand() * (r / d2)]
+            init_dict[k] = np.asarray(it_inits, dtype=dtype)
+        return init_dict
+
+    def DoG(bottom, x, y, sc, ss, rc, rs):
         """DoG operation."""
-        pi = tf.constant(np.pi, dtype=self.model_dtype)
-        pos = ((self.grid_xx - x)**2 + (self.grid_yy - y)**2)
+        pos = ((grid_xx - x)**2 + (grid_yy - y)**2)
         center = tf.exp(-pos/2/sc) / (2*(sc)*pi)
         surround = tf.exp(-pos/2/(sc + ss)) / (2*(sc + ss)*pi)
         weight_vec = tf.reshape((rc*(center)) - (rs*(surround)), [-1, 1])
-        return tf.matmul(self.images, weight_vec)
+        return tf.matmul(bottom, weight_vec), weight_vec
 
-    self['%s_num_lgn'] = layer_weights
-    act_size = [int(x) for x in bottom.get_shape()]
-    initializers = {
-        'x_pos': np.linspace(0., act_size[1], layer_weights),
-        'y_pos': np.linspace(0., act_size[2], layer_weights),
-        'size_center': np.linspace(0.1, act_size[1], layer_weights),
-        'size_surround': np.linspace(0., act_size[1] // 3, layer_weights),
-        'center_weight': np.linspace(0., act_size[1] // 3, layer_weights),
-        'surround_weight': np.linspace(0., act_size[1] // 3, layer_weights)
+    if isinstance(layer_weights, list):
+        layer_weights = layer_weights[0]
+
+    # Construct model bounds
+    bounds = {
+        'x_pos': [
+            0.,
+            hw[0],
+        ],
+        'y_pos': [
+            0.,
+            hw[1],
+        ],
+        'size_center': [
+            0.1,
+            min_dim,
+        ],
+        'size_surround': [
+            0.,
+            min_dim,
+        ],
+        'center_weight': [
+            0.,
+            init_weight,
+        ],
+        'surround_weight': [
+            0.,
+            init_weight,
+        ],
     }
+
+    # Create tensorflow weights
+    initializers = randomize_init(
+        bounds=bounds,
+        layer_weights=layer_weights)
     lgn_x = tf.get_variable(
         name='%s_x_pos' % name,
         dtype=model_dtype,
@@ -52,28 +108,30 @@ def dog_layer(
         initializer=initializers['size_surround'],
         trainable=True)
     lgn_rc = tf.get_variable(
-        name='%s_center_weight',
+        name='%s_center_weight' % name,
         dtype=model_dtype,
         initializer=initializers['center_weight'],
         trainable=True)
     lgn_rs = tf.get_variable(
-        name='%s_surround_weight',
+        name='%s_surround_weight' % name,
         dtype=model_dtype,
         initializer=initializers['surround_weight'],
         trainable=True)
 
-    output = []
+    output, dog_weights = [], []
     for i in range(layer_weights):
-        output += [
-            DoG(
+        activities, weight_vec = DoG(
+                bottom=flat_bottom,
                 x=lgn_x[i],
                 y=lgn_y[i],
                 sc=lgn_sc[i],
                 ss=lgn_ss[i],
                 rc=lgn_rc[i],
                 rs=lgn_rs[i])
-            ]
-    return tf.concat(axis=1, values=output)
+        output += [activities]
+        dog_weights += [weight_vec]
+    self.var_dict[('%s_weights' % name, 0)] = dog_weights
+    return self, tf.concat(axis=1, values=output)
 
 
 def resnet_layer(
@@ -99,7 +157,7 @@ def resnet_layer(
             out_channels=lw,
             name=ln)
         rlayer = nm(ac(rlayer))
-    return combination(rlayer, bottom)
+    return self, combination(rlayer, bottom)
 
 
 def conv_layer(
@@ -122,7 +180,7 @@ def conv_layer(
             name=name)
         conv = tf.nn.conv2d(bottom, filt, stride, padding=padding)
         bias = tf.nn.bias_add(conv, conv_biases)
-        return bias
+        return self, bias
 
 
 def conv_3d_layer(
@@ -145,7 +203,7 @@ def conv_3d_layer(
             name=name)
         conv = tf.nn.conv3d(bottom, filt, stride, padding=padding)
         bias = tf.nn.bias_add(conv, conv_biases)
-        return bias
+        return self, bias
 
 
 def fc_layer(self, bottom, out_channels, name, in_channels=None):
@@ -161,7 +219,7 @@ def fc_layer(self, bottom, out_channels, name, in_channels=None):
         x = tf.reshape(bottom, [-1, in_channels])
         fc = tf.nn.bias_add(tf.matmul(x, weights), biases)
 
-        return fc
+        return self, fc
 
 
 def get_conv_var(
