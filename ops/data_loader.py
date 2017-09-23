@@ -30,7 +30,6 @@ def image_augmentations(
             image = tf.image.resize_images(
                 tf.expand_dims(image, axis=0), model_input_image_size)
             image = tf.squeeze(image, axis=0)
-            import ipdb;ipdb.set_trace()
         else:
             image = tf.image.resize_image_with_crop_or_pad(
                 image, model_input_image_size[0], model_input_image_size[1])
