@@ -10,10 +10,10 @@ class data_processing(object):
         self.config = Config()
         self.output_size = [1, 1]
         self.im_size = (304, 608, 1)
-        self.model_input_image_size = [152, 304, 1]
+        self.model_input_image_size = [304, 608, 1]  # [152, 304, 1]
         self.meta = '/media/data_cifs/contextual_circuit/tf_records/ALLEN_selected_cells_1_meta.npy'
         self.default_loss_function = 'l2'
-        self.score_metric = 'l2'
+        self.score_metric = 'pearson'
         self.preprocess = ['resize']
 
         # Load vars from the meta file

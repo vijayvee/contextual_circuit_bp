@@ -6,8 +6,8 @@ layer_structure = [
         'weights': [64],
         'names': ['conv1_1'],
         'filter_size': [7],
-        'activation': ['relu'],
-        'activation_target': ['post'],
+        'activation': ['logistic'],
+        'activation_target': ['post']
     },
     {
         'layers': ['pool'],

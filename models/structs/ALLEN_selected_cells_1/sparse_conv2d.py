@@ -24,3 +24,12 @@ layer_structure = [
         'activation_target': ['post'],
     },
 ]
+
+output_structure = [
+    {
+        'layers': ['sparse_pool'],
+        'weights': [1],  # Output size
+        'names': ['sp2'],
+    }
+]
+

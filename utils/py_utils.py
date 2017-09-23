@@ -54,7 +54,7 @@ def save_npys(data, model_name, output_string):
 def check_path(data_pointer, log, msg):
     """Check that the path exists."""
     if not os.path.exists(data_pointer):
-        log.error(msg)
+        log.debug(msg)
         return False
 
 

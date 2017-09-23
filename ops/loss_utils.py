@@ -1,4 +1,5 @@
 import tensorflow as tf
+from ops.eval_metrics import pearson_score
 
 
 def optimizer_interpreter(
@@ -122,9 +123,11 @@ def l1(logits, labels):
 
 def huber(logits, labels, weights):
     """Wrapper for huber loss."""
+    logits = tf.squeeze(logits)
+    labels = tf.squeeze(labels)
     if weights is None:
         weights = 1.
-    return tf.losses.huber(
+    return tf.losses.huber_loss(
         predictions=logits,
         labels=labels,
         weights=weights), tf.nn.l2_loss(logits - labels)
@@ -132,42 +135,19 @@ def huber(logits, labels, weights):
 
 def log_loss(logits, labels):
     """Wrapper for log loss."""
-    return tf.losses.log_loss(
+    logits = tf.squeeze(logits)
+    labels = tf.squeeze(labels)
+    ll = tf.losses.log_loss(
         predictions=logits,
         labels=labels)
+    return ll, ll
 
 
-def pearson_loss(logits, labels, eps=1e-12):
-    """Pearson loss function."""
-    x1_flat = tf.contrib.layers.flatten(logits)
-    x2_flat = tf.contrib.layers.flatten(labels)
-    x1_mean = tf.reduce_mean(x1_flat, keep_dims=True, axis=[-1]) + eps
-    x2_mean = tf.reduce_mean(x2_flat, keep_dims=True, axis=[-1]) + eps
-
-    x1_flat_normed = x1_flat - x1_mean
-    x2_flat_normed = x2_flat - x2_mean
-
-    count = int(x2_flat.get_shape()[-1])
-    cov = tf.div(
-        tf.reduce_sum(
-            tf.multiply(
-                x1_flat_normed, x2_flat_normed),
-            -1),
-        count)
-    x1_std = tf.sqrt(
-        tf.div(
-            tf.reduce_sum(
-                tf.square(x1_flat - x1_mean),
-                -1),
-            count))
-    x2_std = tf.sqrt(
-        tf.div(
-            tf.reduce_sum(
-                tf.square(x2_flat - x2_mean),
-                -1),
-            count))
-    corr = cov / (tf.multiply(x1_std, x2_std) + eps)
-    return corr
+def pearson_loss(logits, labels):
+    """Pearson dissimilarity loss."""
+    rhos = 1 - pearson_score(pred=logits, labels=labels)
+    mean_rhos = tf.reduce_mean(rhos)
+    return mean_rhos, rhos
 
 
 def sigmoid_ce(logits, labels, weights, force_dtype=tf.float32):

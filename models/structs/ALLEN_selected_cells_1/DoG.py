@@ -10,9 +10,8 @@ layer_structure = [
         'activation_target': ['post'],
     },
     {
-        'layers': ['pool'],
-        'weights': [None],
-        'names': ['pool1'],
-        'filter_size': [None]
+        'layers': ['fc'],
+        'weights': [64],
+        'names': ['fc2']
     }
 ]

@@ -24,8 +24,11 @@ from tensorflow.python.framework import dtypes
 from tensorflow.python.ops import random_ops
 
 
-__all__ = ['xavier_initializer', 'xavier_initializer_conv2d',
-           'variance_scaling_initializer']
+__all__ = [
+    'xavier_initializer',
+    'xavier_initializer_conv2d',
+    'variance_scaling_initializer'
+]
 
 
 def xavier_initializer(

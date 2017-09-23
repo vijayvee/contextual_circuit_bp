@@ -38,7 +38,7 @@ class model_class(object):
             self,
             data,
             layer_structure,
-            output_layer_structure=None,
+            output_structure=None,
             output_size=None,
             log=None,
             tower_name='cnn'):
@@ -63,6 +63,7 @@ class model_class(object):
             layer_structure,
             data,
             verbose=True)
+
         log.info('Creating main model tower.')
         self, features, layer_summary = create_conv_tower(
             self=self,
@@ -71,23 +72,26 @@ class model_class(object):
             tower_name=tower_name,
             eRFs=tower_eRFs,
             layer_summary=None)
-        if output_layer_structure is None:
+
+        if output_structure is None:
             assert self.output_size is not None, 'Give model an output shape.'
-            output_layer_structure = self.default_output_layer()
+            output_structure = self.default_output_layer()
+
         if tower_eRFs is not None:
             output_eRFs = eRF.calculate(
-                output_layer_structure,
+                output_structure,
                 features,
                 r_i=tower_eRFs.items()[-1][1],
                 verbose=True)
         else:
-            output_eRFs = [None] * len(output_layer_structure)
+            output_eRFs = [None] * len(output_structure)
             log.debug('Could not calculate effective RFs of units.')
+
         log.info('Creating output tower.')
         self, output, layer_summary = create_conv_tower(
             self=self,
             act=features,
-            layer_structure=output_layer_structure,
+            layer_structure=output_structure,
             tower_name='output',
             eRFs=output_eRFs,
             layer_summary=layer_summary)
@@ -355,49 +359,12 @@ def create_conv_tower(
                 norm_mod,
                 eRFs=eRFs,
                 target='pre')
-            if it_neuron_op == 'pool':  # TODO create wrapper for FF ops.
-                self, act = pool.max_pool(
-                    self=self,
-                    bottom=act,
-                    name=it_name)
-            elif it_neuron_op == 'dog' or it_neuron_op == 'DoG':
-                self, act = ff.dog_layer(
-                    self=self,
-                    bottom=act,
-                    layer_weights=it_dict['weights'],
-                    name=it_name,
-                )
-            elif it_neuron_op == 'conv':
-                self, act = ff.conv_layer(
-                    self=self,
-                    bottom=act,
-                    in_channels=int(act.get_shape()[-1]),
-                    out_channels=it_dict['weights'][0],
-                    name=it_name,
-                    filter_size=it_dict['filter_size'][0]
-                )
-            elif it_neuron_op == 'conv3d':
-                self, act = ff.conv_3d_layer(
-                    self=self,
-                    bottom=act,
-                    in_channels=int(act.get_shape()[-1]),
-                    out_channels=it_dict['weights'][0],
-                    name=it_name,
-                    filter_size=it_dict['filter_size'][0]
-                )
-            elif it_neuron_op == 'fc':
-                self, act = ff.fc_layer(
-                    self=self,
-                    bottom=act,
-                    in_channels=int(act.get_shape()[-1]),
-                    out_channels=it_dict['weights'][0],
-                    name=it_name)
-            elif it_neuron_op == 'res':
-                self, act = ff.resnet_layer(
-                    self=self,
-                    bottom=act,
-                    layer_weights=it_dict['weights'],
-                    name=it_name)
+            self, act = ff.pool_ff_interpreter(
+                self=self,
+                it_neuron_op=it_neuron_op,
+                act=act,
+                it_name=it_name,
+                it_dict=it_dict)
             layer_summary = update_summary(
                 layer_summary=layer_summary,
                 op_name=it_dict['layers'])
@@ -443,3 +410,4 @@ def create_conv_tower(
             setattr(self, it_name, act)
             print 'Added layer: %s' % it_name
     return self, act, layer_summary
+

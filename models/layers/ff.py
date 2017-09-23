@@ -1,9 +1,75 @@
 import numpy as np
 import tensorflow as tf
+from ops import initialization
 from models.layers.activations import activations
 from models.layers.normalizations import normalizations
+from models.layers import pool
 
 
+def pool_ff_interpreter(
+        self,
+        it_neuron_op,
+        act,
+        it_name,
+        it_dict):
+    """Wrapper for FF and pooling functions. TODO: turn into a class."""
+    if it_neuron_op == 'pool':  # TODO create wrapper for FF ops.
+        self, act = pool.max_pool(
+            self=self,
+            bottom=act,
+            name=it_name)
+    elif it_neuron_op == 'dog' or it_neuron_op == 'DoG':
+        self, act = dog_layer(
+            self=self,
+            bottom=act,
+            layer_weights=it_dict['weights'],
+            name=it_name,
+        )
+    elif it_neuron_op == 'conv':
+        self, act = conv_layer(
+            self=self,
+            bottom=act,
+            in_channels=int(act.get_shape()[-1]),
+            out_channels=it_dict['weights'][0],
+            name=it_name,
+            filter_size=it_dict['filter_size'][0]
+        )
+    elif it_neuron_op == 'conv3d':
+        self, act = conv_3d_layer(
+            self=self,
+            bottom=act,
+            in_channels=int(act.get_shape()[-1]),
+            out_channels=it_dict['weights'][0],
+            name=it_name,
+            filter_size=it_dict['filter_size'][0]
+        )
+    elif it_neuron_op == 'fc':
+        self, act = fc_layer(
+            self=self,
+            bottom=act,
+            in_channels=int(act.get_shape()[-1]),
+            out_channels=it_dict['weights'][0],
+            name=it_name)
+    elif it_neuron_op == 'sparse_pool':
+        self, act = sparse_pool_layer(
+            self=self,
+            bottom=act,
+            in_channels=int(act.get_shape()[-1]),
+            out_channels=it_dict['weights'][0],
+            aux=it_dict,
+            name=it_name)
+    elif it_neuron_op == 'res':
+        self, act = resnet_layer(
+            self=self,
+            bottom=act,
+            layer_weights=it_dict['weights'],
+            name=it_name)
+    else:
+        raise RuntimeError('Your specified operation %s is not implemented' % it_neuron_op)
+    return self, act
+
+
+# TODO: move each of these ops into a script in the functions folder.
 def dog_layer(
         self,
         bottom,
@@ -142,6 +208,7 @@ def resnet_layer(
         activation=None,
         normalization=None,
         combination=tf.add):  # tf.multiply
+    """Residual layer."""
     ln = '%s_branch' % name
     rlayer = tf.identity(bottom)
     if normalization is not None:
@@ -169,6 +236,7 @@ def conv_layer(
         filter_size=3,
         stride=[1, 1, 1, 1],
         padding='SAME'):
+    """2D convolutional layer."""
     with tf.variable_scope(name):
         if in_channels is None:
             in_channels = int(bottom.get_shape()[-1])
@@ -192,6 +260,7 @@ def conv_3d_layer(
         filter_size=3,
         stride=[1, 1, 1, 1],
         padding='SAME'):
+    """NOT YET IMPLEMENTED: 3D convolutional layer."""
     with tf.variable_scope(name):
         if in_channels is None:
             in_channels = int(bottom.get_shape()[-1])
@@ -207,6 +276,7 @@ def conv_3d_layer(
 
 
 def fc_layer(self, bottom, out_channels, name, in_channels=None):
+    """Fully connected layer."""
     with tf.variable_scope(name):
         if in_channels is None:
             in_channels = int(bottom.get_shape()[-1])
@@ -222,6 +292,60 @@ def fc_layer(self, bottom, out_channels, name, in_channels=None):
         return self, fc
 
 
+def sparse_pool_layer(
+        self,
+        bottom,
+        out_channels,
+        name,
+        in_channels=None,
+        aux=None):
+    """Sparse pooling layer."""
+
+    def create_gaussian_rf(xy, h, w):
+        """Create a gaussian bump for initializing the spatial weights."""
+        # TODO: implement this.
+        pass
+
+    with tf.variable_scope(name):
+        bottom_shape = [int(x) for x in bottom.get_shape()]
+        if in_channels is None:
+            in_channels = bottom_shape[-1]
+
+        # K channel weights
+        channel_weights = tf.get_variable(
+            name='%s_channel' % name,
+            dtype=tf.float32,
+            initializer=initialization.xavier_initializer(
+                shape=[in_channels, out_channels],
+                uniform=True,
+                mask=None))
+
+        # HxW spatial weights
+        spatial_weights = tf.get_variable(
+            name='%s_spatial' % name,
+            dtype=tf.float32,
+            initializer=initialization.xavier_initializer(
+                shape=[1, bottom_shape[1], bottom_shape[2], 1],
+                mask=None))
+
+        # If supplied, initialize the spatial weights with RF info
+        if aux is not None and 'xy' in aux.keys():
+            gaussian_xy = aux['xy']
+            if 'h' in aux.keys():
+                gaussian_h = aux['h']
+                gaussian_w = aux['w']
+            else:
+                gaussian_h, gaussian_w = None, None
+            spatial_rf = create_gaussian_rf(
+                xy=gaussian_xy,
+                h=gaussian_h,
+                w=gaussian_w)
+            spatial_weights += spatial_rf
+        spatial_sparse = tf.reduce_mean(bottom * spatial_weights, reduction_indices=[1, 2])
+        output = tf.matmul(spatial_sparse, channel_weights)
+        return self, output
+
+
 def get_conv_var(
         self,
         filter_size,
@@ -229,6 +353,7 @@ def get_conv_var(
         out_channels,
         name,
         init_type='xavier'):
+    """Prepare convolutional kernel weights."""
     if init_type == 'xavier':
         weight_init = [
             [filter_size, filter_size, in_channels, out_channels],
@@ -259,6 +384,7 @@ def get_fc_var(
         out_size,
         name,
         init_type='xavier'):
+    """Prepare fully connected weights."""
     if init_type == 'xavier':
         weight_init = [
             [in_size, out_size],
@@ -290,6 +416,7 @@ def get_var(
         var_name,
         in_size=None,
         out_size=None):
+    """Handle variable loading if necessary."""
     if self.data_dict is not None and name in self.data_dict:
         value = self.data_dict[name][idx]
     else:
@@ -315,3 +442,4 @@ def get_var(
             name=var_name)
     self.var_dict[(name, idx)] = var
     return var
+

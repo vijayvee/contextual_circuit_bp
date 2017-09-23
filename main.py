@@ -194,13 +194,18 @@ def main(experiment_name, list_experiments=False):
                     'Converting to a scalar.')
                 dataset_module.output_size = np.prod(
                     dataset_module.output_size)
+            if hasattr(dataset_module, 'output_structure'):
+                output_structure = dataset_module.output_structure
+            else:
+                output_structure = None
             model = model_utils.model_class(
                 mean=train_means,
                 training=True,
                 output_size=dataset_module.output_size)
-            output_scores, model_summary = model.build(
+            train_scores, model_summary = model.build(
                 data=train_images,
                 layer_structure=model_dict.layer_structure,
+                output_structure=output_structure,
                 log=log,
                 tower_name='cnn')
             log.info('Built training model.')
@@ -210,8 +215,8 @@ def main(experiment_name, list_experiments=False):
             print_model_architecture(model_summary)
 
             # Prepare the loss function
-            train_loss, train_scores = loss_utils.loss_interpreter(
-                logits=output_scores,
+            train_loss, _ = loss_utils.loss_interpreter(
+                logits=train_scores,
                 labels=train_labels,
                 loss_type=config.loss_function,
                 dataset_module=dataset_module)
@@ -243,15 +248,16 @@ def main(experiment_name, list_experiments=False):
                 mean=val_means,
                 training=True,
                 output_size=dataset_module.output_size)
-            val_output_scores, _ = val_model.build(  # Ignore summary
+            val_scores, _ = val_model.build(  # Ignore summary
                 data=val_images,
                 layer_structure=model_dict.layer_structure,
+                output_structure=output_structure,
                 log=log,
                 tower_name='cnn')
             log.info('Built validation model.')
 
-            val_loss, val_scores = loss_utils.loss_interpreter(
-                logits=val_output_scores,
+            val_loss, _ = loss_utils.loss_interpreter(
+                logits=val_scores,
                 labels=val_labels,
                 loss_type=config.loss_function,
                 dataset_module=dataset_module)
