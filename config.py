@@ -8,8 +8,8 @@ class Config:
 
     def __init__(self, **kwargs):
         """Global config file for normalization experiments."""
-        self.data_root = '/Users/drewlinsley/Documents/contextual_model_psychophysic_data/cc_bp_data/image_datasets'
-        self.project_directory = '/Users/drewlinsley/Documents/contextual_model_psychophysic_data/cc_bp_data/'
+        self.data_root = '/media/data_cifs/image_datasets/'
+        self.project_directory = '/media/data_cifs/contextual_circuit/'
         self.tf_records = os.path.join(
             self.project_directory,
             'tf_records')
