@@ -1,3 +1,4 @@
+"""Functions for handling feedforward and pooling operations."""
 import numpy as np
 import tensorflow as tf
 from ops import initialization
@@ -64,9 +65,33 @@ def pool_ff_interpreter(
             bottom=act,
             layer_weights=it_dict['weights'],
             name=it_name)
+    elif it_neuron_op == 'gather':
+        self, act = gather_value_layer(
+            self=self,
+            bottom=act,
+            aux=it_dict,
+            name=it_name)
+    elif it_neuron_op == 'pass':
+        pass
     else:
-        raise RuntimeError('Your specified operation %s is not implemented' % it_neuron_op)
+        raise RuntimeError(
+            'Your specified operation %s is not implemented' % it_neuron_op)
     return self, act
+
+
+def gather_value_layer(
+        self,
+        bottom,
+        aux,
+        name):
+    """Gather a value from a location in an activity tensor."""
+    assert aux is not None, 'Gather op needs an aux dict with x/y coordinates.'
+    assert 'x' in aux.keys() and 'y' in aux.keys(), 'Gather op dict needs x/y key value pairs'
+    import ipdb;ipdb.set_trace()
+    x = aux['x']
+    y = aux['y']
+    out = tf.gather_nd(bottom, [x, y])
+    return self, out
 
 
 # TODO: move each of these ops into a script in the functions folder.
@@ -113,9 +138,9 @@ def dog_layer(
     def DoG(bottom, x, y, sc, ss, rc, rs):
         """DoG operation."""
         pos = ((grid_xx - x)**2 + (grid_yy - y)**2)
-        center = tf.exp(-pos/2/sc) / (2*(sc)*pi)
-        surround = tf.exp(-pos/2/(sc + ss)) / (2*(sc + ss)*pi)
-        weight_vec = tf.reshape((rc*(center)) - (rs*(surround)), [-1, 1])
+        center = tf.exp(-pos / 2 / sc) / (2 * (sc) * pi)
+        surround = tf.exp(-pos / 2 / (sc + ss)) / (2 * (sc + ss) * pi)
+        weight_vec = tf.reshape((rc * (center)) - (rs * (surround)), [-1, 1])
         return tf.matmul(bottom, weight_vec), weight_vec
 
     if isinstance(layer_weights, list):
@@ -187,13 +212,13 @@ def dog_layer(
     output, dog_weights = [], []
     for i in range(layer_weights):
         activities, weight_vec = DoG(
-                bottom=flat_bottom,
-                x=lgn_x[i],
-                y=lgn_y[i],
-                sc=lgn_sc[i],
-                ss=lgn_ss[i],
-                rc=lgn_rc[i],
-                rs=lgn_rs[i])
+            bottom=flat_bottom,
+            x=lgn_x[i],
+            y=lgn_y[i],
+            sc=lgn_sc[i],
+            ss=lgn_ss[i],
+            rc=lgn_rc[i],
+            rs=lgn_rs[i])
         output += [activities]
         dog_weights += [weight_vec]
     self.var_dict[('%s_weights' % name, 0)] = dog_weights
@@ -240,7 +265,7 @@ def conv_layer(
     with tf.variable_scope(name):
         if in_channels is None:
             in_channels = int(bottom.get_shape()[-1])
-        filt, conv_biases = get_conv_var(
+        self, filt, conv_biases = get_conv_var(
             self=self,
             filter_size=filter_size,
             in_channels=in_channels,
@@ -264,7 +289,7 @@ def conv_3d_layer(
     with tf.variable_scope(name):
         if in_channels is None:
             in_channels = int(bottom.get_shape()[-1])
-        filt, conv_biases = get_conv_var(
+        self, filt, conv_biases = get_conv_var(
             self=self,
             filter_size=filter_size,
             in_channels=in_channels,
@@ -280,7 +305,7 @@ def fc_layer(self, bottom, out_channels, name, in_channels=None):
     with tf.variable_scope(name):
         if in_channels is None:
             in_channels = int(bottom.get_shape()[-1])
-        weights, biases = get_fc_var(
+        self, weights, biases = get_fc_var(
             self=self,
             in_size=in_channels,
             out_size=out_channels,
@@ -300,7 +325,6 @@ def sparse_pool_layer(
         in_channels=None,
         aux=None):
     """Sparse pooling layer."""
-
     def create_gaussian_rf(xy, h, w):
         """Create a gaussian bump for initializing the spatial weights."""
         # TODO: implement this.
@@ -341,7 +365,8 @@ def sparse_pool_layer(
                 h=gaussian_h,
                 w=gaussian_w)
             spatial_weights += spatial_rf
-        spatial_sparse = tf.reduce_mean(bottom * spatial_weights, reduction_indices=[1, 2])
+        spatial_sparse = tf.reduce_mean(
+            bottom * spatial_weights, reduction_indices=[1, 2])
         output = tf.matmul(spatial_sparse, channel_weights)
         return self, output
 
@@ -363,19 +388,19 @@ def get_conv_var(
             [filter_size, filter_size, in_channels, out_channels],
             0.0, 0.001)
     bias_init = tf.truncated_normal([out_channels], .0, .001)
-    filters = get_var(
+    self, filters = get_var(
         self=self,
         initial_value=weight_init,
         name=name,
         idx=0,
         var_name=name + "_filters")
-    biases = get_var(
+    self, biases = get_var(
         self=self,
         initial_value=bias_init,
         name=name,
         idx=1,
         var_name=name + "_biases")
-    return filters, biases
+    return self, filters, biases
 
 
 def get_fc_var(
@@ -393,19 +418,19 @@ def get_fc_var(
         weight_init = tf.truncated_normal(
             [in_size, out_size], 0.0, 0.001)
     bias_init = tf.truncated_normal([out_size], .0, .001)
-    weights = get_var(
+    self, weights = get_var(
         self=self,
         initial_value=weight_init,
         name=name,
         idx=0,
         var_name=name + "_weights")
-    biases = get_var(
+    self, biases = get_var(
         self=self,
         initial_value=bias_init,
         name=name,
         idx=1,
         var_name=name + "_biases")
-    return weights, biases
+    return self, weights, biases
 
 
 def get_var(
@@ -441,5 +466,4 @@ def get_var(
             dtype=tf.float32,
             name=var_name)
     self.var_dict[(name, idx)] = var
-    return var
-
+    return self, var

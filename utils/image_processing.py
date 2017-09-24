@@ -1,3 +1,4 @@
+"""Useful functions for processing images."""
 import cv2
 import numpy as np
 
@@ -12,10 +13,12 @@ def crop_center(img, crop_size):
 
 
 def resize(img, new_size):
+    """Resize image."""
     return cv2.resize(img, tuple(new_size[:2]))
 
 
 def pad_square(img):
+    """Pad rectangular image to square."""
     im_shape = img.shape[:2]
     target_size = np.max(im_shape)
     h_pad = target_size - im_shape[0]

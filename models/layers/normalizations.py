@@ -1,3 +1,4 @@
+"""Wrapper for normalization functions."""
 import tensorflow as tf
 from utils import py_utils
 from ops.eRF_calculator import eRF_calculator
@@ -17,17 +18,22 @@ from models.layers.normalization_functions import contextual_frozen_connectivity
 from models.layers.normalization_functions import contextual_frozen_connectivity_learned_transition_weak_eCRF_vector_modulation
 from models.layers.normalization_functions import contextual_frozen_connectivity_learned_transition_vector_weak_eCRF_vector_modulation
 from models.layers.normalization_functions import contextual_frozen_connectivity_learned_transition_vector_weak_eCRF_vector_modulation_late_I
+from models.layers.normalization_functions import contextual_alt_learned_transition_learned_connectivity_scalar_modulation
+
 
 class normalizations(object):
     """Wrapper class for activation functions."""
+
     def __getitem__(self, name):
+        """Get attribute from class."""
         return getattr(self, name)
 
     def __contains__(self, name):
+        """Check if class contains attribute."""
         return hasattr(self, name)
 
     def __init__(self, kwargs=None):
-        """Globals for normalization functions."""
+        """Global variables for normalization functions."""
         self.timesteps = 3
         self.scale_CRF = True
         self.bias_CRF = True
@@ -38,6 +44,7 @@ class normalizations(object):
         self.update_params(kwargs)
 
     def update_params(self, kwargs):
+        """Update the class attributes with kwargs."""
         if kwargs is not None:
             for k, v in kwargs.iteritems():
                 setattr(self, k, v)
@@ -55,7 +62,8 @@ class normalizations(object):
             V1_feCRF=1.41,
             default_stride=1,
             padding=1):
-        """ Set RF sizes for the normalizations.
+        """Set RF sizes for the normalizations.
+
         Based on calculation of an effective RF (i.e. not
         simply kernel size of the current layer, but instead
         w.r.t. input).
@@ -258,6 +266,23 @@ class normalizations(object):
             strides=self.strides,
             padding=self.padding)
         return contextual_layer.build()
+
+    def contextual_alt_learned_transition_learned_connectivity_scalar_modulation(self, x, layer, eRF, aux):
+        """Contextual model from paper with frozen U & eCRFs."""
+        self.update_params(aux)
+        self.set_RFs(layer=layer, eRF=eRF)
+        import ipdb;ipdb.set_trace()
+        contextual_layer = contextual_alt_learned_transition_learned_connectivity_scalar_modulation.ContextualCircuit(
+            X=x,
+            timesteps=self.timesteps,
+            lesions=self.lesions,
+            SRF=self.SRF,
+            SSN=self.SSN,
+            SSF=self.SSF,
+            strides=self.strides,
+            padding=self.padding)
+        return contextual_layer.build()
+
 
     def contextual_frozen_eCRF_connectivity(self, x, layer, eRF, aux):
         """Contextual model from paper with frozen eCRFs."""

@@ -200,7 +200,10 @@ def norm_op(self, it_dict, act, layer_summary, norm_mod, eRFs, target):
         if len(it_dict['names']) > 1:
             raise RuntimeError('TODO: Fix implementation for multiple names.')
         act, weights, activities = norm_mod[normalization](
-            act, layer=it_dict, eRF=eRFs[it_dict['names'][0]], aux=aux)
+            act,
+            layer=it_dict,
+            eRF=eRFs[it_dict['names'][0]],
+            aux=aux)
         if weights is not None:
             self = attach_weights(
                 self,

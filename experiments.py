@@ -519,3 +519,21 @@ class experiments():
         exp['data_augmentations'] = [['resize']]
         exp['epochs'] = 1
         return exp
+
+    def contextual_model_paper(self):
+        """Each key in experiment_dict must be manually added to the schema."""
+        model_folder = 'contextual_model_paper'
+        exp = {
+            'experiment_name': [model_folder],
+            'lr': [3e-4],
+            'loss_function': ['l2'],
+            'optimizer': ['adam'],
+            'model_struct': [
+                os.path.join(model_folder, 'contextual'),
+            ],
+            'dataset': ['cm_f3a']
+        }
+        exp = self.add_globals(exp)  # Add globals to the experiment'
+        exp['data_augmentations'] = [[None]]
+        exp['epochs'] = 100
+        return exp

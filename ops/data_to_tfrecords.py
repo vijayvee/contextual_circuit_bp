@@ -1,3 +1,4 @@
+"""Routines for encoding data into TFrecords."""
 import numpy as np
 import tensorflow as tf
 from scipy import misc
@@ -25,6 +26,7 @@ def create_example(data_dict):
 
 
 def preprocess_image(image, preprocess, im_size):
+    """Preprocess image files before encoding in TFrecords."""
     if 'crop_center' in preprocess:
         image = image_processing.crop_center(image, im_size)
     elif 'resize' in preprocess:
@@ -54,8 +56,11 @@ def data_to_tfrecords(
             means = np.zeros((im_size))
             for it_f, it_l in tqdm(
                     zip(fv, lv), total=len(fv), desc='Building %s' % fk):
-                image = load_image(it_f, im_size).astype(np.float32)
-                image = preprocess_image(image, preprocess, im_size)
+                if isinstance(it_f, basestring):
+                    image = load_image(it_f, im_size).astype(np.float32)
+                    image = preprocess_image(image, preprocess, im_size)
+                else:
+                    image = it_f
                 means += image
                 data_dict = {
                     'image': targets['image'](image.tostring()),
