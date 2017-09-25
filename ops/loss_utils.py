@@ -154,6 +154,7 @@ def log_poisson(logits, labels):
     ll = tf.nn.log_poisson_loss(
         targets=logits,
         log_input=labels)
+    ll = tf.reduce_mean(ll)
     return ll, ll
 
 
