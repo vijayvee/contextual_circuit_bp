@@ -56,6 +56,8 @@ def check_path(data_pointer, log, msg):
     if not os.path.exists(data_pointer):
         log.debug(msg)
         return False
+    else:
+        return data_pointer
 
 
 def ifloor(x):

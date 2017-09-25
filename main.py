@@ -73,16 +73,17 @@ def get_data_pointers(dataset, base_dir, cv, log):
     py_utils.check_path(
         data_pointer, log, '%s not found.' % data_pointer)
     mean_loc = py_utils.check_path(
-        data_means, log, '%s not found.' % data_means)
+        data_means, log, '%s not found for cv: %s.' % (data_means, cv))
     if not mean_loc:
         alt_data_pointer = data_means.replace('.npy', '.npz')
         alt_data_pointer = py_utils.check_path(
-            data_pointer, log, '%s not found.' % data_pointer)
+            alt_data_pointer, log, '%s not found.' % alt_data_pointer)
         # TODO: Fix this API and make it more flexible. Kill npzs in Allen?
         if not alt_data_pointer:
             # No mean for this dataset
             data_means = None
         else:
+            log.info('Loading means from npz for cv: %s.' % cv)
             data_means = np.load(alt_data_pointer)
             data_means = data_means[data_means.keys()[0]].item()['image']
     else:
@@ -309,7 +310,7 @@ def main(experiment_name, list_experiments=False):
         'val_accuracy': val_accuracy,
         'val_images': val_images,
         'val_labels': val_labels,
-        'val_scores': val_scores
+        'val_scores': val_scores,
     }
 
     # Start training loop
@@ -318,7 +319,7 @@ def main(experiment_name, list_experiments=False):
             dir_list['condition_evaluations'], 'training_config_file'),
         config)
     log.info('Starting training')
-    tr_loss, val_loss, tr_accs, val_accs, timesteps = training.training_loop(
+    output_dict = training.training_loop(
         config=config,
         db=db,
         coord=coord,
@@ -336,20 +337,11 @@ def main(experiment_name, list_experiments=False):
         exp_params=exp_params)
     log.info('Finished training.')
 
-    files_to_save = {
-        'training_loss': tr_loss,
-        'validation_loss': val_loss,
-        'training_acc': tr_accs,
-        'validation_acc': val_accs,
-        'timesteps': timesteps
-    }
-
     model_name = config.model_struct.replace('/', '_')
     py_utils.save_npys(
-        data=files_to_save,
+        data=output_dict,
         model_name=model_name,
-        output_string=dir_list['experiment_evaluations']
-        )
+        output_string=dir_list['experiment_evaluations'])
 
 
 if __name__ == '__main__':

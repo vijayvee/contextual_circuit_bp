@@ -53,7 +53,7 @@ def training_loop(
         exp_params):
     step, time_elapsed = 0, 0
     train_losses, train_accs, timesteps = {}, {}, {}
-    val_losses, val_accs = {}, {}
+    val_losses, val_accs, val_scores, val_labels = {}, {}, {}, {}
     try:
         while not coord.should_stop():
             start_time = time.time()
@@ -70,6 +70,8 @@ def training_loop(
             if step % config.validation_iters == 0:
                 it_val_acc = np.asarray([])
                 it_val_loss = np.asarray([])
+                it_val_scores = np.asarray([])
+                it_val_labels = np.asarray([])
                 for num_vals in range(config.num_validation_evals):
                     # Validation accuracy as the average of n batches
                     val_vars = sess.run(val_dict.values())
@@ -81,10 +83,18 @@ def training_loop(
                     it_val_loss = np.append(
                         it_val_loss,
                         it_val_dict['val_loss'])
+                    it_val_scores = np.append(
+                        it_val_loss,
+                        it_val_dict['val_scores'])
+                    it_val_labels = np.append(
+                        it_val_loss,
+                        it_val_dict['val_labels'])
                 val_acc = it_val_acc.mean()
                 val_lo = it_val_loss.mean()
                 val_accs[step] = val_acc
                 val_losses[step] = val_lo
+                val_scores[step] = it_val_scores
+                val_labels[step] = it_val_labels
 
                 # Summaries
                 summary_str = sess.run(summary_op)
@@ -166,4 +176,14 @@ def training_loop(
     if hasattr(config, 'hp_optim'):
         exp_params['hp_current_iteration'] += 1
 
-    return train_losses, val_losses, train_accs, val_accs, timesteps
+    # Package output variables into a dictionary
+    output_dict = {
+        'train_losses': train_losses,
+        'train_accs': val_losses,
+        'timesteps': train_accs,
+        'val_losses': val_accs,
+        'val_accs': timesteps,
+        'val_scores': val_scores,
+        'val_labels': val_labels,
+    }
+    return output_dict

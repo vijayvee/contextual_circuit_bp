@@ -60,6 +60,10 @@ def loss_interpreter(
         return pearson_loss(
             logits=logits,
             labels=labels)
+    elif loss_type == 'log_poisson':
+        return log_poisson(
+            logits=logits,
+            labels=labels)
     else:
         raise RuntimeError('Cannot understand your loss function.')
 
@@ -140,6 +144,16 @@ def log_loss(logits, labels):
     ll = tf.losses.log_loss(
         predictions=logits,
         labels=labels)
+    return ll, ll
+
+
+def log_poisson(logits, labels):
+    """Wrapper for log poisson loss."""
+    logits = tf.squeeze(logits)
+    labels = tf.squeeze(labels)
+    ll = tf.nn.log_poisson_loss(
+        targets=logits,
+        log_input=labels)
     return ll, ll
 
 
