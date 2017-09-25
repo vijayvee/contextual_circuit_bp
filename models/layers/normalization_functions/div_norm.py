@@ -20,8 +20,9 @@ def div_norm_2d(
         padding,
         gamma=None,
         beta=None,
+        layer=None,
         eps=1.0,
-        scope="dn",
+        scope=None,
         name="dn_out",
         return_mean=False):
     """Applies divisive normalization on CNN feature maps.
@@ -47,6 +48,9 @@ def div_norm_2d(
         sum_window = list(np.repeat(sum_window, 2))
     if not isinstance(sup_window, list):
         sup_window = list(np.repeat(sup_window, 2))
+
+    if scope is None:
+        scope = '%s_%s' % (layer['names'][0], layer['normalization'][0])
     with tf.variable_scope(scope):
         w_sum = tf.ones(sum_window + [1, 1]) / np.prod(np.array(sum_window))
         w_sup = tf.ones(sup_window + [1, 1]) / np.prod(np.array(sup_window))
@@ -66,11 +70,17 @@ def div_norm_2d(
             padding=padding)
         denom = tf.sqrt(x2_mean + eps)
         normed = normed / denom
-        if gamma is not None:
-            normed *= gamma
+        if gamma is None:
+            gamma = tf.get_variable(
+                name='%s_%s' % ('gamma', scope),
+                initializer=1.)
+        normed *= gamma
         if beta is not None:
-            normed += beta
-    normed = tf.identity(normed, name=name)
+            beta = tf.get_variable(
+                name='%s_%s' % ('beta', scope),
+                initializer=0.)
+        normed += beta
+    normed = tf.identity(normed, name='%s_%s' % (scope, name))
     if return_mean:
         return normed, x_mean
     else:
@@ -85,6 +95,7 @@ def div_norm_1d(
         padding,
         gamma=None,
         beta=None,
+        layer=None,
         eps=1.0,
         scope='dn',
         name="dn_out",
@@ -107,6 +118,9 @@ def div_norm_1d(
       normed: Divisive-normalized variable.
       mean: Mean used for normalization (optional).
     """
+
+    if scope is None:
+        scope = '%s_%s' % (layer['names'][0], layer['normalization'][0])
     with tf.variable_scope(scope):
         x = tf.expand_dims(x, 2)
         w_sum = tf.ones([sum_window, 1, 1], dtype='float') / float(sum_window)
@@ -118,11 +132,17 @@ def div_norm_1d(
         normed = (x - mean) / tf.sqrt(eps + var)
         normed = tf.squeeze(normed, [2])
         mean = tf.squeeze(mean, [2])
-    if gamma is not None:
+        if gamma is None:
+            gamma = tf.get_variable(
+                name='%s_%s' % ('gamma', scope),
+                initializer=1.)
         normed *= gamma
-    if beta is not None:
+        if beta is not None:
+            beta = tf.get_variable(
+                name='%s_%s' % ('beta', scope),
+                initializer=0.)
         normed += beta
-    normed = tf.identity(normed, name=name)
+    normed = tf.identity(normed, name='%s_%s' % (scope, name))
     if return_mean:
         return normed, mean
     else:

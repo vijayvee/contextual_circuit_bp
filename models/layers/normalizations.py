@@ -369,6 +369,7 @@ class normalizations(object):
             gamma=self.scale_CRF,
             beta=self.bias_CRF,
             strides=self.strides,
+            layer=layer,
             padding=self.padding), None, None
 
     def divisive_1d(self, x, layer, eRF, aux):
@@ -379,6 +380,7 @@ class normalizations(object):
             x,
             sum_window=self.CRF_excitation,
             sup_window=self.CRF_inhibition,
+            layer=layer,
             gamma=self.scale_CRF,
             beta=self.bias_CRF), None, None
 

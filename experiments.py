@@ -536,6 +536,6 @@ class experiments():
         }
         exp = self.add_globals(exp)  # Add globals to the experiment'
         exp['data_augmentations'] = [[None]]
-        exp['epochs'] = 1000
+        exp['epochs'] = 10000
         return exp
 
