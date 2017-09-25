@@ -435,7 +435,7 @@ class experiments():
         exp = {
             'experiment_name': [model_folder],
             'lr': [1e-3],
-            'loss_function': ['l2'],  # Leave as None to use dataset default
+            'loss_function': ['pearson'],
             'optimizer': ['adam'],
             'regularization_type': ['l2'],  # [None, 'l1', 'l2'],
             'regularization_strength': [1e-7],

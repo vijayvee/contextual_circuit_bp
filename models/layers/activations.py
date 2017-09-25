@@ -39,5 +39,5 @@ class activations(object):
         return tf.nn.crelu(x)
 
     def logistic(self, x, coef=1.0, t=0.0, **kwargs):
-        """Antilok et al., 2016 logistic loss function."""
+        """Antilok et al., 2016 logistic activation function."""
         return coef * tf.log(1 + tf.exp(coef * (x - t)))

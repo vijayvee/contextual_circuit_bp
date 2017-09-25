@@ -338,6 +338,7 @@ def main(experiment_name, list_experiments=False):
     log.info('Finished training.')
 
     model_name = config.model_struct.replace('/', '_')
+    # TODO: Timestamp these numpys
     py_utils.save_npys(
         data=output_dict,
         model_name=model_name,
