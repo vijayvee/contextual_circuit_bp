@@ -20,7 +20,11 @@ def image_augmentations(
         model_input_image_size):
     """Coordinating image augmentations for both image and heatmap."""
     im_size = [int(x) for x in image.get_shape()]
-    im_size_check = any(np.less_equal(im_size[:2], model_input_image_size[:2]))
+    im_size_check = np.any(
+        np.less_equal(
+            model_input_image_size[:2],
+            im_size[:2]))
+    import ipdb;ipdb.set_trace()
     if data_augmentations is not None:
         if 'random_crop' in data_augmentations and im_size_check:
             image = tf.random_crop(image, model_input_image_size)
