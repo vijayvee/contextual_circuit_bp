@@ -147,14 +147,12 @@ def log_loss(logits, labels):
     return ll, ll
 
 
-def log_poisson(logits, labels):
-    """Wrapper for log poisson loss."""
+def log_poisson(logits, labels, eps=1e-12):
+    """Wrapper for log poisson loss from the Antilok dataset."""
     logits = tf.squeeze(logits)
     labels = tf.squeeze(labels)
-    ll = tf.nn.log_poisson_loss(
-        targets=logits,
-        log_input=labels)
-    ll = tf.reduce_mean(ll)
+    ll = tf.reduce_sum(logits) - tf.reduce_sum(
+        tf.multiply(labels, tf.log(logits + eps)))
     return ll, ll
 
 
