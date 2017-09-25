@@ -6,15 +6,25 @@ layer_structure = [
         'weights': [64],
         'names': ['conv1_1'],
         'filter_size': [7],
-        'activation': ['logistic'],
-        'activation_target': ['post']
+        'activation': ['selu'],
+        'activation_target': ['post'],
+        'dropout': [0.5],
+        'dropout_target': ['post']
     },
     {
         'layers': ['pool'],
         'weights': [None],
         'names': ['pool1'],
         'filter_size': [None]
-    }
+    },
+    {
+        'layers': ['conv'],
+        'weights': [64],
+        'names': ['conv2_1'],
+        'filter_size': [1],
+        'activation': ['selu'],
+        'activation_target': ['post']
+    },
 ]
 
 output_structure = [
@@ -24,4 +34,3 @@ output_structure = [
         'names': ['sp2'],
     }
 ]
-

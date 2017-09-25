@@ -173,7 +173,7 @@ def training_loop(
     sess.close()
 
     # If using hp optimization, store performance here
-    if hasattr(config, 'hp_optim'):
+    if exp_params['hp_current_iteration'] is not None:
         exp_params['hp_current_iteration'] += 1
 
     # Package output variables into a dictionary

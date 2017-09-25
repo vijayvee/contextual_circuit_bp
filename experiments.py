@@ -434,16 +434,16 @@ class experiments():
         model_folder = 'ALLEN_all_neurons'
         exp = {
             'experiment_name': [model_folder],
-            'lr': [1e-4],
-            'loss_function': ['log_poisson'],  # Leave as None to use dataset default
+            'lr': [1e-3],
+            'loss_function': ['l2'],  # Leave as None to use dataset default
             'optimizer': ['adam'],
             'regularization_type': ['l2'],  # [None, 'l1', 'l2'],
             'regularization_strength': [1e-7],
             'model_struct': [
                 os.path.join(model_folder, 'conv2d'),
-                os.path.join(model_folder, 'sparse_conv2d'),
                 # os.path.join(model_folder, 'conv3d'),
                 os.path.join(model_folder, 'DoG'),
+                os.path.join(model_folder, 'sparse_conv2d')
             ],
             'dataset': ['ALLEN_all_neurons']
         }
@@ -462,9 +462,9 @@ class experiments():
             'regularization_type': [None, 'l2'],  # [None, 'l1', 'l2'],
             'regularization_strength': [1e-7],
             'model_struct': [
-                os.path.join(model_folder, 'conv2d'),
+                # os.path.join(model_folder, 'conv2d'),
                 # os.path.join(model_folder, 'conv3d'),
-                # os.path.join(model_folder, 'DoG'),
+                os.path.join(model_folder, 'DoG'),
                 # os.path.join(model_folder, 'sparse_conv2d')
             ],
             'dataset': ['ALLEN_all_neurons', 'ALLEN_selected_cells_1']

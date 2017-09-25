@@ -79,6 +79,19 @@ def pool_ff_interpreter(
     return self, act
 
 
+def reshape_layer(
+        self,
+        bottom,
+        aux,
+        name):
+    """Reshape an activity tensor."""
+    import ipdb;ipdb.set_trace()
+
+    h = aux['h']
+    w = aux['w']
+    c = int(bottom.get_shape()[-1])
+
+
 def gather_value_layer(
         self,
         bottom,

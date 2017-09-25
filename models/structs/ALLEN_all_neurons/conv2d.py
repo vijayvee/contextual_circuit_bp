@@ -6,8 +6,10 @@ layer_structure = [
         'weights': [64],
         'names': ['conv1_1'],
         'filter_size': [7],
-        'activation': ['logistic'],
-        'activation_target': ['post']
+        'activation': ['selu'],
+        'activation_target': ['post'],
+        'dropout': [0.5],
+        'dropout_target': ['post']
     },
     {
         'layers': ['pool'],
@@ -21,5 +23,15 @@ layer_structure = [
         'names': ['fc2'],
         'flatten': [True],
         'flatten_target': ['pre'],
+        'activation': ['selu'],
+        'activation_target': ['post']
+    }
+]
+
+output_structure = [
+    {
+        'layers': ['fc'],
+        'weights': [1],  # Output size
+        'names': ['fc3'],
     }
 ]
