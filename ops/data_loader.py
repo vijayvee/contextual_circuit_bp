@@ -24,7 +24,6 @@ def image_augmentations(
         np.less_equal(
             model_input_image_size[:2],
             im_size[:2]))
-    import ipdb;ipdb.set_trace()
     if data_augmentations is not None:
         if 'random_crop' in data_augmentations and im_size_check:
             image = tf.random_crop(image, model_input_image_size)
