@@ -26,7 +26,7 @@ class experiments():
             ],  # TODO: document all data augmentations.
             'epochs': 200,
             'shuffle': True,  # Shuffle data.
-            'validation_iters': 500,  # How often to evaluate validation.
+            'validation_iters': 5000,  # How often to evaluate validation.
             'num_validation_evals': 100,  # How many validation batches.
             'top_n_validation': 0,  # Set to 0 to save all checkpoints.
             'early_stop': False  # Stop training if the loss stops improving.
@@ -456,7 +456,7 @@ class experiments():
         model_folder = 'ALLEN_selected_cells_1'
         exp = {
             'experiment_name': [model_folder],
-            'lr': [3e-4],
+            'lr': [1e-3],
             'loss_function': ['pearson', 'l2'],
             'optimizer': ['adam'],
             'regularization_type': [None, 'l2'],  # [None, 'l1', 'l2'],
@@ -464,8 +464,8 @@ class experiments():
             'model_struct': [
                 os.path.join(model_folder, 'conv2d'),
                 # os.path.join(model_folder, 'conv3d'),
-                os.path.join(model_folder, 'DoG'),
-                os.path.join(model_folder, 'sparse_conv2d')
+                # os.path.join(model_folder, 'DoG'),
+                # os.path.join(model_folder, 'sparse_conv2d')
             ],
             'dataset': ['ALLEN_all_neurons', 'ALLEN_selected_cells_1']
         }
