@@ -4,10 +4,17 @@ layer_structure = [
     {
         'layers': ['pass'],
         'names': ['contextual'],
+        'hardcoded_erfs': {
+            'SRF': 1,
+            'CRF_excitation': 1, 
+            'CRF_inhibition': 1,
+            'SSN': 9,
+            'SSF': 29
+        },
         'normalization': ['contextual_alt_learned_transition_learned_connectivity_scalar_modulation'],
-        'normalization_target': ['post'],
+        'normalization_target': ['pre'],
         'normalization_aux': {
-            'timesteps': 10,
+            'timesteps': 5,
             'regularization_targets': {  # Modulate sparsity
                 'q_t': {
                     'regularization_type': 'l1',
@@ -30,8 +37,8 @@ output_structure = [
     {
         'layers': ['gather'],
         'aux': {
-            'x': 25,
-            'y': 25
+            'h': 25,
+            'w': 25
         },  # Output size
         'names': ['gather'],
     }

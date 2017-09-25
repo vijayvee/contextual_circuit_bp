@@ -31,8 +31,9 @@ def image_augmentations(
                 tf.expand_dims(image, axis=0), model_input_image_size)
             image = tf.squeeze(image, axis=0)
         else:
-            image = tf.image.resize_image_with_crop_or_pad(
-                image, model_input_image_size[0], model_input_image_size[1])
+            pass
+            # image = tf.image.resize_image_with_crop_or_pad(
+            #     image, model_input_image_size[0], model_input_image_size[1])
         if 'left_right' in data_augmentations:
             image = tf.image.random_flip_left_right(image)
         if 'up_down' in data_augmentations:

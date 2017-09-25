@@ -529,11 +529,13 @@ class experiments():
             'loss_function': ['l2'],
             'optimizer': ['adam'],
             'model_struct': [
+                os.path.join(model_folder, 'divisive'),
                 os.path.join(model_folder, 'contextual'),
             ],
-            'dataset': ['cm_f3a']
+            'dataset': ['contextual_model_stimuli']
         }
         exp = self.add_globals(exp)  # Add globals to the experiment'
         exp['data_augmentations'] = [[None]]
-        exp['epochs'] = 100
+        exp['epochs'] = 1000
         return exp
+

@@ -43,7 +43,7 @@ class model_class(object):
             log=None,
             tower_name='cnn'):
         """Main model creation method."""
-        try:
+        if self.mean is not None:
             if isinstance(self.mean, dict):
                 # data -= (
                 #     np.expand_dims(
@@ -53,8 +53,9 @@ class model_class(object):
                         self.mean['max'], axis=0)).astype(np.float32)
             else:
                 data -= (np.expand_dims(self.mean, axis=0)).astype(np.float32)
-        except:
-            log.debug('Failed to mean-center data.')
+        else:
+            log.debug('Empty mean tensor. No mean adjustment.')
+            # log.debug('Failed to mean-center data.')
         input_data = tf.identity(data, name="lrp_input")
         assert log is not None, 'You must pass a logger.'
 
@@ -199,10 +200,15 @@ def norm_op(self, it_dict, act, layer_summary, norm_mod, eRFs, target):
             aux = None
         if len(it_dict['names']) > 1:
             raise RuntimeError('TODO: Fix implementation for multiple names.')
+        if eRFs is None:
+            # Use hardcoded eRF sizes
+            layer_eRFs = None
+        else:
+            layer_eRFs = eRFs[it_dict['names'][0]]
         act, weights, activities = norm_mod[normalization](
             act,
             layer=it_dict,
-            eRF=eRFs[it_dict['names'][0]],
+            eRF=layer_eRFs,
             aux=aux)
         if weights is not None:
             self = attach_weights(

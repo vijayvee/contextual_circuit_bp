@@ -69,7 +69,7 @@ def pool_ff_interpreter(
         self, act = gather_value_layer(
             self=self,
             bottom=act,
-            aux=it_dict,
+            aux=it_dict['aux'],
             name=it_name)
     elif it_neuron_op == 'pass':
         pass
@@ -85,12 +85,11 @@ def gather_value_layer(
         aux,
         name):
     """Gather a value from a location in an activity tensor."""
-    assert aux is not None, 'Gather op needs an aux dict with x/y coordinates.'
-    assert 'x' in aux.keys() and 'y' in aux.keys(), 'Gather op dict needs x/y key value pairs'
-    import ipdb;ipdb.set_trace()
-    x = aux['x']
-    y = aux['y']
-    out = tf.gather_nd(bottom, [x, y])
+    assert aux is not None, 'Gather op needs an aux dict with h/w coordinates.'
+    assert 'h' in aux.keys() and 'w' in aux.keys(), 'Gather op dict needs h/w key value pairs'
+    h = aux['h']
+    w = aux['w']
+    out = tf.squeeze(bottom[:, h, w, :])
     return self, out
 
 

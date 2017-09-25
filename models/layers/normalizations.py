@@ -74,32 +74,47 @@ class normalizations(object):
         eCRF near = 0.54 degrees (2x)
         eCRF far = 1.41 degrees (5.5x)
         """
-        eRFc = eRF_calculator()
-        conv = {
-            'padding': 1,
-            'kernel': layer['filter_size'][0],
-            'stride': 1
-        }
-        if len(layer['filter_size']) > 1:
-            raise RuntimeError(
-                'API not implemented for layers with > 1 module.')
-        self.SRF = layer['filter_size'][0]
-        self.CRF_excitation = layer['filter_size'][0]
-        self.CRF_inhibition = layer['filter_size'][0]
-        if eSRF is not None:
-            self.CRF_excitation
-        if iSRF is not None:
-            self.CRF_inhibition
-        if SSN is None:
-            SSN_eRF = py_utils.iceil(eRF['r_i'] * (V1_neCRF / V1_CRF))
-            self.SSN = eRFc.outFromIn(conv=conv, layer=eRF, fix_r_out=SSN_eRF)
+        if 'hardcoded_erfs' in layer.keys():
+            # Use specified effective receptive fields
+            self.SRF = layer['hardcoded_erfs']['SRF']
+            if 'CRF_excitation' in layer['hardcoded_erfs'].keys():
+                self.CRF_excitation = layer['hardcoded_erfs']['CRF_excitation']
+            else:
+                self.CRF_excitation = self.SRF
+            if 'CRF_inhibition' in layer['hardcoded_erfs'].keys():
+                self.CRF_inhibition = layer['hardcoded_erfs']['CRF_inhibition']
+            else:
+                self.CRF_inhibition = self.SRF
+            self.SSN = layer['hardcoded_erfs']['SSN']
+            self.SSF = layer['hardcoded_erfs']['SSF']
         else:
-            self.SSN = SSN
-        if SSF is None:
-            SSF_eRF = py_utils.iceil(eRF['r_i'] * (V1_feCRF / V1_CRF))
-            self.SSF = eRFc.outFromIn(conv=conv, layer=eRF, fix_r_out=SSF_eRF)
-        else:
-            self.SSF = SSF
+            # Calculate effective receptive field for this layer
+            eRFc = eRF_calculator()
+            conv = {
+                'padding': padding,
+                'kernel': layer['filter_size'][0],
+                'stride': default_stride
+            }
+            if len(layer['filter_size']) > 1:
+                raise RuntimeError(
+                    'API not implemented for layers with > 1 module.')
+            self.SRF = layer['filter_size'][0]
+            self.CRF_excitation = layer['filter_size'][0]
+            self.CRF_inhibition = layer['filter_size'][0]
+            if eSRF is not None:
+                self.CRF_excitation
+            if iSRF is not None:
+                self.CRF_inhibition
+            if SSN is None:
+                SSN_eRF = py_utils.iceil(eRF['r_i'] * (V1_neCRF / V1_CRF))
+                self.SSN = eRFc.outFromIn(conv=conv, layer=eRF, fix_r_out=SSN_eRF)
+            else:
+                self.SSN = SSN
+            if SSF is None:
+                SSF_eRF = py_utils.iceil(eRF['r_i'] * (V1_feCRF / V1_CRF))
+                self.SSF = eRFc.outFromIn(conv=conv, layer=eRF, fix_r_out=SSF_eRF)
+            else:
+                self.SSF = SSF
 
     def contextual(self, x, layer, eRF, aux):
         """Contextual model from paper with learnable weights."""
@@ -271,7 +286,6 @@ class normalizations(object):
         """Contextual model from paper with frozen U & eCRFs."""
         self.update_params(aux)
         self.set_RFs(layer=layer, eRF=eRF)
-        import ipdb;ipdb.set_trace()
         contextual_layer = contextual_alt_learned_transition_learned_connectivity_scalar_modulation.ContextualCircuit(
             X=x,
             timesteps=self.timesteps,

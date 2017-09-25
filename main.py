@@ -75,12 +75,16 @@ def get_data_pointers(dataset, base_dir, cv, log):
     mean_loc = py_utils.check_path(
         data_means, log, '%s not found.' % data_means)
     if not mean_loc:
-        # Try the ALLEN DATA path format
-        log.info('Trying hardcoded alternative allen path.')
+        alt_data_pointer = data_means.replace('.npy', '.npz')
+        alt_data_pointer = py_utils.check_path(
+            data_pointer, log, '%s not found.' % data_pointer)
         # TODO: Fix this API and make it more flexible. Kill npzs in Allen?
-        data_means = data_means.replace('.npy', '.npz')
-        data_means = np.load(data_means)
-        data_means = data_means[data_means.keys()[0]].item()['image']
+        if not alt_data_pointer:
+            # No mean for this dataset
+            data_means = None
+        else:
+            data_means = np.load(alt_data_pointer)
+            data_means = data_means[data_means.keys()[0]].item()['image']
     else:
         data_means = np.load(data_means)
     return data_pointer, data_means
@@ -194,8 +198,10 @@ def main(experiment_name, list_experiments=False):
                     'Converting to a scalar.')
                 dataset_module.output_size = np.prod(
                     dataset_module.output_size)
-            if hasattr(dataset_module, 'output_structure'):
-                output_structure = dataset_module.output_structure
+
+            if hasattr(model_dict, 'output_structure'):
+                # Use specified output layer
+                output_structure = model_dict.output_structure
             else:
                 output_structure = None
             model = model_utils.model_class(
@@ -296,12 +302,14 @@ def main(experiment_name, list_experiments=False):
         'train_images': train_images,
         'train_labels': train_labels,
         'train_op': train_op,
+        'train_scores': train_scores
     }
     val_dict = {
         'val_loss': val_loss,
         'val_accuracy': val_accuracy,
         'val_images': val_images,
         'val_labels': val_labels,
+        'val_scores': val_scores
     }
 
     # Start training loop
