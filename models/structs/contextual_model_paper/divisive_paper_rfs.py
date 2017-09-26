@@ -6,7 +6,7 @@ layer_structure = [
         'names': ['contextual'],
         'hardcoded_erfs': {
             'SRF': 1,
-            'CRF_excitation': 1, 
+            'CRF_excitation': 1,
             'CRF_inhibition': 1,
             'SSN': 9,
             'SSF': 29

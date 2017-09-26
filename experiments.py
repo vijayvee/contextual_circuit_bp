@@ -530,10 +530,12 @@ class experiments():
             'loss_function': ['l2'],
             'optimizer': ['adam'],
             'model_struct': [
+                os.path.join(model_folder, 'divisive_paper_rfs'),
+                os.path.join(model_folder, 'contextual_paper_rfs'),
                 os.path.join(model_folder, 'divisive'),
                 os.path.join(model_folder, 'contextual'),
             ],
-            'dataset': ['contextual_model_stimuli']
+            'dataset': ['contextual_model_multi_stimuli']
         }
         exp = self.add_globals(exp)  # Add globals to the experiment'
         exp['data_augmentations'] = [[None]]
