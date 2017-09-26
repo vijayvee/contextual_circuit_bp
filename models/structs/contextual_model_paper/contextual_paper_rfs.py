@@ -5,11 +5,11 @@ layer_structure = [
         'layers': ['pass'],
         'names': ['contextual'],
         'hardcoded_erfs': {
-            'SRF': 5,
-            'CRF_excitation': 5,
-            'CRF_inhibition': 5,
-            'SSN': 10,
-            'SSF': 27.5
+            'SRF': 1,
+            'CRF_excitation': 1, 
+            'CRF_inhibition': 1,
+            'SSN': 9,
+            'SSF': 29
         },
         'normalization': ['contextual_alt_learned_transition_learned_connectivity_vector_modulation'],
         'normalization_target': ['pre'],

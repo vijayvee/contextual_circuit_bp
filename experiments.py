@@ -442,8 +442,8 @@ class experiments():
             'model_struct': [
                 os.path.join(model_folder, 'conv2d'),
                 # os.path.join(model_folder, 'conv3d'),
-                os.path.join(model_folder, 'DoG'),
-                os.path.join(model_folder, 'sparse_conv2d')
+                # os.path.join(model_folder, 'DoG'),
+                # os.path.join(model_folder, 'sparse_conv2d')
             ],
             'dataset': ['ALLEN_all_neurons']
         }
@@ -457,20 +457,21 @@ class experiments():
         exp = {
             'experiment_name': [model_folder],
             'lr': [1e-3],
-            'loss_function': ['pearson', 'l2'],
+            'loss_function': ['pearson'],
             'optimizer': ['adam'],
-            'regularization_type': [None, 'l2'],  # [None, 'l1', 'l2'],
+            'regularization_type': ['l2'],  # [None, 'l1', 'l2'],
             'regularization_strength': [1e-7],
             'model_struct': [
-                # os.path.join(model_folder, 'conv2d'),
-                # os.path.join(model_folder, 'conv3d'),
+                os.path.join(model_folder, 'conv2d'),
+                os.path.join(model_folder, 'norm_conv2d'),
                 os.path.join(model_folder, 'DoG'),
-                # os.path.join(model_folder, 'sparse_conv2d')
+                os.path.join(model_folder, 'sparse_conv2d')
             ],
-            'dataset': ['ALLEN_all_neurons', 'ALLEN_selected_cells_1']
+            'dataset': ['ALLEN_selected_cells_1']
         }
         exp = self.add_globals(exp)  # Add globals to the experiment'
         exp['data_augmentations'] = [['resize']]
+        exp['epochs'] = 1000
         return exp
 
     def ALLEN_all_neurons_hp_conv(self):

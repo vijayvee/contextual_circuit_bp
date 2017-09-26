@@ -2,15 +2,12 @@
 
 layer_structure = [
     {
-        'layers': ['pass'],
-        'names': ['contextual'],
-        'hardcoded_erfs': {
-            'SRF': 5,
-            'CRF_excitation': 5,
-            'CRF_inhibition': 5,
-            'SSN': 10,
-            'SSF': 27.5
-        },
+        'layers': ['conv'],
+        'weights': [64],
+        'names': ['conv1_1'],
+        'filter_size': [7],
+        'activation': ['selu'],
+        'activation_target': ['post'],
         'normalization': ['contextual_alt_learned_transition_learned_connectivity_vector_modulation'],
         'normalization_target': ['pre'],
         'normalization_aux': {
@@ -30,21 +27,30 @@ layer_structure = [
                 },
             }
         },
+        'dropout': [0.5],
+        'dropout_target': ['post']
+    },
+    {
+        'layers': ['pool'],
+        'weights': [None],
+        'names': ['pool1'],
+        'filter_size': [None]
+    },
+    {
+        'layers': ['fc'],
+        'weights': [64],
+        'names': ['fc2'],
+        'flatten': [True],
+        'flatten_target': ['pre'],
+        'activation': ['selu'],
+        'activation_target': ['post']
     }
 ]
 
 output_structure = [
     {
-        'layers': ['gather'],
-        'aux': {
-            'h': 25,
-            'w': 25
-        },  # Output size
-        'names': ['gather'],
-    },
-    {
         'layers': ['fc'],
-        'weights': [1],
-        'names': ['fc1'],
+        'weights': [1],  # Output size
+        'names': ['fc3'],
     }
 ]

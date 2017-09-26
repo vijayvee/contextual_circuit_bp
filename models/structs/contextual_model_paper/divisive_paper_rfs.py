@@ -11,7 +11,7 @@ layer_structure = [
             'SSN': 9,
             'SSF': 29
         },
-        'normalization': ['batch'],
+        'normalization': ['divisive_2d'],
         'normalization_target': ['pre'],
     }
 ]
@@ -24,5 +24,10 @@ output_structure = [
             'w': 25
         },  # Output size
         'names': ['gather'],
+    },
+    {
+        'layers': ['fc'],
+        'weights': [1],
+        'names': ['fc1'],
     }
 ]
