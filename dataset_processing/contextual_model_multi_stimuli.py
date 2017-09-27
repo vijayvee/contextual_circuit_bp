@@ -14,17 +14,17 @@ class data_processing(object):
         self.name = 'contextual_model_multi_stimuli'
         self.figures = [
             'f3a.npz',
-            'f4.npz',
+            # 'f4.npz',
             'f5.npz',
             # 'tbp.npz',
-            'tbtcso.npz',
+            # 'tbtcso.npz',
             # 'bw.npz'
             ]
         self.target_data = 'label_dict'
         self.config = Config()
         self.output_size = [42, 1]
-        self.im_size = (256, 51, 51, 64)
-        self.model_input_image_size = [256, 51, 51, 64]
+        self.im_size = (51, 51, 75)
+        self.model_input_image_size = [51, 51, 75]
         self.default_loss_function = 'pearson'
         self.score_metric = 'pearson'
         self.preprocess = [None]
@@ -59,6 +59,9 @@ class data_processing(object):
         sizes = np.concatenate(
                     [np.asarray(v.shape).reshape(1, -1) for v in d.values()])
         m_sizes = np.max(sizes, axis=0)
+        if not flatten:
+            m_sizes[-1] = sizes.sum(0)[-1]
+            min_idx = 0
         for k, v in d.iteritems():
             v_shape = v.shape
             out_array = np.zeros(m_sizes)
@@ -66,15 +69,17 @@ class data_processing(object):
             if len(m_sizes) == 1:
                 out_array[:v_shape[0]] = v
             else:
+                max_idx = min_idx + v.shape[-1]
                 out_array[
-                    :v_shape[0],
-                    :v_shape[1],
-                    :v_shape[2],
-                    :v_shape[3]] = v
+                    :,
+                    :,
+                    :,
+                    min_idx:max_idx] = v
+                min_idx = max_idx
             if flatten:
                 out_array = list(out_array)
             d[k] = out_array
-        return d
+        return d, m_sizes[0]
 
     def get_data(self):
         """Called by encode_dataset.py to create a TFrecords."""
@@ -92,16 +97,18 @@ class data_processing(object):
             model_dict[fig_name] = data['model_pred']
 
         # Pad each with 0s to the largest size
-        stim_dict = self.flatten_and_pad_dict(stim_dict, flatten=False)
-        label_dict = self.flatten_and_pad_dict(label_dict, flatten=True)
-        model_dict = self.flatten_and_pad_dict(model_dict, flatten=True)
+        stim_dict, _ = self.flatten_and_pad_dict(
+            stim_dict, flatten=False)
+        stim_dict = np.concatenate(stim_dict.values())
+        label_dict = np.concatenate(label_dict.values())
+        model_dict = np.concatenate(model_dict.values())
 
         # Package for TFrecords
-        files = {k: stim_dict.values() for k in self.folds.keys()}
+        files = {k: stim_dict for k in self.folds.keys()}
         if self.target_data == 'label_dict':
-            labels = {k: label_dict.values() for k in self.folds.keys()}
+            labels = {k: label_dict for k in self.folds.keys()}
         elif self.target_data == 'model_dict':
-            labels = {k: model_dict.values() for k in self.folds.keys()}
+            labels = {k: model_dict for k in self.folds.keys()}
         else:
             raise RuntimeError('Select a target dictionary for TFrecords.')
         return files, labels
