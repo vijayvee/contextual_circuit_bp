@@ -244,7 +244,8 @@ def main(experiment_name, list_experiments=False):
                 metric=dataset_module.score_metric,
                 pred=train_scores,
                 labels=train_labels)  # training accuracy
-            tf.summary.image('train images', train_images)
+            if int(train_images.get_shape()[-1]) > 3:
+                tf.summary.image('train images', train_images)
             tf.summary.scalar('training loss', train_loss)
             tf.summary.scalar('training accuracy', train_accuracy)
             log.info('Added training summaries.')
@@ -272,7 +273,8 @@ def main(experiment_name, list_experiments=False):
                 metric=dataset_module.score_metric,
                 pred=val_scores,
                 labels=val_labels)  # training accuracy
-            tf.summary.image('val images', val_images)
+            if int(train_images.get_shape()[-1]) > 3:
+                tf.summary.image('val images', val_images)
             tf.summary.scalar('validation loss', val_loss)
             tf.summary.scalar('validation accuracy', val_accuracy)
             log.info('Added validation summaries.')
