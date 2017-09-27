@@ -22,7 +22,7 @@ class data_processing(object):
             ]
         self.target_data = 'label_dict'
         self.config = Config()
-        self.output_size = [42, 1]
+        self.output_size = [1, 1]
         self.im_size = (51, 51, 75)
         self.repeats = 20
         self.model_input_image_size = [51, 51, 75]
