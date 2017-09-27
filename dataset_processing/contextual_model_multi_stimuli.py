@@ -24,6 +24,7 @@ class data_processing(object):
         self.config = Config()
         self.output_size = [42, 1]
         self.im_size = (51, 51, 75)
+        self.repeats = 20
         self.model_input_image_size = [51, 51, 75]
         self.default_loss_function = 'pearson'
         self.score_metric = 'pearson'
@@ -99,6 +100,18 @@ class data_processing(object):
         # Pad each with 0s to the largest size
         stim_dict, _ = self.flatten_and_pad_dict(
             stim_dict, flatten=False)
+        stim_dict = {
+            k: v.repeat(
+                self.repeats,
+                axis=0) for k, v in stim_dict.iteritems()}
+        label_dict = {
+            k: v.repeat(
+                self.repeats,
+                axis=0) for k, v in label_dict.iteritems()}
+        model_dict = {
+            k: v.repeat(
+                self.repeats,
+                axis=0) for k, v in model_dict.iteritems()}
         stim_dict = np.concatenate(stim_dict.values())
         label_dict = np.concatenate(label_dict.values())
         model_dict = np.concatenate(model_dict.values())
