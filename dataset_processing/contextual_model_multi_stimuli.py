@@ -112,9 +112,9 @@ class data_processing(object):
             k: v.repeat(
                 self.repeats,
                 axis=0) for k, v in model_dict.iteritems()}
-        stim_dict = np.concatenate(stim_dict.values())
-        label_dict = np.concatenate(label_dict.values())
-        model_dict = np.concatenate(model_dict.values())
+        stim_dict = np.concatenate(stim_dict.values()).astype(np.float32)
+        label_dict = np.concatenate(label_dict.values()).astype(np.float32)
+        model_dict = np.concatenate(model_dict.values()).astype(np.float32)
 
         # Package for TFrecords
         files = {k: stim_dict for k in self.folds.keys()}
