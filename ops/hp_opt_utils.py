@@ -97,8 +97,8 @@ def hp_opt_dict():
     }
 
 
-def nate_test():
-    """Nate's gpyopt tester script."""
+def gpyopt_test():
+    """gpyopt tester script."""
     # Function that takes in data and makes a suggested next parameter combo
     def next_hyps(x_dat, y_dat, vars_dom):
         my_prob = GPyOpt.methods.BayesianOptimization(
@@ -128,10 +128,10 @@ def nate_test():
     print next_hyps(x_init, y_init, bds)
 
 
-def inject_model_with_hps(model_dict, exp_params):
+def inject_model_with_hps(layer_structure, exp_params):
     """Inject model description with hyperparameters from database."""
     # TODO Change API so this isn't hardcoded.
-    for idx, layer in enumerate(model_dict):
+    for idx, layer in enumerate(layer_structure):
         if 'normalization_aux' in layer.keys():
             aux_dict = layer['normalization_aux']
             if 'u_t' in aux_dict:
@@ -143,11 +143,11 @@ def inject_model_with_hps(model_dict, exp_params):
             if 'p_t' in aux_dict:
                 aux_dict['p_t'] = exp_params['p_t']
             if 'timesteps' in aux_dict:
-                aux_dict['timesteps'] = exp_params['timesteps']
+                aux_dict['timesteps'] = int(exp_params['timesteps'])
             layer['normalization_aux'] = aux_dict
-            model_dict[idx] = layer
-    return model_dict
+            layer_structure[idx] = layer
+    return layer_structure
 
 
 if __name__ == '__main__':
-    nate_test()
+    gpyopt_test()

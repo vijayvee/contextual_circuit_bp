@@ -30,7 +30,7 @@ class experiments():
             'num_validation_evals': 100,  # How many validation batches.
             'top_n_validation': 0,  # Set to 0 to save all checkpoints.
             'early_stop': False,  # Stop training if the loss stops improving.
-            'save_weights': True  # Save model weights at every validation eval
+            'save_weights': False  # Save model weights at every validation eval
         }
 
     def add_globals(self, exp):
@@ -545,4 +545,5 @@ class experiments():
         exp = self.add_globals(exp)  # Add globals to the experiment'
         exp['data_augmentations'] = [[None]]
         exp['epochs'] = 1000
+        exp['save_weights'] = True
         return exp

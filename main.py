@@ -199,8 +199,8 @@ def main(
         print 'Could not find the model structure: %s' % experiment_name
 
     # Inject model_dict with hyperparameters if requested
-    model_dict = hp_opt_utils.inject_model_with_hps(
-        model_dict=model_dict,
+    model_dict.layer_structure = hp_opt_utils.inject_model_with_hps(
+        layer_structure=model_dict.layer_structure,
         exp_params=exp_params)
 
     # Prepare model on GPU
