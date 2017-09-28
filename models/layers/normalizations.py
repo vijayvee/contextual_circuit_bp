@@ -107,12 +107,18 @@ class normalizations(object):
                 self.CRF_inhibition
             if SSN is None:
                 SSN_eRF = py_utils.iceil(eRF['r_i'] * (V1_neCRF / V1_CRF))
-                self.SSN = eRFc.outFromIn(conv=conv, layer=eRF, fix_r_out=SSN_eRF)
+                self.SSN = eRFc.outFromIn(
+                    conv=conv,
+                    layer=eRF,
+                    fix_r_out=SSN_eRF)
             else:
                 self.SSN = SSN
             if SSF is None:
                 SSF_eRF = py_utils.iceil(eRF['r_i'] * (V1_feCRF / V1_CRF))
-                self.SSF = eRFc.outFromIn(conv=conv, layer=eRF, fix_r_out=SSF_eRF)
+                self.SSF = eRFc.outFromIn(
+                    conv=conv,
+                    layer=eRF,
+                    fix_r_out=SSF_eRF)
             else:
                 self.SSF = SSF
 

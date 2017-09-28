@@ -8,7 +8,7 @@ class eRF_calculator(object):
         self.default_stride = 1
         self.default_padding = lambda k: [ik // 2 for ik in k]
 
-    def calculate(self, network, image, verbose=True, r_i=None):
+    def calculate(self, network, image, verbose=True, r_i=None, log=None):
         """Routine for calculating effective RF size."""
         try:
             network_params = self.extract_params(network)
@@ -33,8 +33,14 @@ class eRF_calculator(object):
                     self.printLayer(currentLayer, l['layer'])
             return {k['layer']: v for k, v in zip(
                 network_params, layer_infos)}
-        except:
-            print 'Could not derive eRFs.'
+        except (RuntimeError, TypeError, NameError):
+            if log is not None:
+                log.warning('Could not derive eRFs: %s %s %s' % (
+                    RuntimeError,
+                    TypeError,
+                    NameError))
+            else:
+                print 'Could not derive eRFs.'
             return None
 
     def easy_calculate(self, layers):
@@ -55,28 +61,32 @@ class eRF_calculator(object):
     def extract_params(self, network):
         """Extract the filter size, stride, and padding from each layer."""
         params = []
-        for l in network:
-            K = l['filter_size']
+        for layer in network:
+            # Add a filter size if it's absent and we can infer it
+            if 'filter_size' in layer.keys():
+                K = layer['filter_size']
+            else:
+                K = [None]
             K = [k if k is not None else self.default_kernel for k in K]
             layer_len = len(K)
 
-            if 'stride' in l:
-                S = l['stride']
+            if 'stride' in layer:
+                S = layer['stride']
             else:
                 S = np.repeat(self.default_stride, layer_len)
-            if 'padding' in l:
-                P = l['padding']
+            if 'padding' in layer:
+                P = layer['padding']
                 P = [self.interpret_padding(
                         p,
                         k) for p, k in zip(P, K)]
             else:
                 P = self.default_padding(K)
 
-            N = l['names']
+            N = layer['names']
 
-            for idx, (k, s, p, n) in enumerate(zip(K, S, P, N)):
+            for idx, (k, s, p, r) in enumerate(zip(K, S, P, N)):
                 params += [{
-                    'layer': n,
+                    'layer': r,
                     'kernel': k,
                     'stride': s,
                     'padding': p

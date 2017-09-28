@@ -2,6 +2,7 @@ import os
 import time
 import tensorflow as tf
 import numpy as np
+from ops import py_utils
 from datetime import datetime
 
 
@@ -46,6 +47,7 @@ def training_loop(
         threads,
         summary_dir,
         checkpoint_dir,
+        weight_dir,
         train_dict,
         val_dict,
         train_model,
@@ -54,6 +56,12 @@ def training_loop(
     step, time_elapsed = 0, 0
     train_losses, train_accs, timesteps = {}, {}, {}
     val_losses, val_accs, val_scores, val_labels = {}, {}, {}, {}
+    if config.save_weights:
+        weight_dict = {
+            k[0]: v for k, v in val_model.var_dict.iteritems() if k[1] == 0}
+        val_dict = dict(
+            val_dict,
+            **weight_dict)
     try:
         while not coord.should_stop():
             start_time = time.time()
@@ -132,7 +140,6 @@ def training_loop(
                         sess, ckpt_path, global_step=step)
                     print 'Saved checkpoint to: %s' % ckpt_path
                     force_save = False
-
                     time_elapsed += float(duration)
                     db.update_performance(
                         experiment_id=config._id,
@@ -143,6 +150,16 @@ def training_loop(
                         validation_loss=float(val_acc),
                         time_elapsed=time_elapsed,
                         training_step=step)
+                    if config.save_weights:
+                        it_weights = {
+                            k: it_val_dict[k] for k in weight_dict.keys()}
+                        py_utils.save_npys(
+                            data=it_weights,
+                            model_name='%s_%s' % (
+                                config.experiment_name,
+                                step),
+                            output_string=weight_dir)
+
                 if config.early_stop:
                     keys = np.sort([int(k) for k in val_accs.keys()])
                     sorted_vals = np.asarray([val_accs[k] for k in keys])

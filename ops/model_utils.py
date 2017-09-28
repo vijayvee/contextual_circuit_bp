@@ -2,7 +2,7 @@
 import numpy as np
 import tensorflow as tf
 from models.layers import ff
-from models.layers import pool
+# from models.layers import pool
 from models.layers.activations import activations
 from models.layers.normalizations import normalizations
 from models.layers.regularizations import regularizations
@@ -63,8 +63,8 @@ class model_class(object):
         tower_eRFs = eRF.calculate(
             layer_structure,
             data,
-            verbose=True)
-
+            verbose=True,
+            log=log)
         log.info('Creating main model tower.')
         self, features, layer_summary = create_conv_tower(
             self=self,
@@ -108,6 +108,7 @@ class model_class(object):
                 'names': ['output'],
                 'flatten': [True],
                 'flatten_target': ['pre'],
+                'filter_size': [1],
                 'weights': [self.output_size]
             }
         ]

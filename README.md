@@ -129,3 +129,4 @@ TODO:
 
 - Add multiply and concat(add, multiply) ops to the residual layer.
 - Evaluation script: Visualizations w/ LRP.
+- Add to the readme mechanics of creating a CNN tower.

@@ -11,7 +11,7 @@ layer_structure = [
         'normalization': ['contextual_alt_learned_transition_learned_connectivity_vector_modulation'],
         'normalization_target': ['pre'],
         'normalization_aux': {
-            'timesteps': 10,
+            'timesteps': 5,
             'regularization_targets': {  # Modulate sparsity
                 'q_t': {
                    'regularization_type': 'l1',
@@ -19,11 +19,11 @@ layer_structure = [
                 },
                 't_t': {
                     'regularization_type': 'l1',
-                    'regularization_strength': 0.1
+                    'regularization_strength': 0.5
                 },
                 'p_t': {
                     'regularization_type': 'l1',
-                    'regularization_strength': 0.1
+                    'regularization_strength': 0.5
                 },
             }
         },
@@ -39,6 +39,7 @@ layer_structure = [
     {
         'layers': ['fc'],
         'weights': [64],
+        'filter_size': [1],
         'names': ['fc2'],
         'flatten': [True],
         'flatten_target': ['pre'],

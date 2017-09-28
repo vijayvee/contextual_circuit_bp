@@ -20,6 +20,7 @@ layer_structure = [
     {
         'layers': ['fc'],
         'weights': [64],
+        'filter_size': [1],
         'names': ['fc2'],
         'flatten': [True],
         'flatten_target': ['pre'],

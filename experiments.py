@@ -29,7 +29,8 @@ class experiments():
             'validation_iters': 5000,  # How often to evaluate validation.
             'num_validation_evals': 100,  # How many validation batches.
             'top_n_validation': 0,  # Set to 0 to save all checkpoints.
-            'early_stop': False  # Stop training if the loss stops improving.
+            'early_stop': False,  # Stop training if the loss stops improving.
+            'save_weights': True  # Save model weights at every validation eval
         }
 
     def add_globals(self, exp):
@@ -465,13 +466,13 @@ class experiments():
                 os.path.join(model_folder, 'conv2d'),
                 os.path.join(model_folder, 'norm_conv2d'),
                 os.path.join(model_folder, 'DoG'),
-                os.path.join(model_folder, 'sparse_conv2d')
+                # os.path.join(model_folder, 'sparse_conv2d')
             ],
             'dataset': ['ALLEN_selected_cells_1']
         }
         exp = self.add_globals(exp)  # Add globals to the experiment'
         exp['data_augmentations'] = [['resize']]
-        exp['epochs'] = 1000
+        exp['epochs'] = 100
         return exp
 
     def ALLEN_all_neurons_hp_conv(self):

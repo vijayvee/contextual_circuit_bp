@@ -146,7 +146,9 @@ def main(experiment_name, list_experiments=False):
         'experiment_evaluations': os.path.join(
             config.experiment_evaluations, experiment_label),
         'visualization': os.path.join(
-            config.visualizations, condition_label)
+            config.visualizations, condition_label),
+        'weights': os.path.join(
+            config.condition_evaluations, condition_label, 'weights')
     }
     [py_utils.make_dir(v) for v in dir_list.values()]
 
@@ -244,7 +246,7 @@ def main(experiment_name, list_experiments=False):
                 metric=dataset_module.score_metric,
                 pred=train_scores,
                 labels=train_labels)  # training accuracy
-            if int(train_images.get_shape()[-1]) > 3:
+            if int(train_images.get_shape()[-1]) <= 3:
                 tf.summary.image('train images', train_images)
             tf.summary.scalar('training loss', train_loss)
             tf.summary.scalar('training accuracy', train_accuracy)
@@ -273,7 +275,7 @@ def main(experiment_name, list_experiments=False):
                 metric=dataset_module.score_metric,
                 pred=val_scores,
                 labels=val_labels)  # training accuracy
-            if int(train_images.get_shape()[-1]) > 3:
+            if int(train_images.get_shape()[-1]) <= 3:
                 tf.summary.image('val images', val_images)
             tf.summary.scalar('validation loss', val_loss)
             tf.summary.scalar('validation accuracy', val_accuracy)
@@ -332,6 +334,7 @@ def main(experiment_name, list_experiments=False):
         threads=threads,
         summary_dir=dir_list['summaries'],
         checkpoint_dir=dir_list['checkpoints'],
+        weight_dir=dir_list['weights'],
         train_dict=train_dict,
         val_dict=val_dict,
         train_model=model,
@@ -340,11 +343,10 @@ def main(experiment_name, list_experiments=False):
     log.info('Finished training.')
 
     model_name = config.model_struct.replace('/', '_')
-    # TODO: Timestamp these numpys
     py_utils.save_npys(
         data=output_dict,
         model_name=model_name,
-        output_string=dir_list['experiment_evaluations'])
+        output_string=dir_list['condition_evaluations'])
 
 
 if __name__ == '__main__':
