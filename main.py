@@ -47,6 +47,7 @@ def process_DB_exps(experiment_name, log, config):
         )
     else:
         proc_exp_params = exp_params
+
     if exp_id is None:
         err = 'No empty experiments found.' + \
             'Did you select the correct experiment name?'
@@ -91,7 +92,10 @@ def get_data_pointers(dataset, base_dir, cv, log):
     return data_pointer, data_means
 
 
-def main(experiment_name, list_experiments=False):
+def main(
+        experiment_name,
+        list_experiments=False,
+        gpu_device='/gpu:0'):
     """Create a tensorflow worker to run experiments in your DB."""
     if list_experiments:
         exps = db.list_experiments()
@@ -136,6 +140,8 @@ def main(experiment_name, list_experiments=False):
         cv=dataset_module.folds.keys()[0],
         log=log
     )
+
+    # Initialize output folders
     dir_list = {
         'checkpoints': os.path.join(
             config.checkpoints, condition_label),
@@ -179,7 +185,7 @@ def main(experiment_name, list_experiments=False):
         )
     log.info('Created tfrecord dataloader tensors.')
 
-    # Prepare model on GPU
+    # Load model specification
     struct_name = config.model_struct.split(os.path.sep)[-1]
     try:
         model_dict = py_utils.import_module(
@@ -191,7 +197,14 @@ def main(experiment_name, list_experiments=False):
             )
     except IOError:
         print 'Could not find the model structure: %s' % experiment_name
-    with tf.device('/gpu:0'):
+
+    # Inject model_dict with hyperparameters if requested
+    model_dict = hp_opt_utils.inject_model_with_hps(
+        model_dict=model_dict,
+        exp_params=exp_params)
+
+    # Prepare model on GPU
+    with tf.device(gpu_device):
         with tf.variable_scope('cnn') as scope:
 
             # Training model
@@ -362,5 +375,6 @@ if __name__ == '__main__':
         dest='list_experiments',
         action='store_true',
         help='Name of the experiment.')
+    # TODO: Add the ability to specify multiple GPUs for parallelization.
     args = parser.parse_args()
     main(**vars(args))

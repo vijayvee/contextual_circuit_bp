@@ -2,7 +2,7 @@ import os
 import time
 import tensorflow as tf
 import numpy as np
-from ops import py_utils
+from utils import py_utils
 from datetime import datetime
 
 
@@ -53,6 +53,7 @@ def training_loop(
         train_model,
         val_model,
         exp_params):
+    """Run the model training loop."""
     step, time_elapsed = 0, 0
     train_losses, train_accs, timesteps = {}, {}, {}
     val_losses, val_accs, val_scores, val_labels = {}, {}, {}, {}

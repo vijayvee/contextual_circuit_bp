@@ -128,5 +128,26 @@ def nate_test():
     print next_hyps(x_init, y_init, bds)
 
 
+def inject_model_with_hps(model_dict, exp_params):
+    """Inject model description with hyperparameters from database."""
+    # TODO Change API so this isn't hardcoded.
+    for idx, layer in enumerate(model_dict):
+        if 'normalization_aux' in layer.keys():
+            aux_dict = layer['normalization_aux']
+            if 'u_t' in aux_dict:
+                aux_dict['u_t'] = exp_params['u_t']
+            if 'q_t' in aux_dict:
+                aux_dict['q_t'] = exp_params['q_t']
+            if 't_t' in aux_dict:
+                aux_dict['t_t'] = exp_params['t_t']
+            if 'p_t' in aux_dict:
+                aux_dict['p_t'] = exp_params['p_t']
+            if 'timesteps' in aux_dict:
+                aux_dict['timesteps'] = exp_params['timesteps']
+            layer['normalization_aux'] = aux_dict
+            model_dict[idx] = layer
+    return model_dict
+
+
 if __name__ == '__main__':
     nate_test()
