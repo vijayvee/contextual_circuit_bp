@@ -527,14 +527,19 @@ class experiments():
         model_folder = 'contextual_model_paper'
         exp = {
             'experiment_name': [model_folder],
-            'lr': [3e-4],
+            'lr': [5e-3],
             'loss_function': ['l2'],
             'optimizer': ['adam'],
+            'tuning_u': [0, 1e-5, 1e-4, 1e-3, 1e-2, 1e-1],
+            'tuning_q': [0, 1e-5, 1e-4, 1e-3, 1e-2, 1e-1],
+            'tuning_p': [0, 1e-5, 1e-4, 1e-3, 1e-2, 1e-1],
+            'tuning_t': [0, 1e-5, 1e-4, 1e-3, 1e-2, 1e-1],
+            'timesteps': [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
             'model_struct': [
-                os.path.join(model_folder, 'divisive_paper_rfs'),
+                # os.path.join(model_folder, 'divisive_paper_rfs'),
                 os.path.join(model_folder, 'contextual_paper_rfs'),
-                os.path.join(model_folder, 'divisive'),
-                os.path.join(model_folder, 'contextual'),
+                # os.path.join(model_folder, 'divisive'),
+                # os.path.join(model_folder, 'contextual'),
             ],
             'dataset': ['contextual_model_multi_stimuli']
         }
