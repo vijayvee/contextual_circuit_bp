@@ -531,7 +531,7 @@ class experiments():
             'loss_function': ['sigmoid'],
             'optimizer': ['adam'],
             'model_struct': [
-                # os.path.join(model_folder, 'cnn'),
+                os.path.join(model_folder, 'cnn'),
                 os.path.join(model_folder, 'contextual_cnn')
             ],
             'dataset': ['coco_2014']
