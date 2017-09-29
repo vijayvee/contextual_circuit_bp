@@ -530,9 +530,9 @@ class experiments():
             'lr': [5e-3],
             'loss_function': ['l2'],
             'optimizer': ['adam'],
-            'tuning_q': [1e-3, 1e-1],
-            'tuning_p': [1e-2, 1e-1, 1],
-            'tuning_t': [1e-2, 1e-1, 1],
+            'q_t': [1e-3, 1e-1],
+            'p_t': [1e-2, 1e-1, 1],
+            't_t': [1e-2, 1e-1, 1],
             'timesteps': [5, 10],
             'model_struct': [
                 # os.path.join(model_folder, 'divisive_paper_rfs'),

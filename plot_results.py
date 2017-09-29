@@ -8,7 +8,6 @@ import pandas as pd
 from utils.py_utils import get_dt_stamp
 import matplotlib
 from matplotlib import pyplot as plt
-from matplotlib import cm
 from matplotlib.ticker import MaxNLocator
 import plotly.plotly as py
 import plotly.tools as tls
@@ -51,17 +50,30 @@ def main(
     steps = [float(x['training_step']) for x in perf]
     training_loss = [float(x['training_loss']) for x in perf]
     validation_loss = [float(x['validation_loss']) for x in perf]
+    timesteps = [float(x['timesteps']) for x in perf]
+    u_t = [0. if x['u_t'] is None else float(x['u_t']) for x in perf]
+    q_t = [0. if x['q_t'] is None else float(x['q_t']) for x in perf]
+    p_t = [0. if x['p_t'] is None else float(x['p_t']) for x in perf]
+    t_t = [0. if x['t_t'] is None else float(x['t_t']) for x in perf]
 
     # Pass data into a pandas DF
-    model_params = ['%s | %s | %s | %s | %s | %s | %s | %s' % (
-        ipa,
-        ipb,
-        ipc,
-        ipd,
-        ipe,
-        ipf,
-        ipg,
-        iph) for ipa, ipb, ipc, ipd, ipe, ipf, ipg, iph in zip(
+    model_params = [
+        '%s | %s | %s | %s | %s | %s | %s | %s | %s | %s | %s | %s | %s' % (
+            ipa,
+            ipb,
+            ipc,
+            ipd,
+            ipe,
+            ipf,
+            ipg,
+            iph,
+            ipi,
+            ipj,
+            ipk,
+            ipl,
+            ipm)
+        for ipa, ipb, ipc, ipd, ipe, ipf, ipg, iph, ipi, ipj, ipk, ipl, ipm
+        in zip(
             structure_names,
             optimizers,
             lrs,
@@ -69,7 +81,12 @@ def main(
             optimizers,
             wd_types,
             wd_penalties,
-            datasets)]
+            datasets,
+            timesteps,
+            u_t,
+            q_t,
+            p_t,
+            t_t)]
 
     # DF and plot
     df = pd.DataFrame(

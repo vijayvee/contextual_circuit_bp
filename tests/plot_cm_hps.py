@@ -109,8 +109,8 @@ def plot_traces(in_dict, file_dir, title):
 
 def main():
     """Run plotting."""
-    data_dir = '/media/data_cifs/contextual_circuit/experiment_evaluations/'
-    file_dir = os.path.join(data_dir, 'ALLEN_selected_cells_1')
+    data_dir = '/media/data_cifs/contextual_circuit/condition_evaluations'
+    file_stem = os.path.join(data_dir, 'contextual_model_paper_2017_09_28')
 
     # Figure 1. Effectivenss of conv. vs. DoGs for fitting Allen cell.
     file_list = {
