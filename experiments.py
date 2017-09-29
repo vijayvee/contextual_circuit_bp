@@ -30,7 +30,7 @@ class experiments():
             'num_validation_evals': 100,  # How many validation batches.
             'top_n_validation': 0,  # Set to 0 to save all checkpoints.
             'early_stop': False,  # Stop training if the loss stops improving.
-            'save_weights': False  # Save model weights at every validation eval
+            'save_weights': False,  # Save model weights on validation evals.
         }
 
     def add_globals(self, exp):
@@ -520,6 +520,26 @@ class experiments():
         exp['early_stop'] = True
         exp['data_augmentations'] = [['resize']]
         exp['epochs'] = 1
+        return exp
+
+    def coco_cnn(self):
+        """Each key in experiment_dict must be manually added to the schema."""
+        model_folder = 'coco_cnn'
+        exp = {
+            'experiment_name': [model_folder],
+            'lr': [3e-4],
+            'loss_function': ['sigmoid'],
+            'optimizer': ['adam'],
+            'model_struct': [
+                # os.path.join(model_folder, 'cnn'),
+                os.path.join(model_folder, 'contextual_cnn')
+            ],
+            'dataset': ['coco_2014']
+        }
+        exp = self.add_globals(exp)  # Add globals to the experiment'
+        exp['epochs'] = 200
+        exp['batch_size'] = 16  # Train/val batch size.
+        exp['save_weights'] = True
         return exp
 
     def contextual_model_paper(self):

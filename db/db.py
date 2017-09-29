@@ -64,7 +64,7 @@ class db(object):
         self.conn.close()
 
     def experiment_fields(self):
-        """Dict of fields in experiments & hp_combo_history tables. DEPRECIATED."""
+        """Dict of fields in exp & hp_combo_history tables. DEPRECIATED."""
         return {
             'experiment_name': ['experiments', 'hp_combo_history'],
             'model_struct': ['experiments', 'hp_combo_history'],

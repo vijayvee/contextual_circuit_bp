@@ -1,4 +1,5 @@
 """Build DNN models from python dictionaries."""
+import json
 import numpy as np
 import tensorflow as tf
 from models.layers import ff
@@ -45,13 +46,20 @@ class model_class(object):
         """Main model creation method."""
         if self.mean is not None:
             if isinstance(self.mean, dict):
-                # data -= (
-                #     np.expand_dims(
-                #         self.mean['mean'], axis=0)).astype(np.float32)
                 data /= (
                     np.expand_dims(
                         self.mean['max'], axis=0)).astype(np.float32)
             else:
+                # If there's a mean shape mismatch default to channel means
+                test_shape = [int(x) for x in data.get_shape()]
+                if np.any(
+                    np.asarray(
+                        self.mean.shape[:2]) != np.asarray(
+                        test_shape[1:3])):
+                    self.mean = np.mean(np.mean(self.mean, axis=0), axis=0)
+                    log.info(
+                        'Mismatch between saved mean and input data.' +
+                        'Using channel means instead.')
                 data -= (np.expand_dims(self.mean, axis=0)).astype(np.float32)
         else:
             log.debug('Empty mean tensor. No mean adjustment.')
@@ -303,7 +311,8 @@ def attach_regularizations(
                 'regularization_type': wd_type_dict[k],
                 'regularization_strength': reg_strength_dict[k]
             }
-        print self.regularizations
+        print 'Adding layer regularizers:'
+        print json.dumps(self.regularizations.keys(), indent=4)
     return self
 
 

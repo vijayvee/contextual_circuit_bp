@@ -1,6 +1,5 @@
-import numpy as np
 import tensorflow as tf
-from tensorflow.python.ops import math_ops
+
 
 def metric_interpreter(metric, pred, labels):
     """Interpret string as a metric."""
@@ -20,8 +19,23 @@ def metric_interpreter(metric, pred, labels):
         return pearson_score(
             pred=pred,
             labels=labels)
+    elif metric == 'sigmoid_accuracy':
+        return sigmoid_accuracy(
+            pred=pred,
+            labels=labels)
     else:
         raise RuntimeError('Cannot understand the dataset metric.')
+
+
+def sigmoid_accuracy(pred, labels, force_dtype=tf.float32):
+    """Apply sigmoid to pred and round output."""
+    if force_dtype:
+        if pred.dtype != force_dtype:
+            pred = tf.cast(pred, force_dtype)
+        if labels.dtype != force_dtype:
+            labels = tf.cast(labels, force_dtype)
+    adj_pred = tf.round(tf.nn.sigmoid(pred))
+    return tf.reduce_mean(tf.cast(tf.equal(adj_pred, labels), tf.float32))
 
 
 def mean_score(pred, labels, force_dtype=tf.float32):

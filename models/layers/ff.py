@@ -63,6 +63,7 @@ def pool_ff_interpreter(
         self, act = resnet_layer(
             self=self,
             bottom=act,
+            aux=it_dict['aux'],
             layer_weights=it_dict['weights'],
             name=it_name)
     elif it_neuron_op == 'gather':
@@ -77,19 +78,6 @@ def pool_ff_interpreter(
         raise RuntimeError(
             'Your specified operation %s is not implemented' % it_neuron_op)
     return self, act
-
-
-def reshape_layer(
-        self,
-        bottom,
-        aux,
-        name):
-    """Reshape an activity tensor."""
-    import ipdb;ipdb.set_trace()
-
-    h = aux['h']
-    w = aux['w']
-    c = int(bottom.get_shape()[-1])
 
 
 def gather_value_layer(
@@ -242,25 +230,50 @@ def resnet_layer(
         bottom,
         layer_weights,
         name,
-        activation=None,
-        normalization=None,
-        combination=tf.add):  # tf.multiply
+        aux=None,
+        combination=None):  # tf.multiply
     """Residual layer."""
     ln = '%s_branch' % name
     rlayer = tf.identity(bottom)
+    if aux is not None:
+        if 'activation' in aux.keys():
+            activation = aux['activation']
+        if 'normalization' in aux.keys():
+            normalization = aux['normalization']
+        if 'combination' in aux.keys():
+            if aux['combination'] == 'add':
+                combination = tf.add
+            elif aux['combination'] == 'prod':
+                combination = tf.multiply
+            elif aux['combination'] == 'add_prod':
+                combination = lambda x, y: tf.concat(
+                        tf.add(x, y),
+                        tf.multiply(x, y)
+                    )
+        else:
+            combination = tf.add
     if normalization is not None:
-        nm = normalizations()[normalization]
+        if normalization is not 'batch':
+            raise RuntimeError(
+                'Normalization not yet implemented for non-batchnorm.')
+        nm = normalizations({'training': self.training})[normalization]
+    else:
+        nm = lambda x: x
     if activation is not None:
         ac = activations()[activation]
+    else:
+        ac = lambda x: x
     for idx, lw in enumerate(layer_weights):
         ln = '%s_%s' % (name, idx)
-        rlayer = conv_layer(
+        self, rlayer = conv_layer(
             self=self,
             bottom=rlayer,
             in_channels=int(rlayer.get_shape()[-1]),
             out_channels=lw,
             name=ln)
-        rlayer = nm(ac(rlayer))
+        rlayer = nm(ac(rlayer), None, None, None)
+        if isinstance(rlayer, tuple):
+            rlayer = rlayer[0]
     return self, combination(rlayer, bottom)
 
 

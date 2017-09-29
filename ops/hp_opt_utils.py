@@ -134,15 +134,15 @@ def inject_model_with_hps(layer_structure, exp_params):
     for idx, layer in enumerate(layer_structure):
         if 'normalization_aux' in layer.keys():
             aux_dict = layer['normalization_aux']
-            if 'u_t' in aux_dict:
+            if 'u_t' in aux_dict and exp_params['u_t'] is not None:
                 aux_dict['u_t'] = exp_params['u_t']
-            if 'q_t' in aux_dict:
+            if 'q_t' in aux_dict and exp_params['q_t'] is not None:
                 aux_dict['q_t'] = exp_params['q_t']
-            if 't_t' in aux_dict:
+            if 't_t' in aux_dict and exp_params['t_t'] is not None:
                 aux_dict['t_t'] = exp_params['t_t']
-            if 'p_t' in aux_dict:
+            if 'p_t' in aux_dict and exp_params['p_t'] is not None:
                 aux_dict['p_t'] = exp_params['p_t']
-            if 'timesteps' in aux_dict:
+            if 'timesteps' in aux_dict and exp_params['timesteps'] is not None:
                 aux_dict['timesteps'] = int(exp_params['timesteps'])
             layer['normalization_aux'] = aux_dict
             layer_structure[idx] = layer
