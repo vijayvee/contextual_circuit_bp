@@ -43,7 +43,7 @@ def metric_interpreter(metric, pred, labels):
         raise RuntimeError('Cannot understand the dataset metric.')
 
 
-def tabulate_confusion_metrics(pred, labels, force_dtype=tf.int32):
+def tabulate_confusion_metrics(pred, labels, force_dtype=tf.float32):
     pred = tf.round(tf.nn.sigmoid(pred))
     if force_dtype:
         if pred.dtype != force_dtype:
