@@ -5,6 +5,8 @@ import numpy as np
 import pandas as pd
 from matplotlib import pyplot as plt
 from matplotlib.ticker import MaxNLocator
+from glob import glob
+from tqdm import tqdm
 
 
 def get_data_from_timestamp(d):
@@ -110,7 +112,56 @@ def plot_traces(in_dict, file_dir, title):
 def main():
     """Run plotting."""
     data_dir = '/media/data_cifs/contextual_circuit/condition_evaluations'
-    file_stem = os.path.join(data_dir, 'contextual_model_paper_2017_09_28')
+    exp_stem = os.path.join(data_dir, 'contextual_model_paper_2017_09_30_')
+    dirs = glob(os.path.join(data_dir, '%s*' % exp_stem))
+
+    # Load data
+    score_list = []
+    for d in tqdm(dirs, total=len(dirs)):
+        try:
+            files = glob(os.path.join(d, '*'))
+            config_pointer = [f for f in files if 'config' in f][0]
+            config = np.load(config_pointer).item()
+            timesteps = config.timesteps
+            q_t = config.q_t
+            p_t = config.p_t
+            t_t = config.t_t
+            data_fp = [f for f in files if 'timesteps' in f][0]
+            scores = np.load(data_fp).item()
+            score_vec = np.asarray([v for k, v in scores.iteritems()])
+            steps = [k for k, v in scores.iteritems()]
+            best_score = np.max(score_vec)
+            best_ind = steps[np.argmax(score_vec)]
+            ind_over_ninety = steps[np.where(score_vec > 0.9)[0][0]]
+            sample_score = best_ind / float(len(steps))
+            sample_complexity = best_score / sample_score
+            score_entry = [
+                timesteps,
+                q_t,
+                p_t,
+                t_t,
+                best_score,
+                ind_over_ninety,
+                sample_complexity,
+                best_ind
+            ]
+            score_list += [score_entry]
+        except:
+            print 'Skipping: %s' % d
+
+    # Create a DF out of the score_list
+    df = pd.DataFrame(
+        np.asarray(score_list),
+        columns=[
+            'timesteps',
+            'q_t',
+            'p_t',
+            't_t',
+            'best_score',
+            'ind_over_ninety',
+            'sample_complexity',
+            'best_ind'])
+    import ipdb;ipdb.set_trace()
 
     # Figure 1. Effectivenss of conv. vs. DoGs for fitting Allen cell.
     file_list = {

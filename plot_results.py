@@ -50,7 +50,7 @@ def main(
     steps = [float(x['training_step']) for x in perf]
     training_loss = [float(x['training_loss']) for x in perf]
     validation_loss = [float(x['validation_loss']) for x in perf]
-    timesteps = [float(x['timesteps']) for x in perf]
+    timesteps = [0. if x['timesteps'] is None else float(x['timesteps']) for x in perf]
     u_t = [0. if x['u_t'] is None else float(x['u_t']) for x in perf]
     q_t = [0. if x['q_t'] is None else float(x['q_t']) for x in perf]
     p_t = [0. if x['p_t'] is None else float(x['p_t']) for x in perf]

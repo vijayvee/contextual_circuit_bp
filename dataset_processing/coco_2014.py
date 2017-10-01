@@ -18,7 +18,7 @@ class data_processing(object):
         self.model_input_image_size = [224, 224, 3]
         self.default_loss_function = 'sigmoid'
         self.image_meta_file = '_annotations.npy'
-        self.score_metric = 'sigmoid_accuracy'
+        self.score_metric = 'f1'
         self.preprocess = ['pad_resize']
         self.shuffle = False  # Preshuffle data?
         self.folds = {

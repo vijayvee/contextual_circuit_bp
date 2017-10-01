@@ -23,9 +23,84 @@ def metric_interpreter(metric, pred, labels):
         return sigmoid_accuracy(
             pred=pred,
             labels=labels)
+    elif metric == 'f1':
+        return f1(
+            pred=pred,
+            labels=labels)
+    elif metric == 'precision':
+        return precision(
+            pred=pred,
+            labels=labels)
+    elif metric == 'recall':
+        return recall(
+            pred=pred,
+            labels=labels)
+    elif metric == 'auc':
+        return auc(
+            pred=pred,
+            labels=labels)
     else:
         raise RuntimeError('Cannot understand the dataset metric.')
 
+
+def tabulate_confusion_metrics(pred, labels, force_dtype=tf.int32):
+    pred = tf.round(tf.nn.sigmoid(pred))
+    if force_dtype:
+        if pred.dtype != force_dtype:
+            pred = tf.cast(pred, force_dtype)
+        if labels.dtype != force_dtype:
+            labels = tf.cast(labels, force_dtype)
+    tp = tf.count_nonzero(
+        pred * labels,
+        axis=1,
+        dtype=force_dtype)
+    tn = tf.count_nonzero(
+        (pred - 1) * (labels - 1),
+        axis=1,
+        dtype=force_dtype)
+    fp = tf.count_nonzero(
+        pred * (labels - 1),
+        axis=1,
+        dtype=force_dtype)
+    fn = tf.count_nonzero(
+        (pred - 1) * labels,
+        axis=1,
+        dtype=force_dtype)
+    return tp, tn, fp, fn
+
+
+def precision(pred, labels, tp=None, tn=None, fp=None, fn=None, eps=1e-12):
+    if tp is None or tn is None or fp is None or fn is None:
+        tp, tn, fp, fn = tabulate_confusion_metrics(pred, labels)
+    return tp / (tp + fp + eps)
+
+
+def recall(pred, labels, tp=None, tn=None, fp=None, fn=None, eps=1e-12):
+    if tp is None or tn is None or fp is None or fn is None:
+        tp, tn, fp, fn = tabulate_confusion_metrics(pred, labels)
+    return tp / (tp + fn + eps)
+
+
+def f1(pred, labels, force_dtype=tf.float32, eps=1e-12):
+    """Calculate F1 score."""
+    tp, tn, fp, fn = tabulate_confusion_metrics(pred, labels)
+    p = precision(None, None, tp, tn, fp, fn)
+    r = recall(None, None, tp, tn, fp, fn) 
+    f1 = (2 * p * r) / (p + r + eps)
+    return tf.reduce_mean(f1)
+
+
+def auc(pred, labels, force_dtype=tf.float32):
+    if force_dtype:
+        if pred.dtype != force_dtype:
+            pred = tf.cast(pred, force_dtype)
+        if labels.dtype != force_dtype:
+            labels = tf.cast(labels, force_dtype)
+    adj_pred = tf.round(tf.nn.sigmoid(pred))
+    auc, _ = tf.metrics.auc(
+        predictions=adj_pred,
+        labels=labels)
+    return auc
 
 def sigmoid_accuracy(pred, labels, force_dtype=tf.float32):
     """Apply sigmoid to pred and round output."""
