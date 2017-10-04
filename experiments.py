@@ -542,6 +542,26 @@ class experiments():
         exp['save_weights'] = True
         return exp
 
+    def challengedb_cnns(self):
+        """Each key in experiment_dict must be manually added to the schema."""
+        model_folder = 'challengedb_cnns'
+        exp = {
+            'experiment_name': [model_folder],
+            'lr': [1e-3],
+            'loss_function': ['l2'],
+            'optimizer': ['adam'],
+            'model_struct': [
+                os.path.join(model_folder, 'cnn'),
+                os.path.join(model_folder, 'contextual_cnn')
+            ],
+            'dataset': ['ChallengeDB_release']
+        }
+        exp = self.add_globals(exp)  # Add globals to the experiment'
+        exp['epochs'] = 200
+        exp['batch_size'] = 8  # Train/val batch size.
+        exp['save_weights'] = True
+        return exp
+
     def contextual_model_paper(self):
         """Each key in experiment_dict must be manually added to the schema."""
         model_folder = 'contextual_model_paper'

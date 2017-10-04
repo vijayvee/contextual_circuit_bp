@@ -161,54 +161,7 @@ def main():
             'ind_over_ninety',
             'sample_complexity',
             'best_ind'])
-    import ipdb;ipdb.set_trace()
-
-    # Figure 1. Effectivenss of conv. vs. DoGs for fitting Allen cell.
-    file_list = {
-        'DoG':
-            {
-                'file': 'ALLEN_selected_cells_1_dog_train_losses.npy'
-            },
-        'conv2d':
-            {
-                'file': 'ALLEN_selected_cells_1_conv2d_train_losses.npy'
-            },
-        'CM_conv2d':
-            {
-                'file': 'ALLEN_selected_cells_1_norm_conv2d_train_losses.npy'
-            },
-    }
-    output_name = 'training_losses.tiff'
-    title = 'Neuron activity elicited by natural movie.'
-    plot_data(file_list, file_dir, output_name, title)
-
-    # Figure 2. Trace of neural activity on validation data
-    bs = 64
-    file_list = {
-        'DoG': {
-            'pred': 'ALLEN_selected_cells_1_dog_val_scores.npy',
-            'gt': 'ALLEN_selected_cells_1_dog_val_labels.npy',
-            'pred_label': 'DoG',
-            'batch_size': bs,
-            'output': 'DoG_validation_responses.tiff'
-        },
-        'conv2d': {
-            'pred': 'ALLEN_selected_cells_1_conv2d_val_scores.npy',
-            'gt': 'ALLEN_selected_cells_1_conv2d_val_labels.npy',
-            'pred_label': 'conv2d',
-            'batch_size': bs,
-            'output': 'conv2d_validation_responses.tiff'
-        },
-        'contextual_conv2d': {
-            'pred': 'ALLEN_selected_cells_1_norm_conv2d_val_scores.npy',
-            'gt': 'ALLEN_selected_cells_1_norm_conv2d_val_labels.npy',
-            'pred_label': 'contextual conv2d',
-            'batch_size': bs,
-            'output': 'contextual_conv2d_validation_responses.tiff'
-        }
-    }
-    for k, v in file_list.iteritems():
-        plot_traces(v, file_dir, title=k)
+    df.to_csv(os.path.join('tests', 'hp_opt_cm_tuning.csv'))
 
 
 if __name__ == '__main__':

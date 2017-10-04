@@ -18,7 +18,7 @@ def plot_with_plotly(plotly_fig, chart):
         plot_url = py.plot(plotly_fig, auto_open=False)
         print 'Uploaded %s chart to: %s' % (chart, plot_url)
     except:
-        pass
+        print 'Failed to upload to plotly.'
 
 
 def main(
@@ -135,6 +135,7 @@ def main(
     ax.set_color_cycle([cm(1.*i/NUM_COLORS) for i in range(NUM_COLORS)])
     for k in df['model parameters'].unique():
         tmp = df[df['model parameters'] == k]
+        tmp = tmp.sort('training iteration')
         ax = tmp.plot(
             x='training iteration',
             y='training loss',
@@ -151,6 +152,7 @@ def main(
     ax.set_color_cycle([cm(1.*i/NUM_COLORS) for i in range(NUM_COLORS)])
     for k in df['model parameters'].unique():
         tmp = df[df['model parameters'] == k]
+        tmp = tmp.sort('training iteration')
         ax = tmp.plot(
             x='training iteration',
             y='validation loss',
@@ -161,6 +163,7 @@ def main(
     plt.setp(ax.xaxis.get_majorticklabels(), rotation=30)
     ax.xaxis.set_major_locator(MaxNLocator(integer=True))
     ax.set_title('Validation')
+    # TODO: Mine the experiment declarations for the appropos metric name.
     ax.set_ylabel('Categorization accuracy (%)')
     # ax.legend_.remove()
     out_name = os.path.join(
@@ -179,8 +182,6 @@ def main(
     f = plt.figure()
     max_perf = df.groupby(
         ['model parameters'], as_index=False)['validation loss'].max()
-    # max_perf['model parameters'] = max_perf['model parameters'].str.replace(
-    #     '|', '\n')
     plt.rc('xtick', labelsize=2)
     ax = max_perf.plot.bar(
         x='model parameters', y='validation loss', legend=False)

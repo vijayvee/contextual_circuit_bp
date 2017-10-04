@@ -127,6 +127,11 @@ class ContextualCircuit(object):
             },
             'mu': {
                 'r': {  # Recurrent state
+                    'weight': 'mu',
+                }
+            },
+            'nu': {
+                'r': {  # Recurrent state
                     'weight': 'nu',
                 }
             },
