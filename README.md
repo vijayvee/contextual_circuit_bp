@@ -127,6 +127,6 @@
 
 TODO:
 
-- Add multiply and concat(add, multiply) ops to the residual layer.
+- Build classes for FF/Pool operations
 - Evaluation script: Visualizations w/ LRP.
-- Add to the readme mechanics of creating a CNN tower.
+- Add documentation for creating 3d conv models (should be as simple as changing the data-loader shapes)

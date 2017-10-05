@@ -2,8 +2,9 @@
 import json
 import numpy as np
 import tensorflow as tf
-from models.layers import ff
+# from models.layers import ff
 # from models.layers import pool
+from models.layers.ff import ff
 from models.layers.activations import activations
 from models.layers.normalizations import normalizations
 from models.layers.regularizations import regularizations
@@ -96,6 +97,7 @@ class model_class(object):
             output_eRFs = [None] * len(output_structure)
             log.debug('Could not calculate effective RFs of units.')
 
+        # Build the output tower.
         log.info('Creating output tower.')
         self, output, layer_summary = create_conv_tower(
             self=self,
@@ -237,6 +239,31 @@ def norm_op(self, it_dict, act, layer_summary, norm_mod, eRFs, target):
     return self, act, layer_summary
 
 
+def ff_op(self, it_dict, act, layer_summary, ff_mod):
+    """Wrapper for a normalization operation in a graph."""
+    fla = it_dict.get('layers', [None])
+    fns = it_dict.get('names', [None])
+    fws = it_dict.get('weights', [None])
+    ffs = it_dict.get('filter_size', [None])
+    for ff_attr, ff_name, ff_wght, ff_fs in zip(fla, fns, fws, ffs):
+        in_channels = int(act.get_shape()[-1])
+        if hasattr(ff_mod, ff_attr):
+            self, act = ff_mod[ff_attr](
+                context=self,
+                act=act,
+                in_channels=in_channels,
+                out_channels=ff_wght,
+                filter_size=ff_fs,
+                it_dict=it_dict,
+                name=ff_name)
+            layer_summary = update_summary(
+                layer_summary=layer_summary,
+                op_name=ff_attr)
+        else:
+            print 'Skipping %s operation in ff_op.' % ff_attr
+    return self, act, layer_summary
+
+
 def attach_weights(self, weights, layer_name):
     """Attach weights to model."""
     for k, v in weights.iteritems():
@@ -335,10 +362,11 @@ def create_conv_tower(
     activ_mod = activations(self.layer_vars)
     norm_mod = normalizations(self.layer_vars)
     reg_mod = regularizations(self.layer_vars)
+    ff_mod = ff(self.layer_vars)
     with tf.variable_scope(tower_name):
         for it_dict in layer_structure:
             it_name = it_dict['names'][0]
-            it_neuron_op = it_dict['layers'][0]
+            # it_neuron_op = it_dict['layers'][0]
             self, act, layer_summary = flatten_op(
                 self,
                 it_dict,
@@ -378,15 +406,22 @@ def create_conv_tower(
                 norm_mod,
                 eRFs=eRFs,
                 target='pre')
-            self, act = ff.pool_ff_interpreter(
+            # self, act = ff.pool_ff_interpreter(
+            #     self=self,
+            #     it_neuron_op=it_neuron_op,
+            #     act=act,
+            #     it_name=it_name,
+            #     it_dict=it_dict)
+            # Filter and pool operations
+            self, act, layer_summary = ff_op(
                 self=self,
-                it_neuron_op=it_neuron_op,
                 act=act,
-                it_name=it_name,
-                it_dict=it_dict)
-            layer_summary = update_summary(
+                it_dict=it_dict,
                 layer_summary=layer_summary,
-                op_name=it_dict['layers'])
+                ff_mod=ff_mod)
+            # layer_summary = update_summary(
+            #     layer_summary=layer_summary,
+            #     op_name=it_dict['layers'])
             self, act, layer_summary = norm_op(
                 self,
                 it_dict,

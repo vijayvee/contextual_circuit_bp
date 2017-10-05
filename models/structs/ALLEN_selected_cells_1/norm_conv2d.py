@@ -15,15 +15,15 @@ layer_structure = [
             'regularization_targets': {  # Modulate sparsity
                 'q_t': {
                    'regularization_type': 'l1',
-                   'regularization_strength': 0.01
+                   'regularization_strength': 0.1
                 },
                 't_t': {
                     'regularization_type': 'l1',
-                    'regularization_strength': 0.5
+                    'regularization_strength': 0.01
                 },
                 'p_t': {
                     'regularization_type': 'l1',
-                    'regularization_strength': 0.5
+                    'regularization_strength': 0.1
                 },
             }
         },
@@ -51,7 +51,7 @@ layer_structure = [
 output_structure = [
     {
         'layers': ['fc'],
-        'weights': [1],  # Output size
+        'weights': [2],  # Output size
         'names': ['fc3'],
     }
 ]

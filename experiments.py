@@ -39,292 +39,6 @@ class experiments():
             exp[k] = v
         return exp
 
-    def one_layer_conv_mlp(self):
-        """Each key in experiment_dict must be manually added to the schema.
-        Results 8/29/17: L2 regulariaztion sucks. No reg CM does pretty well.
-        """
-        model_folder = 'one_layer_conv_mlp'
-        exp = {
-            'experiment_name': [model_folder],
-            'lr': [1e-5],
-            'loss_function': ['cce'],
-            'optimizer': ['adam'],
-            'regularization_type': [None],  # [None, 'l1', 'l2'],
-            'regularization_strength': [0.005],
-            'model_struct': [
-                os.path.join(model_folder, 'divisive'),
-                os.path.join(model_folder, 'batch'),
-                os.path.join(model_folder, 'layer'),
-                os.path.join(model_folder, 'lrn'),
-                os.path.join(model_folder, 'contextual_div_norm_no_reg'),
-                os.path.join(model_folder, 'contextual_frozen_connectivity_l2_1'),
-                os.path.join(model_folder, 'contextual_frozen_connectivity_l2_2'),
-                os.path.join(model_folder, 'contextual_frozen_connectivity_l2_3'),
-                os.path.join(model_folder, 'contextual_frozen_connectivity_l2_4'),
-                os.path.join(model_folder, 'contextual_frozen_connectivity_l2_5'),
-                os.path.join(model_folder, 'contextual_frozen_connectivity_l2_6'),
-                os.path.join(model_folder, 'contextual_frozen_connectivity_l2_7'),
-                os.path.join(model_folder, 'contextual_frozen_connectivity_l2_8'),
-                os.path.join(model_folder, 'contextual_frozen_connectivity_l2_9'),
-                os.path.join(model_folder, 'contextual_frozen_connectivity_l2_10'),
-            ],
-            'dataset': ['cifar_100']
-        }
-        return self.add_globals(exp)  # Add globals to the experiment
-
-    def one_layer_conv_mlp_reg_or_no(self):
-        """Each key in experiment_dict must be manually added to the schema."""
-        model_folder = 'one_layer_conv_mlp_reg_or_no'
-        exp = {
-            'experiment_name': [model_folder],
-            'lr': [1e-5],
-            'loss_function': ['cce'],
-            'optimizer': ['adam'],
-            'regularization_type': [None],  # [None, 'l1', 'l2'],
-            'regularization_strength': [0.005],
-            'model_struct': [
-                os.path.join(model_folder, 'divisive'),
-                os.path.join(model_folder, 'batch'),
-                os.path.join(model_folder, 'layer'),
-                os.path.join(model_folder, 'lrn'),
-                os.path.join(model_folder, 'contextual_div_norm'),
-                os.path.join(model_folder, 'contextual_div_norm_no_reg'),
-                os.path.join(model_folder, 'contextual_5'),
-                os.path.join(model_folder, 'contextual_no_reg_5'),
-                os.path.join(model_folder, 'contextual_frozen_connectivity_5'),
-                os.path.join(model_folder, 'contextual_frozen_connectivity_no_reg_5'),
-                os.path.join(model_folder, 'contextual_frozen_CRF_connectivity_5'),
-                os.path.join(model_folder, 'contextual_frozen_CRF_connectivity_no_reg_5'),
-                os.path.join(model_folder, 'contextual_frozen_eCRF_connectivity_5'),
-                os.path.join(model_folder, 'contextual_frozen_eCRF_connectivity_no_reg_5')
-            ],
-            'dataset': ['cifar_100']
-        }
-        return self.add_globals(exp)  # Add globals to the experiment
-
-    def one_layer_rnns(self):
-        """Each key in experiment_dict must be manually added to the schema."""
-        model_folder = 'one_layer_rnns'
-        exp = {
-            'experiment_name': [model_folder],
-            'lr': [1e-3],
-            'loss_function': ['cce'],
-            'optimizer': ['adam'],
-            'regularization_type': [None],  # [None, 'l1', 'l2'],
-            'regularization_strength': [0.005],
-            'model_struct': [
-                os.path.join(model_folder, 'divisive'),
-                os.path.join(model_folder, 'batch'),
-                os.path.join(model_folder, 'layer'),
-                os.path.join(model_folder, 'lrn'),
-                os.path.join(model_folder, 'contextual_frozen_connectivity_learned_transition_untuned_eCRF'),
-                os.path.join(model_folder, 'contextual_frozen_connectivity_learned_transition_untuned_eCRF_vector_modulation'),
-                os.path.join(model_folder, 'contextual_frozen_connectivity_learned_transition_weak_eCRF_vector_modulation'),
-                os.path.join(model_folder, 'contextual_frozen_connectivity_learned_transition_untuned_eCRF_10'),
-            ],
-            'dataset': ['cifar_100']
-        }
-        return self.add_globals(exp)  # Add globals to the experiment
-
-    def cluster_one_layer_rnns(self):
-        """Each key in experiment_dict must be manually added to the schema."""
-        model_folder = 'cluster_one_layer_rnns'
-        exp = {
-            'experiment_name': [model_folder],
-            'lr': [1e-4],
-            'loss_function': [None],  # Leave as None to use dataset default
-            'optimizer': ['adam'],
-            'regularization_type': [None],  # [None, 'l1', 'l2'],
-            'regularization_strength': [0.005],
-            'model_struct': [
-                os.path.join(model_folder, 'divisive'),
-                os.path.join(model_folder, 'batch'),
-                os.path.join(model_folder, 'layer'),
-                os.path.join(model_folder, 'lrn'),
-                os.path.join(model_folder, 'learn_transition_weak_eCRF_1'),
-                #  os.path.join(model_folder, 'learn_transition_weak_eCRF_3'),
-                #  os.path.join(model_folder, 'learn_transition_weak_eCRF_5'),
-                os.path.join(model_folder, 'learn_transition_untuned_eCRF_1'),
-                #  os.path.join(model_folder, 'learn_transition_untuned_eCRF_3'),
-                #  os.path.join(model_folder, 'learn_transition_untuned_eCRF_5'),
-                os.path.join(model_folder, 'learn_transition_untuned_eCRF_vector_1'),  # 
-                os.path.join(model_folder, 'learn_transition_untuned_eCRF_vector_3'),  # 
-                #  os.path.join(model_folder, 'learn_transition_untuned_eCRF_vector_5'),
-                #  os.path.join(model_folder, 'learn_transition_scalar_weak_eCRF_scalar_1'),
-                #  os.path.join(model_folder, 'learn_transition_scalar_weak_eCRF_scalar_3'),
-                #  os.path.join(model_folder, 'learn_transition_scalar_weak_eCRF_scalar_5'),
-                #  os.path.join(model_folder, 'learn_transition_scalar_weak_eCRF_scalar_no_reg'),
-                #  os.path.join(model_folder, 'learn_transition_weak_eCRF_scalar_1'),
-                #  os.path.join(model_folder, 'learn_transition_weak_eCRF_scalar_3'),
-                os.path.join(model_folder, 'learn_transition_weak_eCRF_scalar_5'),  # 
-                os.path.join(model_folder, 'learn_transition_weak_eCRF_scalar_no_reg'),
-                os.path.join(model_folder, 'learn_transition_weak_eCRF_vector_1'),  # 
-                os.path.join(model_folder, 'learn_transition_weak_eCRF_vector_3'),  # 
-                os.path.join(model_folder, 'learn_transition_weak_eCRF_vector_5'),
-                os.path.join(model_folder, 'learn_transition_weak_eCRF_vector_no_reg'),  # 
-            ],
-            'dataset': ['cifar_100']
-        }
-        return self.add_globals(exp)  # Add globals to the experiment
-
-    def cluster_one_layer_rnns_selective(self):
-        """Each key in experiment_dict must be manually added to the schema."""
-        model_folder = 'cluster_one_layer_rnns'
-        exp = {
-            'experiment_name': [model_folder],
-            'lr': [1e-4],
-            'loss_function': [None],  # Leave as None to use dataset default
-            'optimizer': ['adam'],
-            'regularization_type': [None],  # [None, 'l1', 'l2'],
-            'regularization_strength': [0.005],
-            'model_struct': [
-                os.path.join(model_folder, 'divisive'),
-                os.path.join(model_folder, 'batch'),
-                os.path.join(model_folder, 'layer'),
-                os.path.join(model_folder, 'lrn'),
-                os.path.join(model_folder, 'learn_transition_weak_eCRF_1'),
-                os.path.join(model_folder, 'learn_transition_untuned_eCRF_1'),
-                os.path.join(model_folder, 'learn_transition_untuned_eCRF_vector_1'),  # 
-                os.path.join(model_folder, 'learn_transition_untuned_eCRF_vector_3'),  # 
-                os.path.join(model_folder, 'learn_transition_weak_eCRF_scalar_5'),  # 
-                os.path.join(model_folder, 'learn_transition_weak_eCRF_scalar_no_reg'),
-                os.path.join(model_folder, 'learn_transition_weak_eCRF_vector_1'),  # 
-                os.path.join(model_folder, 'learn_transition_weak_eCRF_vector_3'),  # 
-                os.path.join(model_folder, 'learn_transition_weak_eCRF_vector_5'),
-                os.path.join(model_folder, 'learn_transition_weak_eCRF_vector_no_reg'),  # 
-            ],
-            'dataset': ['cifar_100']
-        }
-        return self.add_globals(exp)  # Add globals to the experiment
-
-    def cluster_two_layer_rnns_selective(self):
-        """Each key in experiment_dict must be manually added to the schema."""
-        model_folder = 'cluster_two_layer_rnns_selective'
-        exp = {
-            'experiment_name': [model_folder],
-            'lr': [1e-4],
-            'loss_function': [None],  # Leave as None to use dataset default
-            'optimizer': ['adam'],
-            'regularization_type': [None],  # [None, 'l1', 'l2'],
-            'regularization_strength': [0.005],
-            'model_struct': [
-                os.path.join(model_folder, 'divisive'),
-                os.path.join(model_folder, 'batch'),
-                os.path.join(model_folder, 'layer'),
-                os.path.join(model_folder, 'lrn'),
-                os.path.join(model_folder, 'learn_transition_weak_eCRF_1'),
-                os.path.join(model_folder, 'learn_transition_untuned_eCRF_1'),
-                os.path.join(model_folder, 'learn_transition_untuned_eCRF_vector_1'),  # 
-                os.path.join(model_folder, 'learn_transition_untuned_eCRF_vector_3'),  # 
-                os.path.join(model_folder, 'learn_transition_weak_eCRF_scalar_5'),  # 
-                os.path.join(model_folder, 'learn_transition_weak_eCRF_scalar_no_reg'),
-                os.path.join(model_folder, 'learn_transition_weak_eCRF_vector_1'),  # 
-                os.path.join(model_folder, 'learn_transition_weak_eCRF_vector_3'),  # 
-                os.path.join(model_folder, 'learn_transition_weak_eCRF_vector_5'),
-                os.path.join(model_folder, 'learn_transition_weak_eCRF_vector_no_reg'),  # 
-            ],
-            'dataset': ['cifar_100']
-        }
-        return self.add_globals(exp)  # Add globals to the experiment
-
-    def seven_px_one_layer_rnns_selective(self):
-        """Each key in experiment_dict must be manually added to the schema."""
-        model_folder = 'seven_px_one_layer_rnns_selective'
-        exp = {
-            'experiment_name': [model_folder],
-            'lr': [1e-4],
-            'loss_function': [None],  # Leave as None to use dataset default
-            'optimizer': ['adam'],
-            'regularization_type': [None],  # [None, 'l1', 'l2'],
-            'regularization_strength': [0.005],
-            'model_struct': [
-                os.path.join(model_folder, 'divisive'),
-                os.path.join(model_folder, 'batch'),
-                os.path.join(model_folder, 'layer'),
-                os.path.join(model_folder, 'learn_transition_weak_eCRF_1'),
-                os.path.join(model_folder, 'learn_transition_untuned_eCRF_1'),
-                os.path.join(model_folder, 'learn_transition_untuned_eCRF_vector_1'),  # 
-                os.path.join(model_folder, 'learn_transition_untuned_eCRF_vector_3'),  # 
-                os.path.join(model_folder, 'learn_transition_weak_eCRF_scalar_5'),  # 
-                os.path.join(model_folder, 'learn_transition_weak_eCRF_scalar_no_reg'),
-                os.path.join(model_folder, 'learn_transition_weak_eCRF_vector_1'),  # 
-                os.path.join(model_folder, 'learn_transition_weak_eCRF_vector_3'),  # 
-                os.path.join(model_folder, 'learn_transition_weak_eCRF_vector_5'),
-                os.path.join(model_folder, 'learn_transition_weak_eCRF_vector_no_reg'),  # 
-            ],
-            'dataset': ['cifar_100']
-        }
-        return self.add_globals(exp)  # Add globals to the experiment
-
-    def seven_px_one_layer_rnns_selective_imq(self):
-        """Each key in experiment_dict must be manually added to the schema."""
-        model_folder = 'seven_px_one_layer_rnns_selective'
-        exp = {
-            'experiment_name': [model_folder],
-            'lr': [1e-4],
-            'loss_function': [None],  # Leave as None to use dataset default
-            'optimizer': ['adam'],
-            'regularization_type': [None],  # [None, 'l1', 'l2'],
-            'regularization_strength': [0.005],
-            'model_struct': [
-                os.path.join(model_folder, 'divisive'),
-                os.path.join(model_folder, 'batch'),
-                os.path.join(model_folder, 'layer'),
-                os.path.join(model_folder, 'learn_transition_untuned_eCRF_1'),
-                os.path.join(model_folder, 'learn_transition_weak_eCRF_vector_1'), 
-                os.path.join(model_folder, 'learn_transition_weak_eCRF_vector_3'),
-                os.path.join(model_folder, 'learn_transition_weak_eCRF_vector_5'),
-                os.path.join(model_folder, 'learn_transition_weak_eCRF_vector_8'),
-                os.path.join(model_folder, 'bn_learn_transition_weak_eCRF_vector_1'),
-                os.path.join(model_folder, 'bn_learn_transition_weak_eCRF_vector_3'),
-                os.path.join(model_folder, 'bn_learn_transition_weak_eCRF_vector_5'),
-                os.path.join(model_folder, 'bn_learn_transition_weak_eCRF_vector_8'),
-            ],
-            'dataset': ['ChallengeDB_release']
-        }
-        return self.add_globals(exp)  # Add globals to the experiment
-
-    def cluster_two_layer_rnns_no_regularization(self):
-        """Each key in experiment_dict must be manually added to the schema."""
-        model_folder = 'cluster_two_layer_rnns_no_regularization'
-        exp = {
-            'experiment_name': [model_folder],
-            'lr': [1e-4],
-            'loss_function': [None],  # Leave as None to use dataset default
-            'optimizer': ['adam'],
-            'regularization_type': [None],  # [None, 'l1', 'l2'],
-            'regularization_strength': [0.005],
-            'model_struct': [
-                # os.path.join(model_folder, 'divisive'),
-                # os.path.join(model_folder, 'batch'),
-                # os.path.join(model_folder, 'layer'),
-                # os.path.join(model_folder, 'lrn'),
-                os.path.join(model_folder, 'learn_transition_weak_eCRF_1'),
-                os.path.join(model_folder, 'learn_transition_weak_eCRF_3'),
-                os.path.join(model_folder, 'learn_transition_weak_eCRF_5'),
-                os.path.join(model_folder, 'learn_transition_untuned_eCRF_1'),
-                os.path.join(model_folder, 'learn_transition_untuned_eCRF_3'),
-                os.path.join(model_folder, 'learn_transition_untuned_eCRF_5'),
-                os.path.join(model_folder, 'learn_transition_untuned_eCRF_vector_1'),
-                os.path.join(model_folder, 'learn_transition_untuned_eCRF_vector_3'),
-                os.path.join(model_folder, 'learn_transition_untuned_eCRF_vector_5'),
-                os.path.join(model_folder, 'learn_transition_scalar_weak_eCRF_scalar_1'),
-                os.path.join(model_folder, 'learn_transition_scalar_weak_eCRF_scalar_3'),
-                os.path.join(model_folder, 'learn_transition_scalar_weak_eCRF_scalar_5'),
-                os.path.join(model_folder, 'learn_transition_scalar_weak_eCRF_scalar_no_reg'),
-                os.path.join(model_folder, 'learn_transition_weak_eCRF_scalar_1'),
-                os.path.join(model_folder, 'learn_transition_weak_eCRF_scalar_3'),
-                os.path.join(model_folder, 'learn_transition_weak_eCRF_scalar_5'),
-                os.path.join(model_folder, 'learn_transition_weak_eCRF_scalar_no_reg'),
-                os.path.join(model_folder, 'learn_transition_weak_eCRF_vector_1'),
-                os.path.join(model_folder, 'learn_transition_weak_eCRF_vector_3'),
-                os.path.join(model_folder, 'learn_transition_weak_eCRF_vector_5'),
-                os.path.join(model_folder, 'learn_transition_weak_eCRF_vector_no_reg'),
-            ],
-            'dataset': ['cifar_100']
-        }
-        return self.add_globals(exp)  # Add globals to the experiment
-
     def perceptual_iq_hp_optimization(self):
         """Each key in experiment_dict must be manually added to the schema.
 
@@ -430,98 +144,6 @@ class experiments():
         }
         return self.add_globals(exp)  # Add globals to the experiment
 
-    def ALLEN_all_neurons(self):
-        """Each key in experiment_dict must be manually added to the schema."""
-        model_folder = 'ALLEN_all_neurons'
-        exp = {
-            'experiment_name': [model_folder],
-            'lr': [1e-3],
-            'loss_function': ['pearson'],
-            'optimizer': ['adam'],
-            'regularization_type': ['l2'],  # [None, 'l1', 'l2'],
-            'regularization_strength': [1e-7],
-            'model_struct': [
-                os.path.join(model_folder, 'conv2d'),
-                # os.path.join(model_folder, 'conv3d'),
-                # os.path.join(model_folder, 'DoG'),
-                # os.path.join(model_folder, 'sparse_conv2d')
-            ],
-            'dataset': ['ALLEN_all_neurons']
-        }
-        exp = self.add_globals(exp)  # Add globals to the experiment'
-        exp['data_augmentations'] = [['resize']]
-        return exp
-
-    def ALLEN_selected_cells_1(self):
-        """Each key in experiment_dict must be manually added to the schema."""
-        model_folder = 'ALLEN_selected_cells_1'
-        exp = {
-            'experiment_name': [model_folder],
-            'lr': [1e-3],
-            'loss_function': ['pearson'],
-            'optimizer': ['adam'],
-            'regularization_type': ['l2'],  # [None, 'l1', 'l2'],
-            'regularization_strength': [1e-7],
-            'model_struct': [
-                os.path.join(model_folder, 'conv2d'),
-                os.path.join(model_folder, 'norm_conv2d'),
-                os.path.join(model_folder, 'DoG'),
-                # os.path.join(model_folder, 'sparse_conv2d')
-            ],
-            'dataset': ['ALLEN_selected_cells_1']
-        }
-        exp = self.add_globals(exp)  # Add globals to the experiment'
-        exp['data_augmentations'] = [['resize']]
-        exp['epochs'] = 100
-        return exp
-
-    def ALLEN_all_neurons_hp_conv(self):
-        """Each key in experiment_dict must be manually added to the schema."""
-        model_folder = 'ALLEN_all_neurons_hp_conv'
-        exp = {
-            'experiment_name': model_folder,
-            'hp_optim': 'gpyopt',
-            'hp_multiple': 10,
-            'lr': 1e-4,
-            'lr_domain': [1e-5, 1e-1],
-            'loss_function': None,  # Leave as None to use dataset default
-            'optimizer': 'adam',
-            'regularization_type': 'l2',  # [None, 'l1', 'l2'],
-            'regularization_strength': 1e-5,
-            'regularization_strength_domain': [1e-7, 1e-1],
-            # 'timesteps': True,
-            'model_struct': os.path.join(model_folder, 'conv2d'),
-            'dataset': 'ALLEN_all_neurons',
-            'early_stop': True
-        }
-        exp = self.add_globals(exp)  # Add globals to the experiment'
-        exp['data_augmentations'] = [['resize']]
-        return exp
-
-    def ALLEN_all_neurons_hp_dog(self):
-        """Each key in experiment_dict must be manually added to the schema."""
-        model_folder = 'ALLEN_all_neurons_hp_dog'
-        exp = {
-            'experiment_name': model_folder,
-            'hp_optim': 'gpyopt',
-            'hp_multiple': 10,
-            'lr': 1e-4,
-            'lr_domain': [1e-5, 1e-1],
-            'loss_function': None,  # Leave as None to use dataset default
-            'optimizer': 'adam',
-            'regularization_type': 'l2',  # [None, 'l1', 'l2'],
-            'regularization_strength': 1e-5,
-            'regularization_strength_domain': [1e-7, 1e-1],
-            # 'timesteps': True,
-            'model_struct': os.path.join(model_folder, 'dog'),
-            'dataset': 'ALLEN_all_neurons'
-        }
-        exp = self.add_globals(exp)  # Add globals to the experiment'
-        exp['early_stop'] = True
-        exp['data_augmentations'] = [['resize']]
-        exp['epochs'] = 1
-        return exp
-
     def coco_cnn(self):
         """Each key in experiment_dict must be manually added to the schema."""
         model_folder = 'coco_cnn'
@@ -586,4 +208,27 @@ class experiments():
         exp['data_augmentations'] = [[None]]
         exp['epochs'] = 1000
         exp['save_weights'] = True
+        return exp
+
+    def ALLEN_selected_cells_1(self):
+        """Each key in experiment_dict must be manually added to the schema."""
+        model_folder = 'ALLEN_selected_cells_1'
+        exp = {
+            'experiment_name': [model_folder],
+            'lr': [1e-3],
+            'loss_function': ['pearson'],
+            'optimizer': ['adam'],
+            'regularization_type': ['l2'],  # [None, 'l1', 'l2'],
+            'regularization_strength': [1e-7],
+            'model_struct': [
+                os.path.join(model_folder, 'conv2d'),
+                os.path.join(model_folder, 'norm_conv2d'),
+                os.path.join(model_folder, 'DoG'),
+                # os.path.join(model_folder, 'sparse_conv2d')
+            ],
+            'dataset': ['ALLEN_all_neurons']
+        }
+        exp = self.add_globals(exp)  # Add globals to the experiment'
+        exp['data_augmentations'] = [['resize']]
+        exp['epochs'] = 100
         return exp

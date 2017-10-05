@@ -7,6 +7,184 @@ from models.layers.normalizations import normalizations
 from models.layers import pool
 
 
+class ff(object):
+    """Wrapper class for network filter operations."""
+
+    def __getitem__(self, name):
+        """Get attribute from class."""
+        return getattr(self, name)
+
+    def __contains__(self, name):
+        """Check if class contains attribute."""
+        return hasattr(self, name)
+
+    def __init__(self, kwargs=None):
+        """Global variables for ff functions."""
+        self.update_params(kwargs)
+
+    def update_params(self, kwargs):
+        """Update the class attributes with kwargs."""
+        if kwargs is not None:
+            for k, v in kwargs.iteritems():
+                setattr(self, k, v)
+
+    def dog(
+            self,
+            context,
+            act,
+            in_channels,
+            out_channels,
+            filter_size,
+            name,
+            it_dict):
+        """Add a Difference of Gaussians layer."""
+        context, act = dog_layer(
+            self=context,
+            bottom=act,
+            layer_weights=out_channels,
+            name=name)
+        return context, act
+
+    def conv(
+            self,
+            context,
+            act,
+            in_channels,
+            out_channels,
+            filter_size,
+            name,
+            it_dict):
+        """Add a 2D convolution layer."""
+        context, act = conv_layer(
+            self=context,
+            bottom=act,
+            in_channels=in_channels,
+            out_channels=out_channels,
+            name=name,
+            filter_size=filter_size)
+        return context, act
+
+    def conv3d(
+            self,
+            context,
+            act,
+            in_channels,
+            out_channels,
+            filter_size,
+            name,
+            it_dict):
+        """Add a 3D convolution layer."""
+        context, act = conv_3d_layer(
+            self=context,
+            bottom=act,
+            in_channels=in_channels,
+            out_channels=out_channels,
+            name=name,
+            filter_size=filter_size)
+        return context, act
+
+    def fc(
+            self,
+            context,
+            act,
+            in_channels,
+            out_channels,
+            filter_size,
+            name,
+            it_dict):
+        """Add a fully-connected layer."""
+        context, act = fc_layer(
+            self=context,
+            bottom=act,
+            in_channels=in_channels,
+            out_channels=out_channels,
+            name=name)
+        return context, act
+
+    def sparse_pool(
+            self,
+            context,
+            act,
+            in_channels,
+            out_channels,
+            filter_size,
+            name,
+            it_dict):
+        """Add a sparse pooling layer."""
+        context, act = sparse_pool_layer(
+            self=context,
+            bottom=act,
+            in_channels=in_channels,
+            out_channels=out_channels,
+            aux=it_dict,
+            name=name)
+        return context, act
+
+    def res(
+            self,
+            context,
+            act,
+            in_channels,
+            out_channels,
+            filter_size,
+            name,
+            it_dict):
+        """Add a residual layer."""
+        context, act = resnet_layer(
+            self=context,
+            bottom=act,
+            aux=it_dict['aux'],
+            layer_weights=out_channels,
+            name=name)
+        return context, act
+
+    def _pass(
+            self,
+            context,
+            act,
+            in_channels,
+            out_channels,
+            filter_size,
+            name,
+            it_dict):
+        """Skip a filter operation on this layer."""
+        return context, act
+
+    def pool(
+            self,
+            context,
+            act,
+            in_channels,
+            out_channels,
+            filter_size,
+            name,
+            it_dict):
+        """Wrapper for 2d pool. TODO: add op flexibility."""
+        context, act = pool.max_pool(
+            self=context,
+            bottom=act,
+            name=name
+        )
+        return context, act
+
+    def pool3d(
+            self,
+            context,
+            act,
+            in_channels,
+            out_channels,
+            filter_size,
+            name,
+            it_dict):
+        """Wrapper for 3d pool. TODO: add op flexibility."""
+        context, act = pool.max_pool_3d(
+            self=context,
+            bottom=act,
+            name=name
+        )
+        return context, act
+
+
 def pool_ff_interpreter(
         self,
         it_neuron_op,
@@ -18,7 +196,14 @@ def pool_ff_interpreter(
         self, act = pool.max_pool(
             self=self,
             bottom=act,
-            name=it_name)
+            name=it_name
+        )
+    elif it_neuron_op == 'pool3d':  # TODO create wrapper for FF ops.
+        self, act = pool.max_pool_3d(
+            self=self,
+            bottom=act,
+            name=it_name
+        )
     elif it_neuron_op == 'dog' or it_neuron_op == 'DoG':
         self, act = dog_layer(
             self=self,
@@ -42,8 +227,11 @@ def pool_ff_interpreter(
             in_channels=int(act.get_shape()[-1]),
             out_channels=it_dict['weights'][0],
             name=it_name,
-            filter_size=it_dict['filter_size'][0]
+            filter_size=it_dict['filter_size'][0],
+            aux=it_dict['aux']
         )
+    elif it_neuron_op == 'residual_conv3d':
+        pass
     elif it_neuron_op == 'fc':
         self, act = fc_layer(
             self=self,
@@ -86,8 +274,10 @@ def gather_value_layer(
         aux,
         name):
     """Gather a value from a location in an activity tensor."""
-    assert aux is not None, 'Gather op needs an aux dict with h/w coordinates.'
-    assert 'h' in aux.keys() and 'w' in aux.keys(), 'Gather op dict needs h/w key value pairs'
+    assert aux is not None,\
+        'Gather op needs an aux dict with h/w coordinates.'
+    assert 'h' in aux.keys() and 'w' in aux.keys(),\
+        'Gather op dict needs h/w key value pairs'
     h = aux['h']
     w = aux['w']
     out = tf.squeeze(bottom[:, h, w, :])
@@ -308,8 +498,9 @@ def conv_3d_layer(
         name,
         in_channels=None,
         filter_size=3,
-        stride=[1, 1, 1, 1],
-        padding='SAME'):
+        stride=[1, 1, 1, 1, 1],
+        padding='SAME',
+        aux=None):
     """NOT YET IMPLEMENTED: 3D convolutional layer."""
     with tf.variable_scope(name):
         if in_channels is None:
@@ -319,10 +510,75 @@ def conv_3d_layer(
             filter_size=filter_size,
             in_channels=in_channels,
             out_channels=out_channels,
-            name=name)
-        conv = tf.nn.conv3d(bottom, filt, stride, padding=padding)
+            name=name,
+            kernel_dimensionality=3)
+        if aux is not None and 'dilation' in aux.keys():
+            conv = tf.nn.convolution(
+                input=bottom,
+                filter=filt,
+                strides=stride,
+                padding=padding,
+                dilation_rate=aux['dilation'])
+        else:
+            conv = tf.nn.conv3d(
+                bottom,
+                filt,
+                stride,
+                padding=padding)
         bias = tf.nn.bias_add(conv, conv_biases)
         return self, bias
+
+
+def st_resnet_layer(
+        self,
+        bottom,
+        layer_weights,
+        name,
+        aux=None,
+        combination=None):  # tf.multiply
+    """Spatiotemporal residual layer."""
+    ln = '%s_branch' % name
+    rlayer = tf.identity(bottom)
+    if aux is not None:
+        if 'activation' in aux.keys():
+            activation = aux['activation']
+        if 'normalization' in aux.keys():
+            normalization = aux['normalization']
+        if 'combination' in aux.keys():
+            if aux['combination'] == 'add':
+                combination = tf.add
+            elif aux['combination'] == 'prod':
+                combination = tf.multiply
+            elif aux['combination'] == 'add_prod':
+                combination = lambda x, y: tf.concat(
+                        tf.add(x, y),
+                        tf.multiply(x, y)
+                    )
+        else:
+            combination = tf.add
+    if normalization is not None:
+        if normalization is not 'batch':
+            raise RuntimeError(
+                'Normalization not yet implemented for non-batchnorm.')
+        nm = normalizations({'training': self.training})[normalization]
+    else:
+        nm = lambda x: x
+    if activation is not None:
+        ac = activations()[activation]
+    else:
+        ac = lambda x: x
+    for idx, lw in enumerate(layer_weights):
+        ln = '%s_%s' % (name, idx)
+        self, rlayer = conv_3d_layer(
+            self=self,
+            bottom=rlayer,
+            in_channels=int(rlayer.get_shape()[-1]),
+            out_channels=lw,
+            name=ln)
+        rlayer = nm(ac(rlayer), None, None, None)
+        if isinstance(rlayer, tuple):
+            rlayer = rlayer[0]
+    return self, combination(rlayer, bottom)
 
 
 def fc_layer(self, bottom, out_channels, name, in_channels=None):
@@ -402,11 +658,13 @@ def get_conv_var(
         in_channels,
         out_channels,
         name,
-        init_type='xavier'):
+        init_type='xavier',
+        kernel_dimensionality=2):
     """Prepare convolutional kernel weights."""
+    kernel = [filter_size] * kernel_dimensionality
     if init_type == 'xavier':
         weight_init = [
-            [filter_size, filter_size, in_channels, out_channels],
+            kernel + [in_channels, out_channels],
             tf.contrib.layers.xavier_initializer_conv2d(uniform=False)]
     else:
         weight_init = tf.truncated_normal(

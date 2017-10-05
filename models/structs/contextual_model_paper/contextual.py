@@ -2,7 +2,7 @@
 
 layer_structure = [
     {
-        'layers': ['pass'],
+        'layers': ['_pass'],
         'names': ['contextual'],
         'hardcoded_erfs': {
             'SRF': 5,

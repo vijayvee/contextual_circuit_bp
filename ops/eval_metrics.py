@@ -16,7 +16,7 @@ def metric_interpreter(metric, pred, labels):
             pred=pred,
             labels=labels)
     elif metric == 'pearson':
-        return pearson_score(
+        return pearson_summary_score(
             pred=pred,
             labels=labels)
     elif metric == 'sigmoid_accuracy':
@@ -85,7 +85,7 @@ def f1(pred, labels, force_dtype=tf.float32, eps=1e-12):
     """Calculate F1 score."""
     tp, tn, fp, fn = tabulate_confusion_metrics(pred, labels)
     p = precision(None, None, tp, tn, fp, fn)
-    r = recall(None, None, tp, tn, fp, fn) 
+    r = recall(None, None, tp, tn, fp, fn)
     f1 = (2 * p * r) / (p + r + eps)
     return tf.reduce_mean(f1)
 
@@ -101,6 +101,7 @@ def auc(pred, labels, force_dtype=tf.float32):
         predictions=adj_pred,
         labels=labels)
     return auc
+
 
 def sigmoid_accuracy(pred, labels, force_dtype=tf.float32):
     """Apply sigmoid to pred and round output."""
@@ -138,6 +139,16 @@ def l2_score(pred, labels):
 def tf_confusion_matrix(pred, labels):
     """Wrapper for calculating confusion matrix."""
     return tf.contrib.metrics.confusion_matrix(pred, labels)
+
+
+def pearson_summary_score(pred, labels, eps_1=1e-4, eps_2=1e-12):
+    """Wrapper to summarize a vector of correlations."""
+    return tf.reduce_mean(
+        pearson_score(
+            pred,
+            labels,
+            eps_1=eps_1,
+            eps_2=eps_2))
 
 
 def pearson_score(pred, labels, eps_1=1e-4, eps_2=1e-12):
@@ -180,4 +191,3 @@ def pearson_score(pred, labels, eps_1=1e-4, eps_2=1e-12):
                 -1),
             count))
     return cov / (tf.multiply(x1_std, x2_std) + eps_2)
-

@@ -56,11 +56,24 @@ def read_and_decode(
         model_input_image_size,
         tf_dict,
         tf_reader_settings,
-        data_augmentations):
+        data_augmentations,
+        number_of_files):
     """Read and decode tensors from tf_records and apply augmentations."""
     reader = tf.TFRecordReader()
-    _, serialized_example = reader.read(filename_queue)
-    features = tf.parse_single_example(serialized_example, features=tf_dict)
+
+    # Switch between single/multi-file reading
+    if number_of_files == 1:
+        _, serialized_example = reader.read(filename_queue)
+        features = tf.parse_single_example(
+            serialized_example,
+            features=tf_dict)
+    else:
+        _, serialized_examples = reader.read_up_to(
+            filename_queue,
+            num_records=number_of_files)
+        features = tf.parse_example(
+            serialized_examples,
+            features=tf_dict)
 
     # Handle decoding of each element
     image = tf.decode_raw(
@@ -76,10 +89,32 @@ def read_and_decode(
         label = tf.reshape(label, tf_reader_settings['label']['reshape'])
 
     # Preprocess images and heatmaps
-    image = image_augmentations(
-        image=image,
-        model_input_image_size=model_input_image_size,
-        data_augmentations=data_augmentations)
+    if len(model_input_image_size) == 3:
+
+        # 2D image augmentations
+        image = image_augmentations(
+            image=image,
+            model_input_image_size=model_input_image_size,
+            data_augmentations=data_augmentations)
+    elif len(model_input_image_size) == 4:
+        # 3D image augmentations.
+        # TODO: optimize 3D augmentations. This is slow.
+        split_images = tf.split(
+            image,
+            model_input_image_size[0],
+            axis=0)
+        split_images = [tf.squeeze(im, axis=0) for im in split_images]
+        images = []
+        for im in split_images:
+            images += [
+                image_augmentations(
+                    image=im,
+                    model_input_image_size=model_input_image_size[1:],
+                    data_augmentations=data_augmentations),
+                ]
+        image = tf.stack(
+            images,
+            axis=0)
     return image, label
 
 
@@ -91,14 +126,22 @@ def inputs(
         data_augmentations,
         num_epochs,
         tf_reader_settings,
-        shuffle):
+        shuffle,
+        number_of_files=1):
     """Read tfrecords and prepare them for queueing."""
     min_after_dequeue = 1000
     capacity = min_after_dequeue + 5 * batch_size
     num_threads = 2
+
+    # Check if we need timecourses.
+    if len(model_input_image_size) == 4:
+        number_of_files = model_input_image_size[0]
+
+    # Start data loader loop
     with tf.name_scope('input'):
         filename_queue = tf.train.string_input_producer(
             [dataset], num_epochs=num_epochs)
+
         # Even when reading in multiple threads, share the filename
         # queue.
         batch_data = read_and_decode(
@@ -106,7 +149,8 @@ def inputs(
             model_input_image_size=model_input_image_size,
             tf_dict=tf_dict,
             tf_reader_settings=tf_reader_settings,
-            data_augmentations=data_augmentations)
+            data_augmentations=data_augmentations,
+            number_of_files=number_of_files)
 
         # Shuffle the examples and collect them into batch_size batches.
         # (Internally uses a RandomShuffleQueue.)
