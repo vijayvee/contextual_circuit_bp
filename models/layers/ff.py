@@ -134,7 +134,7 @@ class ff(object):
             self=context,
             bottom=act,
             aux=it_dict['aux'],
-            layer_weights=out_channels,
+            layer_weights=it_dict['weights'],
             name=name)
         return context, act
 
