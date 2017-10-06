@@ -185,89 +185,6 @@ class ff(object):
         return context, act
 
 
-def pool_ff_interpreter(
-        self,
-        it_neuron_op,
-        act,
-        it_name,
-        it_dict):
-    """Wrapper for FF and pooling functions. TODO: turn into a class."""
-    if it_neuron_op == 'pool':  # TODO create wrapper for FF ops.
-        self, act = pool.max_pool(
-            self=self,
-            bottom=act,
-            name=it_name
-        )
-    elif it_neuron_op == 'pool3d':  # TODO create wrapper for FF ops.
-        self, act = pool.max_pool_3d(
-            self=self,
-            bottom=act,
-            name=it_name
-        )
-    elif it_neuron_op == 'dog' or it_neuron_op == 'DoG':
-        self, act = dog_layer(
-            self=self,
-            bottom=act,
-            layer_weights=it_dict['weights'],
-            name=it_name,
-        )
-    elif it_neuron_op == 'conv':
-        self, act = conv_layer(
-            self=self,
-            bottom=act,
-            in_channels=int(act.get_shape()[-1]),
-            out_channels=it_dict['weights'][0],
-            name=it_name,
-            filter_size=it_dict['filter_size'][0]
-        )
-    elif it_neuron_op == 'conv3d':
-        self, act = conv_3d_layer(
-            self=self,
-            bottom=act,
-            in_channels=int(act.get_shape()[-1]),
-            out_channels=it_dict['weights'][0],
-            name=it_name,
-            filter_size=it_dict['filter_size'][0],
-            aux=it_dict['aux']
-        )
-    elif it_neuron_op == 'residual_conv3d':
-        pass
-    elif it_neuron_op == 'fc':
-        self, act = fc_layer(
-            self=self,
-            bottom=act,
-            in_channels=int(act.get_shape()[-1]),
-            out_channels=it_dict['weights'][0],
-            name=it_name)
-    elif it_neuron_op == 'sparse_pool':
-        self, act = sparse_pool_layer(
-            self=self,
-            bottom=act,
-            in_channels=int(act.get_shape()[-1]),
-            out_channels=it_dict['weights'][0],
-            aux=it_dict,
-            name=it_name)
-    elif it_neuron_op == 'res':
-        self, act = resnet_layer(
-            self=self,
-            bottom=act,
-            aux=it_dict['aux'],
-            layer_weights=it_dict['weights'],
-            name=it_name)
-    elif it_neuron_op == 'gather':
-        self, act = gather_value_layer(
-            self=self,
-            bottom=act,
-            aux=it_dict['aux'],
-            name=it_name)
-    elif it_neuron_op == 'pass':
-        pass
-    else:
-        raise RuntimeError(
-            'Your specified operation %s is not implemented' % it_neuron_op)
-    return self, act
-
-
 def gather_value_layer(
         self,
         bottom,
@@ -750,3 +667,86 @@ def get_var(
             name=var_name)
     self.var_dict[(name, idx)] = var
     return self, var
+
+
+def pool_ff_interpreter(
+        self,
+        it_neuron_op,
+        act,
+        it_name,
+        it_dict):
+    """Wrapper for FF and pooling functions. DEPRECIATED."""
+    if it_neuron_op == 'pool':  # TODO create wrapper for FF ops.
+        self, act = pool.max_pool(
+            self=self,
+            bottom=act,
+            name=it_name
+        )
+    elif it_neuron_op == 'pool3d':  # TODO create wrapper for FF ops.
+        self, act = pool.max_pool_3d(
+            self=self,
+            bottom=act,
+            name=it_name
+        )
+    elif it_neuron_op == 'dog' or it_neuron_op == 'DoG':
+        self, act = dog_layer(
+            self=self,
+            bottom=act,
+            layer_weights=it_dict['weights'],
+            name=it_name,
+        )
+    elif it_neuron_op == 'conv':
+        self, act = conv_layer(
+            self=self,
+            bottom=act,
+            in_channels=int(act.get_shape()[-1]),
+            out_channels=it_dict['weights'][0],
+            name=it_name,
+            filter_size=it_dict['filter_size'][0]
+        )
+    elif it_neuron_op == 'conv3d':
+        self, act = conv_3d_layer(
+            self=self,
+            bottom=act,
+            in_channels=int(act.get_shape()[-1]),
+            out_channels=it_dict['weights'][0],
+            name=it_name,
+            filter_size=it_dict['filter_size'][0],
+            aux=it_dict['aux']
+        )
+    elif it_neuron_op == 'residual_conv3d':
+        pass
+    elif it_neuron_op == 'fc':
+        self, act = fc_layer(
+            self=self,
+            bottom=act,
+            in_channels=int(act.get_shape()[-1]),
+            out_channels=it_dict['weights'][0],
+            name=it_name)
+    elif it_neuron_op == 'sparse_pool':
+        self, act = sparse_pool_layer(
+            self=self,
+            bottom=act,
+            in_channels=int(act.get_shape()[-1]),
+            out_channels=it_dict['weights'][0],
+            aux=it_dict,
+            name=it_name)
+    elif it_neuron_op == 'res':
+        self, act = resnet_layer(
+            self=self,
+            bottom=act,
+            aux=it_dict['aux'],
+            layer_weights=it_dict['weights'],
+            name=it_name)
+    elif it_neuron_op == 'gather':
+        self, act = gather_value_layer(
+            self=self,
+            bottom=act,
+            aux=it_dict['aux'],
+            name=it_name)
+    elif it_neuron_op == 'pass':
+        pass
+    else:
+        raise RuntimeError(
+            'Your specified operation %s is not implemented' % it_neuron_op)
+    return self, act

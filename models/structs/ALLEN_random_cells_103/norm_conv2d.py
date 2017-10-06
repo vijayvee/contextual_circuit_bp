@@ -8,6 +8,25 @@ layer_structure = [
         'filter_size': [7],
         'activation': ['selu'],
         'activation_target': ['post'],
+        'normalization': ['contextual_alt_learned_transition_learned_connectivity_vector_modulation'],
+        'normalization_target': ['pre'],
+        'normalization_aux': {
+            'timesteps': 5,
+            'regularization_targets': {  # Modulate sparsity
+                'q_t': {
+                   'regularization_type': 'l1',
+                   'regularization_strength': 0.1
+                },
+                't_t': {
+                    'regularization_type': 'l1',
+                    'regularization_strength': 0.01
+                },
+                'p_t': {
+                    'regularization_type': 'l1',
+                    'regularization_strength': 0.1
+                },
+            }
+        },
         'dropout': [0.5],
         'dropout_target': ['post']
     },
@@ -32,7 +51,7 @@ layer_structure = [
 output_structure = [
     {
         'layers': ['fc'],
-        'weights': [1],  # Output size
+        'weights': [103],  # Output size
         'names': ['fc3'],
     }
 ]

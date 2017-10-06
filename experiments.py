@@ -226,7 +226,53 @@ class experiments():
                 os.path.join(model_folder, 'DoG'),
                 # os.path.join(model_folder, 'sparse_conv2d')
             ],
-            'dataset': ['ALLEN_all_neurons']
+            'dataset': ['ALLEN_selected_cells_1']
+        }
+        exp = self.add_globals(exp)  # Add globals to the experiment'
+        exp['data_augmentations'] = [['resize']]
+        exp['epochs'] = 100
+        return exp
+
+    def ALLEN_selected_cells_103(self):
+        """Each key in experiment_dict must be manually added to the schema."""
+        model_folder = 'ALLEN_selected_cells_103'
+        exp = {
+            'experiment_name': [model_folder],
+            'lr': [1e-3],
+            'loss_function': ['pearson'],
+            'optimizer': ['adam'],
+            'regularization_type': ['l2'],  # [None, 'l1', 'l2'],
+            'regularization_strength': [1e-7],
+            'model_struct': [
+                os.path.join(model_folder, 'conv2d'),
+                os.path.join(model_folder, 'norm_conv2d'),
+                os.path.join(model_folder, 'DoG'),
+                # os.path.join(model_folder, 'sparse_conv2d')
+            ],
+            'dataset': ['ALLEN_selected_cells_103']
+        }
+        exp = self.add_globals(exp)  # Add globals to the experiment'
+        exp['data_augmentations'] = [['resize']]
+        exp['epochs'] = 100
+        return exp
+
+    def ALLEN_random_cells_103(self):
+        """Each key in experiment_dict must be manually added to the schema."""
+        model_folder = 'ALLEN_random_cells_103'
+        exp = {
+            'experiment_name': [model_folder],
+            'lr': [1e-3],
+            'loss_function': ['pearson'],
+            'optimizer': ['adam'],
+            'regularization_type': ['l2'],  # [None, 'l1', 'l2'],
+            'regularization_strength': [1e-7],
+            'model_struct': [
+                os.path.join(model_folder, 'conv2d'),
+                os.path.join(model_folder, 'norm_conv2d'),
+                os.path.join(model_folder, 'DoG'),
+                # os.path.join(model_folder, 'sparse_conv2d')
+            ],
+            'dataset': ['ALLEN_random_cells_103']
         }
         exp = self.add_globals(exp)  # Add globals to the experiment'
         exp['data_augmentations'] = [['resize']]

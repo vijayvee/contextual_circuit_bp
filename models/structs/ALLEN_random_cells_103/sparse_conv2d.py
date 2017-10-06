@@ -18,21 +18,19 @@ layer_structure = [
         'filter_size': [None]
     },
     {
-        'layers': ['fc'],
+        'layers': ['conv'],
         'weights': [64],
+        'names': ['conv2_1'],
         'filter_size': [1],
-        'names': ['fc2'],
-        'flatten': [True],
-        'flatten_target': ['pre'],
         'activation': ['selu'],
         'activation_target': ['post']
-    }
+    },
 ]
 
 output_structure = [
     {
-        'layers': ['fc'],
-        'weights': [1],  # Output size
-        'names': ['fc3'],
+        'layers': ['sparse_pool'],
+        'weights': [103],  # Output size
+        'names': ['sp2'],
     }
 ]

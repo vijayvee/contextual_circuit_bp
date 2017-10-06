@@ -139,8 +139,8 @@ class data_processing(object):
                         self.im_folder,
                         '%s%s' % (st, self.im_ext)))
                 if self.resize is not None:
-                    it_images = misc.imresize(it_image, self.resize)
-                it_images += [np.expand_dims(it_image, axis=0)]]
+                    it_image = misc.imresize(it_image, self.resize)
+                it_images += [np.expand_dims(it_image, axis=0)]
                 it_labels += [np.where(np.asarray(st) == scene_labels)]
             it_neural = np.asarray(data['LFP']['data'])[self.channel]
             it_neural = it_neural.transpose(1, 0).reshape(len(it_images), -1)
