@@ -216,21 +216,25 @@ class experiments():
         exp = {
             'experiment_name': [model_folder],
             'lr': [1e-3],
-            'loss_function': ['pearson'],
+            'loss_function': ['l2'],
             'optimizer': ['adam'],
             'regularization_type': ['l2'],  # [None, 'l1', 'l2'],
             'regularization_strength': [1e-7],
             'model_struct': [
                 os.path.join(model_folder, 'conv2d'),
-                os.path.join(model_folder, 'norm_conv2d'),
+                os.path.join(model_folder, 'adj_norm_conv2d'),
+                os.path.join(model_folder, 'scalar_norm_conv2d'),
+                os.path.join(model_folder, 'vector_norm_conv2d'),
                 os.path.join(model_folder, 'DoG'),
-                # os.path.join(model_folder, 'sparse_conv2d')
             ],
             'dataset': ['ALLEN_selected_cells_1']
         }
         exp = self.add_globals(exp)  # Add globals to the experiment'
         exp['data_augmentations'] = [['resize']]
         exp['epochs'] = 100
+        exp['validation_iters'] = 500
+        exp['num_validation_evals'] = 100
+        exp['batch_size'] = 16  # Train/val batch size.
         return exp
 
     def ALLEN_selected_cells_103(self):
@@ -239,21 +243,25 @@ class experiments():
         exp = {
             'experiment_name': [model_folder],
             'lr': [1e-3],
-            'loss_function': ['pearson'],
+            'loss_function': ['l2'],
             'optimizer': ['adam'],
             'regularization_type': ['l2'],  # [None, 'l1', 'l2'],
             'regularization_strength': [1e-7],
             'model_struct': [
                 os.path.join(model_folder, 'conv2d'),
-                os.path.join(model_folder, 'norm_conv2d'),
+                os.path.join(model_folder, 'adj_norm_conv2d'),
+                os.path.join(model_folder, 'scalar_norm_conv2d'),
+                os.path.join(model_folder, 'vector_norm_conv2d'),
                 os.path.join(model_folder, 'DoG'),
-                # os.path.join(model_folder, 'sparse_conv2d')
             ],
             'dataset': ['ALLEN_selected_cells_103']
         }
         exp = self.add_globals(exp)  # Add globals to the experiment'
         exp['data_augmentations'] = [['resize']]
         exp['epochs'] = 100
+        exp['validation_iters'] = 500
+        exp['num_validation_evals'] = 100
+        exp['batch_size'] = 16  # Train/val batch size.
         return exp
 
     def ALLEN_random_cells_103(self):
@@ -262,19 +270,50 @@ class experiments():
         exp = {
             'experiment_name': [model_folder],
             'lr': [1e-3],
-            'loss_function': ['pearson'],
+            'loss_function': ['l2'],
             'optimizer': ['adam'],
             'regularization_type': ['l2'],  # [None, 'l1', 'l2'],
             'regularization_strength': [1e-7],
             'model_struct': [
                 os.path.join(model_folder, 'conv2d'),
-                os.path.join(model_folder, 'norm_conv2d'),
+                os.path.join(model_folder, 'adj_norm_conv2d'),
+                os.path.join(model_folder, 'scalar_norm_conv2d'),
+                os.path.join(model_folder, 'vector_norm_conv2d'),
                 os.path.join(model_folder, 'DoG'),
-                # os.path.join(model_folder, 'sparse_conv2d')
             ],
             'dataset': ['ALLEN_random_cells_103']
         }
         exp = self.add_globals(exp)  # Add globals to the experiment'
         exp['data_augmentations'] = [['resize']]
         exp['epochs'] = 100
+        exp['validation_iters'] = 500
+        exp['num_validation_evals'] = 100
+        exp['batch_size'] = 16  # Train/val batch size.
+        return exp
+
+    def ALLEN_all_cells(self):
+        """Each key in experiment_dict must be manually added to the schema."""
+        model_folder = 'ALLEN_all_cells_103'
+        exp = {
+            'experiment_name': [model_folder],
+            'lr': [1e-3],
+            'loss_function': ['l2'],
+            'optimizer': ['adam'],
+            'regularization_type': ['l2'],  # [None, 'l1', 'l2'],
+            'regularization_strength': [1e-7],
+            'model_struct': [
+                os.path.join(model_folder, 'conv2d'),
+                os.path.join(model_folder, 'adj_norm_conv2d'),
+                os.path.join(model_folder, 'scalar_norm_conv2d'),
+                os.path.join(model_folder, 'vector_norm_conv2d'),
+                os.path.join(model_folder, 'DoG'),
+            ],
+            'dataset': ['ALLEN_all_cells']
+        }
+        exp = self.add_globals(exp)  # Add globals to the experiment'
+        exp['data_augmentations'] = [['resize']]
+        exp['epochs'] = 50
+        exp['validation_iters'] = 500
+        exp['num_validation_evals'] = 100
+        exp['batch_size'] = 16  # Train/val batch size.
         return exp

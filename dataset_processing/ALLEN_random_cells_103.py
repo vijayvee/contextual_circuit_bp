@@ -6,12 +6,12 @@ class data_processing(object):
     """Template file for Allen neural data."""
     def __init__(self):
         """Init global variables for contextual circuit bp."""
-        self.name = 'ALLEN_all_neurons'
+        self.name = 'ALLEN_random_cells_103'
         self.config = Config()
-        self.output_size = [2, 1]
+        self.output_size = [103, 1]
         self.im_size = (304, 608, 1)
         self.model_input_image_size = [152, 304, 1]
-        self.meta = '/media/data_cifs/contextual_circuit/tf_records/ALLEN_all_neurons_meta.npy'
+        self.meta = '/media/data_cifs/contextual_circuit/tf_records/ALLEN_random_cells_103_meta.npy'
         self.default_loss_function = 'pearson'
         self.score_metric = 'pearson'
         self.preprocess = ['resize']

@@ -127,6 +127,6 @@
 
 TODO:
 
-- Build classes for FF/Pool operations
 - Evaluation script: Visualizations w/ LRP.
 - Add documentation for creating 3d conv models (should be as simple as changing the data-loader shapes)
+- Clean up inconsistent filter/kernel variable names.

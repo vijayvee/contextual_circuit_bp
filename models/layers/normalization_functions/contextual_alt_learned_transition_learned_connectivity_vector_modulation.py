@@ -301,11 +301,12 @@ class ContextualCircuit(object):
 
         # Vector weights
         w_array = np.ones([1, 1, 1, self.k]).astype(np.float32)
+        b_array = np.zeros([1, 1, 1, self.k]).astype(np.float32)
         self.xi = tf.get_variable(name='xi', initializer=w_array)
         self.alpha = tf.get_variable(name='alpha', initializer=w_array)
         self.beta = tf.get_variable(name='beta', initializer=w_array)
-        self.mu = tf.get_variable(name='mu', initializer=w_array)
-        self.nu = tf.get_variable(name='nu', initializer=w_array)
+        self.mu = tf.get_variable(name='mu', initializer=b_array)
+        self.nu = tf.get_variable(name='nu', initializer=b_array)
         self.zeta = tf.get_variable(name='zeta', initializer=w_array)
         self.gamma = tf.get_variable(name='gamma', initializer=w_array)
         self.delta = tf.get_variable(name='delta', initializer=w_array)

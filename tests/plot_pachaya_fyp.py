@@ -110,21 +110,21 @@ def plot_traces(in_dict, file_dir, title):
 def main():
     """Run plotting."""
     data_dir = '/media/data_cifs/contextual_circuit/experiment_evaluations/'
-    file_dir = os.path.join(data_dir, 'ALLEN_selected_cells_1')
+    file_dir = os.path.join(data_dir, 'ALLEN_selected_cells_103')
 
     # Figure 1. Effectivenss of conv. vs. DoGs for fitting Allen cell.
     file_list = {
         'DoG':
             {
-                'file': 'ALLEN_selected_cells_1_dog_train_losses.npy'
+                'file': 'ALLEN_selected_cells_103_dog_train_losses.npy'
             },
         'conv2d':
             {
-                'file': 'ALLEN_selected_cells_1_conv2d_train_losses.npy'
+                'file': 'ALLEN_selected_cells_103_conv2d_train_losses.npy'
             },
         'CM_conv2d':
             {
-                'file': 'ALLEN_selected_cells_1_norm_conv2d_train_losses.npy'
+                'file': 'ALLEN_selected_cells_103_norm_conv2d_train_losses.npy'
             },
     }
     output_name = 'training_losses.tiff'

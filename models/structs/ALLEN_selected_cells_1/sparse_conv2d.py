@@ -15,7 +15,7 @@ layer_structure = [
         'layers': ['pool'],
         'weights': [None],
         'names': ['pool1'],
-        'filter_size': [None]
+        'filter_size': [2]
     },
     {
         'layers': ['conv'],
@@ -30,7 +30,7 @@ layer_structure = [
 output_structure = [
     {
         'layers': ['sparse_pool'],
-        'weights': [1],  # Output size
+        'weights': [103],  # Output size
         'names': ['sp2'],
     }
 ]

@@ -26,63 +26,83 @@ class pool(object):
             for k, v in kwargs.iteritems():
                 setattr(self, k, v)
 
-    def max_pool(self, context, act, name, it_dict, kwargs=None):
-        """Max pooling operation. TODO: Move to its own pool layer."""
+    def interpret_2dpool(
+            self,
+            context,
+            bottom,
+            name,
+            filter_size,
+            stride_size,
+            pool_type,
+            padding=None,
+            kwargs=None):
+        """Apply the appropriate 2D pooling type."""
+        if filter_size is None:
+            filter_size = self.k
+        if stride_size is None:
+            stride_size = self.s
+        if padding is None:
+            padding = self.p
         if kwargs is not None:
             self.update_params(kwargs)
-        context, act = max_pool(
-            self=context,
-            bottom=act,
-            name=name,
-            k=self.k,
-            s=self.s,
-            p=self.p)
+        if pool_type == 'max':
+            context, act = max_pool(
+                self=context,
+                bottom=bottom,
+                name=name,
+                k=filter_size,
+                s=stride_size,
+                p=padding)
+        elif pool_type == 'avg':
+            context, act = self.avg_pool(
+                self=context,
+                bottom=bottom,
+                name=name,
+                k=filter_size,
+                s=stride_size,
+                p=padding)
+        else:
+            raise RuntimeError('Cannot understand specifed pool type.')
         return context, act
 
-    def avg_pool(self, context, act, name, it_dict):
-        """Max pooling operation. TODO: Move to its own pool layer."""
-        context, act = avg_pool(
-            self=context,
-            bottom=act,
-            name=name,
-            k=self.k,
-            s=self.s,
-            p=self.p)
-        return context, act
-
-    def avg_pool_3d(
+    def interpret_3dpool(
             self,
             context,
             bottom,
             name,
-            k=[1, 2, 2, 1],
-            s=[1, 2, 2, 1],
-            p='SAME'):
-        """Spatiotemporal average pooling."""
-        return context, avg_pool_3d(
-            self=context,
-            bottom=bottom,
-            ksize=k,
-            strides=s,
-            padding=p,
-            name=name)
-
-    def max_pool_3d(
-            self,
-            context,
-            bottom,
-            name,
-            k=[1, 2, 2, 2, 1],  # D/H/W
-            s=[1, 2, 2, 2, 1],  # D/H/W
-            p='SAME'):
-        """Spatiotemporal max pooling."""
-        return context, max_pool_3d(
-            self=context,
-            bottom=bottom,
-            ksize=k,
-            strides=s,
-            padding=p,
-            name=name)
+            filter_size,
+            stride_size,
+            pool_type,
+            padding=None,
+            kwargs=None):
+        """Apply the appropriate 3D pooling type."""
+        if filter_size is None:
+            raise RuntimeError('Failed to pass a kernel to avg_pool3d.')
+        if stride_size is None:
+            raise RuntimeError('Failed to pass a stride to avg_pool3d.')
+        if padding is None:
+            raise RuntimeError('Failed to pass a padding to avg_pool3d.')
+        if kwargs is not None:
+            self.update_params(kwargs)
+        if pool_type == 'max':
+            context, act = max_pool_3d(
+                self=context,
+                bottom=bottom,
+                name=name,
+                k=filter_size,
+                s=stride_size,
+                p=padding)
+        elif pool_type == 'avg':
+            context, act = avg_pool_3d(
+                self=context,
+                bottom=bottom,
+                name=name,
+                k=filter_size,
+                s=stride_size,
+                p=padding)
+        else:
+            raise RuntimeError('Cannot understand specifed pool type.')
+        return context, act
 
 
 def avg_pool(

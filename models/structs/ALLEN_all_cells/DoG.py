@@ -14,6 +14,7 @@ layer_structure = [
     {
         'layers': ['fc'],
         'weights': [64],
+        'filter_size': [1],
         'names': ['fc2'],
         'flatten': [True],
         'flatten_target': ['pre'],
@@ -25,7 +26,7 @@ layer_structure = [
 output_structure = [
     {
         'layers': ['fc'],
-        'weights': [1],  # Output size
+        'weights': [103],  # Output size
         'names': ['fc3'],
     }
 ]

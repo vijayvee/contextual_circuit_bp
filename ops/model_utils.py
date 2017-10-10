@@ -156,8 +156,9 @@ def update_summary(layer_summary, op_name):
     else:
         bottom_name = layer_summary[len(layer_summary) - 1].split(
             'Operation: ')[-1].strip('\n')
+    assert isinstance(op_name, basestring), 'Pass a string to update_summary.'
     layer_summary += ['Bottom: %s | Operation: %s\n' % (
-        bottom_name, op_name[0])]
+        bottom_name, op_name)]
     return layer_summary
 
 
@@ -172,7 +173,7 @@ def flatten_op(self, it_dict, act, layer_summary, eRFs, target):
         act = tf.reshape(act, [rows, cols])
         layer_summary = update_summary(
             layer_summary=layer_summary,
-            op_name=['flattened'])
+            op_name='flattened')
     return self, act, layer_summary
 
 
@@ -184,7 +185,7 @@ def dropout_op(self, it_dict, act, layer_summary, reg_mod, eRFs, target):
         act = reg_mod.dropout(act, keep_prob=dropout_prop)
         layer_summary = update_summary(
             layer_summary=layer_summary,
-            op_name=['dropout_%s' % dropout_prop])
+            op_name='dropout_%s' % dropout_prop)
     return self, act, layer_summary
 
 
@@ -244,7 +245,7 @@ def ff_op(self, it_dict, act, layer_summary, ff_mod):
     fla = it_dict.get('layers', [None])
     fns = it_dict.get('names', [None])
     fws = it_dict.get('weights', [None])
-    ffs = it_dict.get('filter_size', [None])
+    ffs = it_dict.get('filter_size', [1, 2, 2, 1])  # default filter size
     for ff_attr, ff_name, ff_wght, ff_fs in zip(fla, fns, fws, ffs):
         in_channels = int(act.get_shape()[-1])
         if hasattr(ff_mod, ff_attr):

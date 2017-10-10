@@ -1,4 +1,5 @@
 """2D convolutional model for Allen data."""
+"""2D convolutional model for Allen data."""
 
 layer_structure = [
     {
@@ -15,7 +16,26 @@ layer_structure = [
         'layers': ['pool'],
         'weights': [None],
         'names': ['pool1'],
-        'filter_size': [2]
+        'filter_size': [2],
+        'normalization': ['contextual_alt_learned_transition_learned_connectivity_vector_modulation'],
+        'normalization_target': ['post'],
+        'normalization_aux': {
+            'timesteps': 5,
+            'regularization_targets': {  # Modulate sparsity
+                'q_t': {
+                   'regularization_type': 'l1',
+                   'regularization_strength': 0.1
+                },
+                't_t': {
+                    'regularization_type': 'l1',
+                    'regularization_strength': 0.01
+                },
+                'p_t': {
+                    'regularization_type': 'l1',
+                    'regularization_strength': 0.1
+                },
+            }
+        },
     },
     {
         'layers': ['fc'],

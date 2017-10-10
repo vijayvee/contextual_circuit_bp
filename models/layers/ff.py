@@ -4,6 +4,7 @@ import tensorflow as tf
 from ops import initialization
 from models.layers.activations import activations
 from models.layers.normalizations import normalizations
+from models.layers.ff_functions import ff as ff_fun
 from models.layers import pool
 
 
@@ -21,6 +22,7 @@ class ff(object):
     def __init__(self, kwargs=None):
         """Global variables for ff functions."""
         self.update_params(kwargs)
+        self.pool_class = pool.pool()
 
     def update_params(self, kwargs):
         """Update the class attributes with kwargs."""
@@ -160,10 +162,25 @@ class ff(object):
             name,
             it_dict):
         """Wrapper for 2d pool. TODO: add op flexibility."""
-        context, act = pool.max_pool(
-            self=context,
+        if filter_size is None:
+            filter_size = [1, 2, 2, 1]
+        stride_size = it_dict.get('stride', [1, 2, 2, 1])
+        if not isinstance(filter_size, list):
+            filter_size = [1, filter_size, filter_size, 1]
+        if not isinstance(stride_size, list):
+            filter_size = [1, stride_size, stride_size, 1]
+        if 'aux' in it_dict and 'pool_type' in it_dict['aux']:
+            pool_type = it_dict['aux']['pool_type']
+        else:
+            pool_type = 'max'
+
+        context, act = self.pool_class.interpret_2dpool(
+            context=context,
             bottom=act,
-            name=name
+            name=name,
+            filter_size=filter_size,
+            stride_size=stride_size,
+            pool_type=pool_type
         )
         return context, act
 
@@ -177,11 +194,44 @@ class ff(object):
             name,
             it_dict):
         """Wrapper for 3d pool. TODO: add op flexibility."""
-        context, act = pool.max_pool_3d(
+        if filter_size is None:
+            filter_size = [1, 2, 2, 1]
+        stride_size = it_dict.get('stride', [1, 2, 2, 1])
+        if not isinstance(filter_size, list):
+            filter_size = [1, filter_size, filter_size, 1]
+        if not isinstance(stride_size, list):
+            filter_size = [1, stride_size, stride_size, 1]
+        if 'aux' in it_dict and 'pool_type' in it_dict['aux']:
+            pool_type = it_dict['aux']['pool_type']
+        else:
+            pool_type = 'max'
+
+        context, act = self.pool_class.max_pool_3d(
+            context=context,
+            bottom=act,
+            name=name,
+            filter_size=filter_size,
+            stride_size=stride_size,
+            pool_type=pool_type
+        )
+        return context, act
+
+    def vgg16(
+            self,
+            context,
+            act,
+            in_channels,
+            out_channels,
+            filter_size,
+            name,
+            it_dict):
+        """Wrapper for loading an imagnet initialized VGG16."""
+        context, act = ff_fun.vgg16(
             self=context,
             bottom=act,
-            name=name
-        )
+            aux=it_dict['aux'],
+            layer_weights=it_dict['weights'],
+            name=name)
         return context, act
 
 

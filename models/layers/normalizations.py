@@ -4,21 +4,9 @@ from utils import py_utils
 from ops.eRF_calculator import eRF_calculator
 from models.layers.normalization_functions import div_norm
 from models.layers.normalization_functions import layer_norm
-from models.layers.normalization_functions import contextual
-from models.layers.normalization_functions import contextual_rnn
-from models.layers.normalization_functions import contextual_frozen_connectivity
-from models.layers.normalization_functions import contextual_frozen_eCRF_connectivity
-from models.layers.normalization_functions import contextual_frozen_CRF_connectivity
-from models.layers.normalization_functions import contextual_div_norm
-from models.layers.normalization_functions import contextual_frozen_connectivity_learned_transition
-from models.layers.normalization_functions import contextual_frozen_connectivity_learned_transition_weak_eCRF
-from models.layers.normalization_functions import contextual_frozen_connectivity_learned_transition_untuned_eCRF
 from models.layers.normalization_functions import contextual_alt_learned_transition_learned_connectivity_vector_modulation
-from models.layers.normalization_functions import contextual_frozen_connectivity_learned_transition_untuned_eCRF_vector_modulation
-from models.layers.normalization_functions import contextual_frozen_connectivity_learned_transition_weak_eCRF_vector_modulation
-from models.layers.normalization_functions import contextual_frozen_connectivity_learned_transition_vector_weak_eCRF_vector_modulation
-from models.layers.normalization_functions import contextual_frozen_connectivity_learned_transition_vector_weak_eCRF_vector_modulation_late_I
 from models.layers.normalization_functions import contextual_alt_learned_transition_learned_connectivity_scalar_modulation
+from models.layers.normalization_functions import contextual_adjusted_recurrent
 
 
 class normalizations(object):
@@ -88,7 +76,8 @@ class normalizations(object):
             self.SSN = layer['hardcoded_erfs']['SSN']
             self.SSF = layer['hardcoded_erfs']['SSF']
         else:
-            # Calculate effective receptive field for this layer
+            # Calculate effective receptive field for this layer.
+            # Adjust eCRF filters to yield appropriate RF sizes.
             eRFc = eRF_calculator()
             conv = {
                 'padding': padding,
@@ -122,157 +111,6 @@ class normalizations(object):
             else:
                 self.SSF = SSF
 
-    def contextual(self, x, layer, eRF, aux):
-        """Contextual model from paper with learnable weights."""
-        self.update_params(aux)
-        self.set_RFs(layer=layer, eRF=eRF)
-        contextual_layer = contextual.ContextualCircuit(
-            X=x,
-            timesteps=self.timesteps,
-            lesions=self.lesions,
-            SRF=self.SRF,
-            SSN=self.SSN,
-            SSF=self.SSF,
-            strides=self.strides,
-            padding=self.padding)
-        return contextual_layer.build()
-
-    def contextual_frozen_connectivity(self, x, layer, eRF, aux):
-        """Contextual model from paper with frozen U & eCRFs."""
-        self.update_params(aux)
-        self.set_RFs(layer=layer, eRF=eRF)
-        contextual_layer = contextual_frozen_connectivity.ContextualCircuit(
-            X=x,
-            timesteps=self.timesteps,
-            lesions=self.lesions,
-            SRF=self.SRF,
-            SSN=self.SSN,
-            SSF=self.SSF,
-            strides=self.strides,
-            padding=self.padding)
-        return contextual_layer.build()
-
-    def contextual_frozen_connectivity_learned_transition(self, x, layer, eRF, aux):
-        """Contextual model from paper with frozen U & eCRFs."""
-        self.update_params(aux)
-        self.set_RFs(layer=layer, eRF=eRF)
-        contextual_layer = contextual_frozen_connectivity_learned_transition.ContextualCircuit(
-            X=x,
-            timesteps=self.timesteps,
-            lesions=self.lesions,
-            SRF=self.SRF,
-            SSN=self.SSN,
-            SSF=self.SSF,
-            strides=self.strides,
-            padding=self.padding)
-        return contextual_layer.build()
-
-    def contextual_frozen_connectivity_learned_transition_weak_eCRF_vector_modulation(self, x, layer, eRF, aux):
-        """Contextual model from paper with frozen U & eCRFs."""
-        self.update_params(aux)
-        self.set_RFs(layer=layer, eRF=eRF)
-        contextual_layer = contextual_frozen_connectivity_learned_transition_weak_eCRF_vector_modulation.ContextualCircuit(
-            X=x,
-            timesteps=self.timesteps,
-            lesions=self.lesions,
-            SRF=self.SRF,
-            SSN=self.SSN,
-            SSF=self.SSF,
-            strides=self.strides,
-            padding=self.padding)
-        return contextual_layer.build()
-
-    def bn_contextual_frozen_connectivity_learned_transition_weak_eCRF_vector_modulation(self, x, layer, eRF, aux):
-        """Contextual model from paper with frozen U & eCRFs."""
-        self.update_params(aux)
-        self.set_RFs(layer=layer, eRF=eRF)
-        contextual_layer = contextual_frozen_connectivity_learned_transition_weak_eCRF_vector_modulation.ContextualCircuit(
-            X=x,
-            timesteps=self.timesteps,
-            lesions=self.lesions,
-            SRF=self.SRF,
-            SSN=self.SSN,
-            SSF=self.SSF,
-            strides=self.strides,
-            padding=self.padding)
-        context_mod = contextual_layer.build()
-        return self.batch(x, context_mod, eRF, aux)
-
-    def contextual_frozen_connectivity_learned_transition_weak_eCRF(self, x, layer, eRF, aux):
-        """Contextual model from paper with frozen U & eCRFs."""
-        self.update_params(aux)
-        self.set_RFs(layer=layer, eRF=eRF)
-        contextual_layer = contextual_frozen_connectivity_learned_transition_weak_eCRF.ContextualCircuit(
-            X=x,
-            timesteps=self.timesteps,
-            lesions=self.lesions,
-            SRF=self.SRF,
-            SSN=self.SSN,
-            SSF=self.SSF,
-            strides=self.strides,
-            padding=self.padding)
-        return contextual_layer.build()
-
-    def contextual_frozen_connectivity_learned_transition_untuned_eCRF(self, x, layer, eRF, aux):
-        """Contextual model from paper with frozen U & eCRFs."""
-        self.update_params(aux)
-        self.set_RFs(layer=layer, eRF=eRF)
-        contextual_layer = contextual_frozen_connectivity_learned_transition_untuned_eCRF.ContextualCircuit(
-            X=x,
-            timesteps=self.timesteps,
-            lesions=self.lesions,
-            SRF=self.SRF,
-            SSN=self.SSN,
-            SSF=self.SSF,
-            strides=self.strides,
-            padding=self.padding)
-        return contextual_layer.build()
-
-    def contextual_frozen_connectivity_learned_transition_untuned_eCRF_vector_modulation(self, x, layer, eRF, aux):
-        """Contextual model from paper with frozen U & eCRFs."""
-        self.update_params(aux)
-        self.set_RFs(layer=layer, eRF=eRF)
-        contextual_layer = contextual_frozen_connectivity_learned_transition_untuned_eCRF_vector_modulation.ContextualCircuit(
-            X=x,
-            timesteps=self.timesteps,
-            lesions=self.lesions,
-            SRF=self.SRF,
-            SSN=self.SSN,
-            SSF=self.SSF,
-            strides=self.strides,
-            padding=self.padding)
-        return contextual_layer.build()
-
-    def contextual_frozen_connectivity_learned_transition_vector_weak_eCRF_vector_modulation(self, x, layer, eRF, aux):
-        """Contextual model from paper with frozen U & eCRFs."""
-        self.update_params(aux)
-        self.set_RFs(layer=layer, eRF=eRF)
-        contextual_layer = contextual_frozen_connectivity_learned_transition_vector_weak_eCRF_vector_modulation.ContextualCircuit(
-            X=x,
-            timesteps=self.timesteps,
-            lesions=self.lesions,
-            SRF=self.SRF,
-            SSN=self.SSN,
-            SSF=self.SSF,
-            strides=self.strides,
-            padding=self.padding)
-        return contextual_layer.build()
-
-    def contextual_frozen_connectivity_learned_transition_vector_weak_eCRF_vector_modulation_late_I(self, x, layer, eRF, aux):
-        """Contextual model from paper with frozen U & eCRFs."""
-        self.update_params(aux)
-        self.set_RFs(layer=layer, eRF=eRF)
-        contextual_layer = contextual_frozen_connectivity_learned_transition_vector_weak_eCRF_vector_modulation_late_I.ContextualCircuit(
-            X=x,
-            timesteps=self.timesteps,
-            lesions=self.lesions,
-            SRF=self.SRF,
-            SSN=self.SSN,
-            SSF=self.SSF,
-            strides=self.strides,
-            padding=self.padding)
-        return contextual_layer.build()
-
     def contextual_alt_learned_transition_learned_connectivity_vector_modulation(self, x, layer, eRF, aux):
         """Contextual model from paper with frozen U & eCRFs."""
         self.update_params(aux)
@@ -303,12 +141,11 @@ class normalizations(object):
             padding=self.padding)
         return contextual_layer.build()
 
-
-    def contextual_frozen_eCRF_connectivity(self, x, layer, eRF, aux):
-        """Contextual model from paper with frozen eCRFs."""
+    def contextual_adjusted_recurrent(self, x, layer, eRF, aux):
+        """Contextual model from paper with frozen U & eCRFs."""
         self.update_params(aux)
         self.set_RFs(layer=layer, eRF=eRF)
-        contextual_layer = contextual_frozen_eCRF_connectivity.ContextualCircuit(
+        contextual_layer = contextual_adjusted_recurrent.ContextualCircuit(
             X=x,
             timesteps=self.timesteps,
             lesions=self.lesions,
@@ -318,51 +155,6 @@ class normalizations(object):
             strides=self.strides,
             padding=self.padding)
         return contextual_layer.build()
-
-    def contextual_frozen_CRF_connectivity(self, x, layer, eRF, aux):
-        """Contextual model from paper with frozen eCRFs."""
-        self.update_params(aux)
-        self.set_RFs(layer=layer, eRF=eRF)
-        contextual_layer = contextual_frozen_CRF_connectivity.ContextualCircuit(
-            X=x,
-            timesteps=self.timesteps,
-            lesions=self.lesions,
-            SRF=self.SRF,
-            SSN=self.SSN,
-            SSF=self.SSF,
-            strides=self.strides,
-            padding=self.padding)
-        return contextual_layer.build()
-
-    def contextual_rnn(self, x, layer, eRF, aux):
-        """Contextual model translated into a RNN architecture."""
-        self.update_params(aux)
-        self.set_RFs(layer=layer, eRF=eRF)
-        contextual_layer = contextual_rnn.ContextualCircuit(
-            X=x,
-            timesteps=self.timesteps,
-            lesions=self.lesions,
-            SRF=self.SRF,
-            SSN=self.SSN,
-            SSF=self.SSF,
-            strides=self.strides,
-            padding=self.padding)
-        return contextual_layer.build()
-
-    def contextual_div_norm_2d(self, x, layer, eRF, aux):
-        """Divisive normalization 2D."""
-        self.update_params(aux)
-        self.set_RFs(layer=layer, eRF=eRF)
-        return contextual_div_norm.contextual_div_norm_2d(
-            x,
-            CRF_sum_window=self.CRF_excitation,
-            CRF_sup_window=self.CRF_inhibition,
-            eCRF_sum_window=self.SSN,
-            eCRF_sup_window=self.SSF,
-            gamma=self.scale_CRF,
-            beta=self.bias_CRF,
-            strides=self.strides,
-            padding=self.padding), None, None
 
     def divisive_2d(self, x, layer, eRF, aux):
         """Divisive normalization 2D."""

@@ -149,7 +149,7 @@ def main(
             config.summaries, condition_label),
         'condition_evaluations': os.path.join(
             config.condition_evaluations, condition_label),
-        'experiment_evaluations': os.path.join(
+        'experiment_evaluations': os.path.join(  # DEPRECIATED
             config.experiment_evaluations, experiment_label),
         'visualization': os.path.join(
             config.visualizations, condition_label),

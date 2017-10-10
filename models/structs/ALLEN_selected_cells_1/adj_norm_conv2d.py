@@ -15,7 +15,26 @@ layer_structure = [
         'layers': ['pool'],
         'weights': [None],
         'names': ['pool1'],
-        'filter_size': [2]
+        'filter_size': [2],
+        'normalization': ['contextual_adjusted_recurrent'],
+        'normalization_target': ['post'],
+        'normalization_aux': {
+            'timesteps': 5,
+            'regularization_targets': {  # Modulate sparsity
+                'q_t': {
+                   'regularization_type': 'l1',
+                   'regularization_strength': 0.1
+                },
+                't_t': {
+                    'regularization_type': 'l1',
+                    'regularization_strength': 0.01
+                },
+                'p_t': {
+                    'regularization_type': 'l1',
+                    'regularization_strength': 0.1
+                },
+            }
+        },
     },
     {
         'layers': ['fc'],

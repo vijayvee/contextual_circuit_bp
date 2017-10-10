@@ -8,7 +8,6 @@ from tqdm import tqdm
 import scipy
 from scipy import io as spio
 from scipy import misc
-import numpy as np
 
 
 def loadmat(filename):
@@ -30,7 +29,7 @@ def loadmat(filename):
 
     def _todict(matobj):
         '''
-        A recursive function which constructs from matobjects nested dictionaries
+        A recursive function which constructs matobject nested dictionaries
         '''
         d = {}
         for strg in matobj._fieldnames:
@@ -76,7 +75,9 @@ class data_processing(object):
         self.im_folder = 'scene_images'
         self.neural_data = 'LFP'  # 'spike'
         self.val_set = -1
-        self.channel = 0
+        # Recording starts 200msec before onset.
+        # Target is 50 - 150ms. = 270 - 370.
+        self.spike_range = [250, 350]
         self.resize = [192, 256]
         self.folds = {
             'train': 'train',
@@ -122,6 +123,8 @@ class data_processing(object):
                 for x in scene_images])
         files = []
         labels = []
+        neural_channels = {}
+        bin_range = np.arange(self.spike_range[0], self.spike_range[1])
         for f in tqdm(
                 neural_files,
                 total=len(neural_files),
@@ -140,21 +143,52 @@ class data_processing(object):
                         '%s%s' % (st, self.im_ext)))
                 if self.resize is not None:
                     it_image = misc.imresize(it_image, self.resize)
-                it_images += [np.expand_dims(it_image, axis=0)]
+                it_images += [
+                    {st: np.expand_dims(it_image, axis=0)}
+                ]
                 it_labels += [np.where(np.asarray(st) == scene_labels)]
-            it_neural = np.asarray(data['LFP']['data'])[self.channel]
-            it_neural = it_neural.transpose(1, 0).reshape(len(it_images), -1)
-            labels += [it_images]
-            files += [it_neural]
+            it_channel_key = np.asarray(data['spike']['channel'])
+            it_neural = np.asarray(data['spike']['data'])
+            unique_channels = np.unique(it_channel_key)
+            for channel in unique_channels:
+                channel_idx = np.where(it_channel_key == channel)[0]
+                proc_it_neural = np.expand_dims(
+                    it_neural[channel_idx].sum(0)[bin_range].sum(0),
+                    axis=-1)
+                if channel not in neural_channels.keys():
+                    neural_channels[channel] = [proc_it_neural]
+                else:
+                    neural_channels[channel] += [proc_it_neural]
+            # TODO: Visualize gaussian-smoothed spikes here
+            files += [it_images]
+            labels += [neural_channels]
+
+        # Combine images
+        all_image_map = {}
+        for fidx, f in enumerate(files):
+            for itidx, it_f in enumerate(f):
+                if 
+                all_image_names += [it_f.keys()[0]]
+
+
+        all_image_key = {}
+        for 
+
+        # Mean spikes across stimuli
+        all_channels = np.unique([d.keys() for d in labels])
+        for l in labels:
+
+
+        # Organize images according to this ordering
 
         # Split labels/files into training/testing (leave one session out).
         out_files = {  # Images
-            'train': np.concatenate(labels[:self.val_set], axis=0),
-            'val': np.concatenate(labels[self.val_set:], axis=0)
-        }
-        out_labels = {  # Neural data
             'train': np.concatenate(files[:self.val_set], axis=0),
             'val': np.concatenate(files[self.val_set:], axis=0)
+        }
+        out_labels = {  # Neural data
+            'train': np.concatenate(labels[:self.val_set], axis=0),
+            'val': np.concatenate(labels[self.val_set:], axis=0)
         }
         return files, labels
 

@@ -1,4 +1,3 @@
-"""Contextual model class."""
 import numpy as np
 import tensorflow as tf
 from utils import py_utils
@@ -6,14 +5,10 @@ from ops import initialization
 
 
 class ContextualCircuit(object):
-    """Contextual model: learned transitions, tuning, scalar weights."""
-
     def __getitem__(self, name):
-        """Get attribute from class."""
         return getattr(self, name)
 
     def __contains__(self, name):
-        """Check if class contains attribute."""
         return hasattr(self, name)
 
     def __init__(
@@ -29,7 +24,7 @@ class ContextualCircuit(object):
             padding='SAME',
             dtype=tf.float32,
             return_weights=True):
-        """Model global variables."""
+
         self.X = X
         self.n, self.h, self.w, self.k = [int(x) for x in X.get_shape()]
         self.model_version = model_version
@@ -66,35 +61,35 @@ class ContextualCircuit(object):
             self.SSF = self.SRF * 5
 
     def prepare_tensors(self):
-        """Prepare recurrent/forward weight matrices."""
+        """ Prepare recurrent/forward weight matrices."""
         self.weight_dict = {  # Weights lower/activity upper
             'U': {
                 'r': {
                     'weight': 'u_r',
                     'activity': 'U_r'
-                }
-            },
+                    }
+                },
             'T': {
                 'r': {
                     'weight': 't_r',
                     'activity': 'T_r',
                     'tuning': 't_t'
-                }
-            },
+                    }
+                },
             'P': {
                 'r': {
                     'weight': 'p_r',
                     'activity': 'P_r',
                     'tuning': 'p_t'
-                }
-            },
+                    }
+                },
             'Q': {
                 'r': {
                     'weight': 'q_r',
                     'activity': 'Q_r',
                     'tuning': 'q_t'
-                }
-            },
+                    }
+                },
             'I': {
                 'r': {  # Recurrent state
                     'weight': 'i_r',
@@ -168,7 +163,7 @@ class ContextualCircuit(object):
                 dtype=self.dtype,
                 initializer=q_array.astype(np.float32),
                 trainable=False)
-        )
+            )
 
         # untuned suppression: reduction across feature axis
         ####################################################
@@ -181,7 +176,7 @@ class ContextualCircuit(object):
                 dtype=self.dtype,
                 initializer=u_array.astype(np.float32),
                 trainable=False)
-        )
+            )
 
         # weakly tuned summation: pooling in h, w dimensions
         #############################################
@@ -305,8 +300,8 @@ class ContextualCircuit(object):
                     mask=None)))
 
         # Vector weights
-        w_array = np.ones([1, 1, 1, 1]).astype(np.float32)
-        b_array = np.zeros([1, 1, 1, 1]).astype(np.float32)
+        w_array = np.ones([1, 1, 1, self.k]).astype(np.float32)
+        b_array = np.zeros([1, 1, 1, self.k]).astype(np.float32)
         self.xi = tf.get_variable(name='xi', initializer=w_array)
         self.alpha = tf.get_variable(name='alpha', initializer=w_array)
         self.beta = tf.get_variable(name='beta', initializer=w_array)
@@ -323,10 +318,10 @@ class ContextualCircuit(object):
         else:
             weights = self[weight_key]
         activities = tf.nn.conv2d(
-            data,
-            weights,
-            self.strides,
-            padding=self.padding)
+                data,
+                weights,
+                self.strides,
+                padding=self.padding)
         if out_key is None:
             return activities
         else:
@@ -336,13 +331,12 @@ class ContextualCircuit(object):
                 activities)
 
     def apply_tuning(self, data, wm, nl=True):
-        """Apply learned tuning to the activities before normalization."""
         for k in self.tuning_params:
             if wm == k:
                 data = self.conv_2d_op(
                     data=data,
                     weight_key=self.weight_dict[wm]['r']['tuning']
-                )
+                    )
                 if nl:
                     return self.tuning_nl(data)
                 else:
@@ -359,7 +353,7 @@ class ContextualCircuit(object):
         # tau is O input gate
         """
 
-        # Connectivity convolutions
+        # I state connectivity
         U = self.conv_2d_op(
             data=self.apply_tuning(O, 'U'),
             weight_key=self.weight_dict['U']['r']['weight']
@@ -368,16 +362,8 @@ class ContextualCircuit(object):
             data=self.apply_tuning(O, 'T'),
             weight_key=self.weight_dict['T']['r']['weight']
         )
-        P = self.conv_2d_op(
-            data=self.apply_tuning(I, 'P'),
-            weight_key=self.weight_dict['P']['r']['weight']
-        )
-        Q = self.conv_2d_op(
-            data=self.apply_tuning(I, 'Q'),
-            weight_key=self.weight_dict['Q']['r']['weight']
-        )
 
-        # Gates
+        # I state gates
         I_update_input = self.conv_2d_op(
             data=self.X,
             weight_key=self.weight_dict['I']['f']['weight']
@@ -387,6 +373,25 @@ class ContextualCircuit(object):
             weight_key=self.weight_dict['I']['r']['weight']
         )
         I_update = self.gate_nl(I_update_input + I_update_recurrent)
+
+        # I state circuit
+        I_summand = self.recurrent_nl(
+            (self.xi * self.X)
+            - ((self.alpha * I + self.mu) * U)
+            - ((self.beta * I + self.nu) * T))
+        I = (I_update * I) + ((1 - I_update) * I_summand)
+
+        # O state connectivity
+        P = self.conv_2d_op(
+            data=self.apply_tuning(I, 'P'),
+            weight_key=self.weight_dict['P']['r']['weight']
+        )
+        Q = self.conv_2d_op(
+            data=self.apply_tuning(I, 'Q'),
+            weight_key=self.weight_dict['Q']['r']['weight']
+        )
+
+        # O state gates
         O_update_input = self.conv_2d_op(
             data=self.X,
             weight_key=self.weight_dict['O']['f']['weight']
@@ -397,18 +402,15 @@ class ContextualCircuit(object):
         )
         O_update = self.gate_nl(O_update_input + O_update_recurrent)
 
-        # Circuit
-        I_summand = self.recurrent_nl(
-            (self.xi * self.X)
-            - ((self.alpha * I + self.mu) * U)
-            - ((self.beta * I + self.nu) * T))
-        I = (I_update * I) + ((1 - I_update) * I_summand)
+        # O state circuit
         O_summand = self.recurrent_nl(
             self.zeta * I
             + self.gamma * P
             + self.delta * Q)
         O = (O_update * O) + ((1 - O_update) * O_summand)
-        i0 += 1  # Iterate loop
+
+        # Iterate loop
+        i0 += 1
         return i0, O, I
 
     def condition(self, i0, O, I):
@@ -416,7 +418,6 @@ class ContextualCircuit(object):
         return i0 < self.timesteps
 
     def gather_tensors(self, wak='weight'):
-        """Gather tensor weights for runtime manipulation."""
         weights = {}
         for k, v in self.weight_dict.iteritems():
             for wk, wv in v.iteritems():
