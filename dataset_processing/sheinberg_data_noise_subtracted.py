@@ -206,6 +206,7 @@ class data_processing(object):
                 it_image = misc.imresize(it_image, self.resize)
             all_images += [np.expand_dims(it_image, axis=0)]
         all_images = np.asarray(all_images).squeeze()
+        import ipdb;ipdb.set_trace()
 
         # Split labels/files into training/testing (leave one session out).
         out_files = {  # Images

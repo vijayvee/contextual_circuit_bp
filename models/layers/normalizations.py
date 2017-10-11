@@ -61,6 +61,18 @@ class normalizations(object):
         CRF = 0.26 degrees (1x)
         eCRF near = 0.54 degrees (2x)
         eCRF far = 1.41 degrees (5.5x)
+
+        Implementation is to calculate the RF of a computational unit in
+        an activity tensor. Then, near and far eCRFs are derived relative
+        to the CRF size. This means that the *filter size* for the CRF is 1
+        tensor pixel. And the eRFs are deduced as the appropriate filter size
+        for their calculated RFs.
+
+        For instance, units in pool_2 of VGG16 have RFs of 16x16 pixels of
+        the input image. Setting the CRF filter size to 1, this means that the
+        near eCRF filter size must capture an RF of ~ 32x32 pixels, and the
+        far eCRF filter size must capture an RF of ~ 80x80 pixels. The eRF
+        calculator can deduce these filter sizes.
         """
         if 'hardcoded_erfs' in layer.keys():
             # Use specified effective receptive fields
@@ -87,9 +99,13 @@ class normalizations(object):
             if len(layer['filter_size']) > 1:
                 raise RuntimeError(
                     'API not implemented for layers with > 1 module.')
-            self.SRF = layer['filter_size'][0]
-            self.CRF_excitation = layer['filter_size'][0]
-            self.CRF_inhibition = layer['filter_size'][0]
+
+            self.SRF = 1  # See explanation above.
+            self.CRF_excitation = 1
+            self.CRF_inhibition = 1
+            # self.SRF = eRF['r_i']
+            # self.CRF_excitation = eRF['r_i']
+            # self.CRF_inhibition = eRF['r_i']
             if eSRF is not None:
                 self.CRF_excitation
             if iSRF is not None:
