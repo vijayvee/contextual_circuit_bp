@@ -16,13 +16,14 @@ class eRF_calculator(object):
         """Routine for calculating effective RF size."""
         try:
             network_params, lp = self.extract_params(network)
-            if log is not None:
-                log.warning(
-                    'Multiple entries detected in a layer.',
-                    'This may affect RF calculation.')
-            else:
-                print 'Multiple entries detected in a layer.' +\
-                    'This may affect RF calculation.'
+            if lp:
+                if log is not None:
+                    log.warning(
+                        'Multiple entries detected in a layer.',
+                        'This may affect RF calculation.')
+                else:
+                    print 'Multiple entries detected in a layer.' +\
+                        'This may affect RF calculation.'
             imsize = int(image.get_shape()[1])
             if verbose:
                 print '-------Net summary-------'
