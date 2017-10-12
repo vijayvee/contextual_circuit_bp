@@ -103,16 +103,28 @@ class data_processing(object):
         }
 
     def get_data(self):
+        """Process all data into TFrecords and npzs."""
+        # # First process the RFs
+        # rf_files = glob(
+        #     os.path.join(
+        #         self.config.data_root,
+        #         self.name,
+        #         'spot*.mat'))
+        # channels = {}
+        # for f in tqdm(
+        #         rf_files,
+        #         total=len(rf_files),
+        #         desc='Processing Sheinberg RFs'):
+        #     data = loadmat(f)['data']
+
+        #     import ipdb;ipdb.set_trace()
+
+        # Then process neural data and scenes
         neural_files = glob(
             os.path.join(
                 self.config.data_root,
                 self.name,
                 'scene*.mat'))
-        rf_files = glob(
-            os.path.join(
-                self.config.data_root,
-                self.name,
-                'spot*.mat'))
         scene_images = glob(
             os.path.join(
                 self.config.data_root,

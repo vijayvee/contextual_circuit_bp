@@ -30,7 +30,7 @@ layer_structure = [
 output_structure = [
     {
         'layers': ['sparse_pool'],
-        'weights': [103],  # Output size
+        'weights': [1],  # Output size
         'names': ['sp2'],
     }
 ]
