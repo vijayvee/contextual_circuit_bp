@@ -66,15 +66,15 @@ class data_processing(object):
         self.name = 'sheinberg_data'
         self.config = Config()
         self.output_size = [1, 1]
-        self.im_size = [1, 1]
-        self.model_input_image_size = [1, 1]
+        self.im_size = [192, 256, 3]
+        self.model_input_image_size = [192, 256, 3]
         self.default_loss_function = 'l2'
         self.score_metric = 'l2'
         self.preprocess = [None]
         self.im_ext = '.jpg'
         self.im_folder = 'scene_images'
         self.neural_data = 'LFP'  # 'spike'
-        self.val_set = -1
+        self.val_set = -76
         self.save_npys = True
         # Recording starts 200msec before onset.
         # Target is 50 - 150ms. = 270 - 370.
@@ -84,11 +84,11 @@ class data_processing(object):
             'train': 'train',
             'test': 'test'}
         self.targets = {
-            'image': tf_fun.float_feature,
+            'image': tf_fun.bytes_feature,
             'label': tf_fun.float_feature
         }
         self.tf_dict = {
-            'image': tf_fun.fixed_len_feature(dtype='float'),
+            'image': tf_fun.fixed_len_feature(dtype='string'),
             'label': tf_fun.fixed_len_feature(dtype='float')
         }
         self.tf_reader = {
@@ -193,6 +193,9 @@ class data_processing(object):
                 if len(event_data):
                     data_matrix[idx, ch] = np.mean(event_data)
 
+        # Convert data_matrix to list of lists
+        data_matrix = data_matrix.tolist()
+
         # Load and process all images
         all_images = []
         for im in unique_images:
@@ -206,16 +209,15 @@ class data_processing(object):
                 it_image = misc.imresize(it_image, self.resize)
             all_images += [np.expand_dims(it_image, axis=0)]
         all_images = np.asarray(all_images).squeeze()
-        import ipdb;ipdb.set_trace()
 
         # Split labels/files into training/testing (leave one session out).
         out_files = {  # Images
-            'train': np.concatenate(all_images[:self.val_set], axis=0),
-            'val': np.concatenate(all_images[self.val_set:], axis=0)
+            'train': all_images[:self.val_set],
+            'val': all_images[self.val_set:]
         }
         out_labels = {  # Neural data
-            'train': np.concatenate(data_matrix[:self.val_set], axis=0),
-            'val': np.concatenate(data_matrix[self.val_set:], axis=0)
+            'train': data_matrix[:self.val_set],
+            'val': data_matrix[self.val_set:]
         }
 
         if self.save_npys:
