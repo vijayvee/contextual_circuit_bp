@@ -77,6 +77,7 @@ class data_processing(object):
         self.val_set = -76
         self.save_npys = True
         self.num_channels = 33  # 32 with indexing from 1
+        self.dates = 2
         # Recording starts 200msec before onset.
         # Target is 50 - 150ms. = 270 - 370.
         self.spike_range = [250, 350]
@@ -108,13 +109,18 @@ class data_processing(object):
             os.path.join(
                 self.config.data_root,
                 self.name,
-                'scene*.mat'))[:2]
+                'scene*.mat'))
         scene_images = glob(
             os.path.join(
                 self.config.data_root,
                 self.name,
                 self.im_folder,
                 '*%s' % self.im_ext))
+
+        # Restrict to dates
+        if self.dates is not None:
+            neural_files = neural_files[:self.dates]
+            scene_images = scene_images[:self.dates]
         scene_labels = np.asarray(
             [x.split('/')[-1].split(self.im_ext)[0]
                 for x in scene_images])
@@ -145,6 +151,7 @@ class data_processing(object):
                     0)[bin_range].sum(0).astype(np.float32)
                 channel_data[:, channel] = proc_it_neural
 
+            print data['trial_info']['date']
             # TODO: Visualize gaussian-smoothed spikes here
             files += [it_images]
             im_labels += [it_labels]
@@ -171,15 +178,18 @@ class data_processing(object):
             sliced_images += [all_images[im]]
 
         # Prepare data and build up extra regressors for linear model
-        data_matrix = np.concatenate(channel_data, axis=0)
+        data_matrix = np.concatenate(labels, axis=0)
         run_idx = np.concatenate([
             np.zeros((len(f))) for f in files])
 
         # Create across-session stimulus normalized data
         im_means = {}
         for im in unique_images:
-            idx = np.where(im == cat_files)[0]
-            im_means[im] = data_matrix[idx, :].mean(0)
+            try:
+                mask = np.asarray(im) == cat_files
+                im_means[im] = data_matrix[mask, :].mean(0)
+            except:
+                import ipdb; ipdb.set_trace()
 
         across_session_data_matrix = []
         for idx, im in enumerate(cat_files):
@@ -209,3 +219,4 @@ class data_processing(object):
                 all_images=sliced_images,
                 run_idx=run_idx)
         return out_files, out_labels
+

@@ -74,10 +74,11 @@ class data_processing(object):
         self.im_ext = '.jpg'
         self.im_folder = 'scene_images'
         self.neural_data = 'LFP'  # 'spike'
-        self.val_set = -76
+        self.val_set = -1
         self.save_npys = True
         # Recording starts 200msec before onset.
         # Target is 50 - 150ms. = 270 - 370.
+        self.dates = 1
         self.spike_range = [250, 350]
         self.resize = [192, 256]
         self.folds = {
@@ -131,6 +132,11 @@ class data_processing(object):
                 self.name,
                 self.im_folder,
                 '*%s' % self.im_ext))
+
+        # Restrict to dates
+        if self.dates is not None:
+            neural_files = neural_files[:self.dates]
+            scene_images = scene_images[:self.dates]
         scene_labels = np.asarray(
             [x.split('/')[-1].split(self.im_ext)[0]
                 for x in scene_images])
@@ -222,6 +228,7 @@ class data_processing(object):
             all_images += [np.expand_dims(it_image, axis=0)]
         all_images = np.asarray(all_images).squeeze()
 
+        import ipdb;ipdb.set_trace()
         # Split labels/files into training/testing (leave one session out).
         out_files = {  # Images
             'train': all_images[:self.val_set],

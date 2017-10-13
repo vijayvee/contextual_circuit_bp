@@ -61,6 +61,7 @@ def data_to_tfrecords(
                     image = preprocess_image(image, preprocess, im_size)
                 else:
                     image = it_f
+                import ipdb;ipdb.set_trace()
                 means += image
                 data_dict = {
                     'image': targets['image'](image.tostring()),
