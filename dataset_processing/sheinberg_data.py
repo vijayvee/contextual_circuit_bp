@@ -73,12 +73,14 @@ class data_processing(object):
         self.preprocess = [None]
         self.im_ext = '.jpg'
         self.im_folder = 'scene_images'
-        self.neural_data = 'LFP'  # 'spike'
+        self.neural_data = 'spike'  # 'spike'
         self.val_set = -1
         self.save_npys = True
+        self.num_rf_images = 2000
         # Recording starts 200msec before onset.
         # Target is 50 - 150ms. = 270 - 370.
-        self.dates = 1
+        self.num_channels = 33  # 32 with indexing from 1
+        self.dates = ['100614', '100714', '100814', '100914']
         self.spike_range = [250, 350]
         self.resize = [192, 256]
         self.folds = {
@@ -103,47 +105,89 @@ class data_processing(object):
             }
         }
 
+    def process_channels(self, data, it_images, bin_range):
+        """Loop through channels and store data."""
+        it_channel_key = np.asarray(data['channel'])
+        it_neural = np.asarray(data['data'])
+        unique_channels = np.unique(it_channel_key)
+        channel_data = np.zeros((len(it_images), self.num_channels))
+        for channel in unique_channels:
+            #  Sum up spikes across spike-sorted channels
+            channel_idx = np.where(it_channel_key == channel)[0]
+            proc_it_neural = it_neural[channel_idx].sum(
+                0)[bin_range].sum(0).astype(np.float32)
+            channel_data[:, channel] = proc_it_neural
+        return channel_data
+
     def get_data(self):
         """Process all data into TFrecords and npzs."""
-        # # First process the RFs
-        # rf_files = glob(
-        #     os.path.join(
-        #         self.config.data_root,
-        #         self.name,
-        #         'spot*.mat'))
-        # channels = {}
-        # for f in tqdm(
-        #         rf_files,
-        #         total=len(rf_files),
-        #         desc='Processing Sheinberg RFs'):
-        #     data = loadmat(f)['data']
-
-        #     import ipdb;ipdb.set_trace()
-
-        # Then process neural data and scenes
-        neural_files = glob(
-            os.path.join(
-                self.config.data_root,
-                self.name,
-                'scene*.mat'))
-        scene_images = glob(
-            os.path.join(
-                self.config.data_root,
-                self.name,
-                self.im_folder,
-                '*%s' % self.im_ext))
+        # Find files
+        neural_files = np.asarray(
+            glob(
+                os.path.join(
+                    self.config.data_root,
+                    self.name,
+                    'scene*.mat')))
+        scene_images = np.asarray(
+            glob(
+                os.path.join(
+                    self.config.data_root,
+                    self.name,
+                    self.im_folder,
+                    '*%s' % self.im_ext)))
+        rf_files = np.asarray(
+            glob(
+                os.path.join(
+                    self.config.data_root,
+                    self.name,
+                    'spot*.mat')))
 
         # Restrict to dates
         if self.dates is not None:
-            neural_files = neural_files[:self.dates]
-            scene_images = scene_images[:self.dates]
+            neural_files = [
+                f for f in neural_files
+                if f.split('_')[-1].split('.')[0] in self.dates]
+            neural_files.sort(
+                key=lambda x: int(x.split('_')[-1].split('.')[0]))
+            rf_files = [
+                f for f in rf_files
+                if f.split('_')[-1].split('.')[0] in self.dates]
+            rf_files.sort(
+                key=lambda x: int(x.split('_')[-1].split('.')[0]))
+
+        # Process RF data
+        bin_range = np.arange(self.spike_range[0], self.spike_range[1])
+        rfs = []
+        for f in tqdm(
+                rf_files,
+                total=len(rf_files),
+                desc='Processing Sheinberg RFs'):
+            data = loadmat(f)['data']
+            rf_channel_data = self.process_channels(
+                data[self.neural_data],
+                np.zeros((self.num_rf_images)),
+                bin_range)
+            X = np.concatenate((
+                np.asarray(data['trial_info']['stim_pos_y'])[:, None],
+                np.asarray(data['trial_info']['stim_pos_x'])[:, None]),
+                axis=1)
+            preferred_rfs = [X[np.argmax(
+                rf_channel_data[:, idx])] for idx in range(
+                rf_channel_data.shape[-1])]
+            rfs += [preferred_rfs]
+        # Use the mean RF across sessions
+        rfs = np.asarray(rfs)
+        rfs = np.asarray([
+            np.asarray(rfs)[:, idx, :].mean(0)
+            for idx in range(rfs.shape[1])])
+
+        # Process scene data
         scene_labels = np.asarray(
             [x.split('/')[-1].split(self.im_ext)[0]
                 for x in scene_images])
         files = []
         labels = []
         im_labels = []
-        bin_range = np.arange(self.spike_range[0], self.spike_range[1])
         for f in tqdm(
                 neural_files,
                 total=len(neural_files),
@@ -157,8 +201,8 @@ class data_processing(object):
                 st = st.split('\x00')[0].replace(' ', '')
                 it_images += [st]
                 it_labels += [np.where(np.asarray(st) == scene_labels)]
-            it_channel_key = np.asarray(data['spike']['channel'])
-            it_neural = np.asarray(data['spike']['data'])
+            it_channel_key = np.asarray(data[self.neural_data]['channel'])
+            it_neural = np.asarray(data[self.neural_data]['data'])
             unique_channels = np.unique(it_channel_key)
             for channel in unique_channels:
                 channel_idx = np.where(it_channel_key == channel)[0]
@@ -228,7 +272,6 @@ class data_processing(object):
             all_images += [np.expand_dims(it_image, axis=0)]
         all_images = np.asarray(all_images).squeeze()
 
-        import ipdb;ipdb.set_trace()
         # Split labels/files into training/testing (leave one session out).
         out_files = {  # Images
             'train': all_images[:self.val_set],
@@ -243,9 +286,10 @@ class data_processing(object):
             out_file = os.path.join(
                 self.config.data_root,
                 self.name,
-                'sheinberg_data')
+                self.name)
             np.savez(
                 out_file,
                 data_matrix=data_matrix,
-                all_images=all_images)
+                all_images=all_images,
+                rfs=rfs)
         return out_files, out_labels
