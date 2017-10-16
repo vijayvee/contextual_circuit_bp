@@ -5,7 +5,7 @@ layer_structure = [
         'layers': ['DoG'],
         'weights': [9],
         'names': ['dog1'],
-        'filter_size': [7],
+        'filter_size': [5],
         'activation': ['selu'],
         'activation_target': ['post'],
         'dropout': [0.5],

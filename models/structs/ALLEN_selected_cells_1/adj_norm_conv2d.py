@@ -5,18 +5,12 @@ layer_structure = [
         'layers': ['conv'],
         'weights': [64],
         'names': ['conv1_1'],
-        'filter_size': [7],
+        'filter_size': [5],
         'activation': ['selu'],
         'activation_target': ['post'],
         'dropout': [0.5],
-        'dropout_target': ['post']
-    },
-    {
-        'layers': ['pool'],
-        'weights': [None],
-        'names': ['pool1'],
-        'filter_size': [2],
-        'normalization': ['contextual_adjusted_recurrent'],
+        'dropout_target': ['post'],
+        'normalization': ['contextual_vector_separable_random'],
         'normalization_target': ['post'],
         'normalization_aux': {
             'timesteps': 5,
@@ -35,23 +29,13 @@ layer_structure = [
                 },
             }
         },
-    },
-    {
-        'layers': ['fc'],
-        'weights': [64],
-        'filter_size': [1],
-        'names': ['fc2'],
-        'flatten': [True],
-        'flatten_target': ['pre'],
-        'activation': ['selu'],
-        'activation_target': ['post']
     }
 ]
 
 output_structure = [
     {
-        'layers': ['fc'],
-        'weights': [1],  # Output size
-        'names': ['fc3'],
+        'layers': ['sparse_pool'],
+        'weights': [103],  # Output size
+        'names': ['sp2'],
     }
 ]

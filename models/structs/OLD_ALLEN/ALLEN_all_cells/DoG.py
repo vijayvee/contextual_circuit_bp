@@ -1,10 +1,10 @@
-"""2D convolutional model for Allen data."""
+"""DoG model for Allen data."""
 
 layer_structure = [
     {
-        'layers': ['conv'],
-        'weights': [64],
-        'names': ['conv1_1'],
+        'layers': ['DoG'],
+        'weights': [9],
+        'names': ['dog1'],
         'filter_size': [7],
         'activation': ['selu'],
         'activation_target': ['post'],
@@ -12,16 +12,12 @@ layer_structure = [
         'dropout_target': ['post']
     },
     {
-        'layers': ['pool'],
-        'weights': [None],
-        'names': ['pool1'],
-        'filter_size': [2]
-    },
-    {
-        'layers': ['conv'],
+        'layers': ['fc'],
         'weights': [64],
-        'names': ['conv2_1'],
         'filter_size': [1],
+        'names': ['fc2'],
+        'flatten': [True],
+        'flatten_target': ['pre'],
         'activation': ['selu'],
         'activation_target': ['post']
     },
@@ -29,8 +25,8 @@ layer_structure = [
 
 output_structure = [
     {
-        'layers': ['sparse_pool'],
+        'layers': ['fc'],
         'weights': [103],  # Output size
-        'names': ['sp2'],
+        'names': ['fc3'],
     }
 ]

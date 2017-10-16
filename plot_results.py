@@ -2,10 +2,11 @@ import os
 import numpy as np
 from db import db
 from db import credentials
+import experiments
 from config import Config
 from argparse import ArgumentParser
 import pandas as pd
-from utils.py_utils import get_dt_stamp
+from utils import py_utils
 import matplotlib
 from matplotlib import pyplot as plt
 from matplotlib.ticker import MaxNLocator
@@ -24,7 +25,7 @@ def plot_with_plotly(plotly_fig, chart):
 def main(
         experiment_name,
         im_ext='.pdf',
-        log_transform_loss=True,
+        transform_loss=None,  # 'log',
         colors='Paired',
         flip_axis=False,
         exclude=None):
@@ -110,21 +111,47 @@ def main(
         errors='coerce')
     df['training loss'] = pd.to_numeric(df['training loss'], errors='coerce')
 
-    if log_transform_loss:
-        loss_label = 'Log loss'
-        df['training loss'] = np.log(df['training loss'])
-    else:
-        loss_label = 'Normalized loss (x / max(x))'
-        df['training loss'] /= df.groupby(
-            'model parameters')['training loss'].transform(max)
-    df['validation loss'] = pd.to_numeric(df['validation loss']) * 100.
-
     if exclude is not None:
         exclusion_search = df['model parameters'].str.contains(exclude)
         df = df[exclusion_search == False]
         print 'Removed %s rows.' % exclusion_search.sum()
 
     # Start plotting
+    experiment_dict = experiments.experiments()[experiment_name]()
+    print 'Plotting results for dataset: %s.' % experiment_dict['dataset'][0]
+    dataset_module = py_utils.import_module(
+        model_dir=config.dataset_info,
+        dataset=experiment_dict['dataset'][0])
+    dataset_module = dataset_module.data_processing()  # hardcoded class name
+    if transform_loss is None:
+        loss_label = ''
+    elif transform_loss == 'log':
+        loss_label = ' log loss'
+        df['training loss'] = np.log(df['training loss'])
+    elif transform_loss == 'max':
+        loss_label = ' normalized (x / max(x)) '
+        df['training loss'] /= df.groupby(
+            'model parameters')['training loss'].transform(max)
+    if ['loss_function'] in experiment_dict.keys():
+        loss_metric = experiment_dict['loss_function'][0]
+    else:
+        loss_metric = dataset_module.default_loss_function
+    df['validation loss'] = pd.to_numeric(df['validation loss'])
+    if loss_metric == 'pearson':
+        loss_label = 'Pearson correlation' + loss_label
+    elif loss_metric == 'l2':
+        loss_label = 'L2' + loss_label
+    else:
+        loss_label = 'Classification accuracy (%)'
+        df['validation loss'] *= 100.
+
+    if ['score_metric'] in experiment_dict.keys():
+        score_metric = experiment_dict['score_metric']
+    else:
+        score_metric = dataset_module.score_metric
+    if score_metric == 'pearson':
+        y_lab = 'Pearson correlation'
+
     matplotlib.style.use('ggplot')
     plt.rc('font', size=6)
     plt.rc('legend', fontsize=8, labelspacing=3)
@@ -164,12 +191,12 @@ def main(
     ax.xaxis.set_major_locator(MaxNLocator(integer=True))
     ax.set_title('Validation')
     # TODO: Mine the experiment declarations for the appropos metric name.
-    ax.set_ylabel('Categorization accuracy (%)')
+    ax.set_ylabel(y_lab)
     # ax.legend_.remove()
     out_name = os.path.join(
         config.plots,
         '%s_%s%s' % (
-            experiment_name, get_dt_stamp(), im_ext))
+            experiment_name, py_utils.get_dt_stamp(), im_ext))
     plt.savefig(out_name)
     print 'Saved to: %s' % out_name
     plotly_fig = tls.mpl_to_plotly(f)
@@ -187,11 +214,11 @@ def main(
         x='model parameters', y='validation loss', legend=False)
     plt.tight_layout()
     ax.set_title('Max validation value')
-    ax.set_ylabel('Categorization accuracy (%)')
+    ax.set_ylabel(y_lab)
     out_name = os.path.join(
         config.plots,
         '%s_%s_bar%s' % (
-            experiment_name, get_dt_stamp(), im_ext))
+            experiment_name, py_utils.get_dt_stamp(), im_ext))
     plt.savefig(out_name)
     print 'Saved to: %s' % out_name
     try:

@@ -359,7 +359,7 @@ def main(
     py_utils.save_npys(
         data=output_dict,
         model_name=model_name,
-        output_string=dir_list['condition_evaluations'])
+        output_string=dir_list['experiment_evaluations'])
 
 
 if __name__ == '__main__':

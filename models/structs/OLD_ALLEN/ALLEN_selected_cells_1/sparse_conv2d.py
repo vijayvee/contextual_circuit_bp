@@ -9,10 +9,22 @@ layer_structure = [
         'activation': ['selu'],
         'activation_target': ['post'],
         'dropout': [0.5],
-        'dropout_target': ['post'],
-        'normalization': ['contextual_vector_separable_random'],
-        'normalization_target': ['post'],
-    }
+        'dropout_target': ['post']
+    },
+    {
+        'layers': ['pool'],
+        'weights': [None],
+        'names': ['pool1'],
+        'filter_size': [2]
+    },
+    {
+        'layers': ['conv'],
+        'weights': [64],
+        'names': ['conv2_1'],
+        'filter_size': [1],
+        'activation': ['selu'],
+        'activation_target': ['post']
+    },
 ]
 
 output_structure = [

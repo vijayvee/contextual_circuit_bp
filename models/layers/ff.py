@@ -576,7 +576,8 @@ def sparse_pool_layer(
     def create_gaussian_rf(xy, h, w):
         """Create a gaussian bump for initializing the spatial weights."""
         # TODO: implement this.
-        pass
+        import ipdb;ipdb.set_trace()
+        raise NotImplementedError
 
     with tf.variable_scope(name):
         bottom_shape = [int(x) for x in bottom.get_shape()]
@@ -606,12 +607,14 @@ def sparse_pool_layer(
             if 'h' in aux.keys():
                 gaussian_h = aux['h']
                 gaussian_w = aux['w']
+                k = aux['k']
             else:
-                gaussian_h, gaussian_w = None, None
+                gaussian_h, gaussian_w, k = None, None, None
             spatial_rf = create_gaussian_rf(
                 xy=gaussian_xy,
                 h=gaussian_h,
-                w=gaussian_w)
+                w=gaussian_w,
+                k=k)
             spatial_weights += spatial_rf
         spatial_sparse = tf.reduce_mean(
             bottom * spatial_weights, reduction_indices=[1, 2])

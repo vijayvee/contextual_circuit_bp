@@ -1,12 +1,11 @@
 """2D convolutional model for Allen data."""
-"""2D convolutional model for Allen data."""
 
 layer_structure = [
     {
         'layers': ['conv'],
         'weights': [64],
         'names': ['conv1_1'],
-        'filter_size': [7],
+        'filter_size': [5],
         'activation': ['selu'],
         'activation_target': ['post'],
         'dropout': [0.5],
@@ -17,7 +16,7 @@ layer_structure = [
         'weights': [None],
         'names': ['pool1'],
         'filter_size': [2],
-        'normalization': ['contextual_alt_learned_transition_learned_connectivity_vector_modulation'],
+        'normalization': ['contextual_adjusted_recurrent'],
         'normalization_target': ['post'],
         'normalization_aux': {
             'timesteps': 5,

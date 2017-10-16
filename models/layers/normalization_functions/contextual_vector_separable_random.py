@@ -422,8 +422,14 @@ class ContextualCircuit(object):
         """Run the backprop version of the CCircuit."""
         self.prepare_tensors()
         i0 = tf.constant(0)
-        O = tf.identity(self.X)
-        I = tf.identity(self.X)
+        I = initialization.xavier_initializer(
+            shape=[self.n, self.h, self.w, self.k],
+            uniform=self.normal_initializer,
+            mask=None)
+        O = initialization.xavier_initializer(
+            shape=[self.n, self.h, self.w, self.k],
+            uniform=self.normal_initializer,
+            mask=None)
 
         if reduce_memory:
             print 'Warning: Using FF version of the model.'

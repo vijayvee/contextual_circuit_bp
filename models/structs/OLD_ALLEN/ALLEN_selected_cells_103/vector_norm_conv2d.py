@@ -1,4 +1,5 @@
 """2D convolutional model for Allen data."""
+"""2D convolutional model for Allen data."""
 
 layer_structure = [
     {
@@ -9,8 +10,14 @@ layer_structure = [
         'activation': ['selu'],
         'activation_target': ['post'],
         'dropout': [0.5],
-        'dropout_target': ['post'],
-        'normalization': ['contextual_vector_separable_random'],
+        'dropout_target': ['post']
+    },
+    {
+        'layers': ['pool'],
+        'weights': [None],
+        'names': ['pool1'],
+        'filter_size': [2],
+        'normalization': ['contextual_alt_learned_transition_learned_connectivity_vector_modulation'],
         'normalization_target': ['post'],
         'normalization_aux': {
             'timesteps': 5,
@@ -29,13 +36,23 @@ layer_structure = [
                 },
             }
         },
+    },
+    {
+        'layers': ['fc'],
+        'weights': [64],
+        'filter_size': [1],
+        'names': ['fc2'],
+        'flatten': [True],
+        'flatten_target': ['pre'],
+        'activation': ['selu'],
+        'activation_target': ['post']
     }
 ]
 
 output_structure = [
     {
-        'layers': ['sparse_pool'],
+        'layers': ['fc'],
         'weights': [103],  # Output size
-        'names': ['sp2'],
+        'names': ['fc3'],
     }
 ]
