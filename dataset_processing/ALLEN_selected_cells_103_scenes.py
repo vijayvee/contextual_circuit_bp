@@ -11,7 +11,7 @@ class data_processing(object):
         self.output_size = [103, 1]
         self.im_size = (304, 608, 1)
         self.model_input_image_size = [152, 304, 1]
-        self.meta = '/media/data_cifs/contextual_circuit/tf_records/ALLEN_selected_cells_103_scenes_meta.npy'
+        self.meta = 'media/data_cifs/contextual_circuit/tf_records/ALLEN_selected_cells_103_scenes_meta.npy'
         self.default_loss_function = 'pearson'
         self.score_metric = 'pearson'
         self.preprocess = ['resize']

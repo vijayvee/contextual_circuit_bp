@@ -18,7 +18,12 @@ layer_structure = [
 output_structure = [
     {
         'layers': ['sparse_pool'],
-        'weights': [103],  # Output size
+        'weights': ['OUTPUT_SIZE'],  # Output size
+        'aux': {
+            'h': 'H_PIX',
+            'w': 'W_PIX',
+            'k': 'SIGMA'
+        },
         'names': ['sp2'],
     }
 ]

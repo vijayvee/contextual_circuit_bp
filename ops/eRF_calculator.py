@@ -212,9 +212,8 @@ def test():
         network=vgg16.layer_structure,
         image=tf.zeros([1, 224, 224, 3]))
 
-    layer_idxs = [6, 7, 8, 9, 10]
-    layer_strings = ['pool_2', 'conv3_1', 'conv3_2', 'conv3_3', 'pool_3']
-
+    layer_idxs = [6, 7, 8, 9]
+    layer_strings = ['conv3_1', 'conv3_2', 'conv3_3', 'pool_3']
     for layer_idx, layer_string in zip(layer_idxs, layer_strings):
         # Derive appropriate filter sizes for a layer
         layer = {
@@ -234,6 +233,8 @@ def test():
             conv=layer,
             layer=layer_RF,
             fix_r_out=SSF_eRF)
+        print 'Layers: %s' % layer_string
+        print 'CRF: RF = %s; filter size = %s' % (layer_RF['r_i'], layer['kernel'])
         print 'near eCRF: RF = %s; filter size = %s' % (SSN_eRF, SSN)
         print 'far eCRF: RF = %s; filter size = %s' % (SSF_eRF, SSF)
         print '-' * 20
