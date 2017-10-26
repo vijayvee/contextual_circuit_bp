@@ -9,6 +9,8 @@ from models.layers.normalization_functions import contextual_alt_learned_transit
 from models.layers.normalization_functions import contextual_adjusted_recurrent
 from models.layers.normalization_functions import contextual_vector_separable
 from models.layers.normalization_functions import contextual_vector_separable_random
+from models.layers.normalization_functions import contextual_vector_separable_zero_vd
+from models.layers.normalization_functions import contextual_vector_separable_zero_zoneout
 
 
 class normalizations(object):
@@ -149,6 +151,36 @@ class normalizations(object):
         self.update_params(aux)
         self.set_RFs(layer=layer, eRF=eRF)
         contextual_layer = contextual_alt_learned_transition_learned_connectivity_scalar_modulation.ContextualCircuit(
+            X=x,
+            timesteps=self.timesteps,
+            lesions=self.lesions,
+            SRF=self.SRF,
+            SSN=self.SSN,
+            SSF=self.SSF,
+            strides=self.strides,
+            padding=self.padding)
+        return contextual_layer.build()
+
+    def contextual_vector_separable_zero_vd(self, x, layer, eRF, aux):
+        """Contextual model from paper with frozen U & eCRFs."""
+        self.update_params(aux)
+        self.set_RFs(layer=layer, eRF=eRF)
+        contextual_layer = contextual_vector_separable_zero_vd.ContextualCircuit(
+            X=x,
+            timesteps=self.timesteps,
+            lesions=self.lesions,
+            SRF=self.SRF,
+            SSN=self.SSN,
+            SSF=self.SSF,
+            strides=self.strides,
+            padding=self.padding)
+        return contextual_layer.build()
+
+    def contextual_vector_separable_zero_zoneout(self, x, layer, eRF, aux):
+        """Contextual model from paper with frozen U & eCRFs."""
+        self.update_params(aux)
+        self.set_RFs(layer=layer, eRF=eRF)
+        contextual_layer = contextual_vector_separable_zero_vd.ContextualCircuit(
             X=x,
             timesteps=self.timesteps,
             lesions=self.lesions,
