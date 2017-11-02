@@ -3,27 +3,24 @@
 layer_structure = [
     {
         'layers': ['conv'],
-        'weights': [64],
+        'weights': [32],
         'names': ['conv1_1'],
         'filter_size': [5],
         'activation': ['selu'],
         'activation_target': ['post'],
+    },
+    {
+        'layers': ['fc'],
+        'weights': [64],
+        'names': ['fc1'],
+        'flatten': [True],
+        'flatten_target': ['pre'],
         'dropout': [0.5],
         'dropout_target': ['post'],
-        'normalization': ['contextual_vector_separable_random'],
-        'normalization_target': ['post'],
-    }
-]
-
-output_structure = [
-    {
-        'layers': ['sparse_pool'],
-        'weights': ['OUTPUT_SIZE'],  # Output size
-        'aux': {
-            'h': 'H_PIX',
-            'w': 'W_PIX',
-            'k': '9.73340521816'
-        },
-        'names': ['sp2'],
+        'regularization_type': ['l2'],
+        'regularization_target': ['post'],
+        'regularization_strength': [1e-7],
+        'activation': ['selu'],
+        'activation_target': ['post']
     }
 ]

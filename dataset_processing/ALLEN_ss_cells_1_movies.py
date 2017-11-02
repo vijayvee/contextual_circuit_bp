@@ -8,9 +8,9 @@ class data_processing(object):
         """Init global variables for contextual circuit bp."""
         self.name = 'ALLEN_ss_cells_1_movies'
         self.config = Config()
-        self.output_size = [103, 1]
+        self.output_size = [1, 1]
         self.im_size = (304, 608, 1)
-        self.model_input_image_size = [354, 608, 1]
+        self.model_input_image_size = [152, 304, 1]
         self.meta = '/media/data_cifs/contextual_circuit/tf_records/ALLEN_ss_cells_1_movies_meta.npy'
         self.default_loss_function = 'pearson'
         self.score_metric = 'pearson'

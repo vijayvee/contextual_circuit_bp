@@ -380,7 +380,7 @@ def create_conv_tower(
                 weights=None,
                 activities=act,
                 aux=None,
-                layer_name=None,
+                layer_name=it_name,
                 it_dict=it_dict,
                 side='pre')
             self, act, layer_summary = dropout_op(
@@ -452,7 +452,7 @@ def create_conv_tower(
                 weights=None,
                 activities=act,
                 aux=None,
-                layer_name=None,
+                layer_name=it_name,
                 it_dict=it_dict,
                 side='post')
             self, act, layer_summary = flatten_op(

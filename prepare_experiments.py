@@ -1,13 +1,13 @@
 import os
 import json
 import argparse
+import config
 import numpy as np
 import pandas as pd
 import itertools as it
 from db import db
 from db import credentials
 from utils import logger
-from config import Config
 from experiments import experiments
 
 
@@ -47,7 +47,7 @@ def package_parameters(parameter_dict, log):
 
 def main(reset_process, initialize_db, experiment_name, remove=None):
     """Populate db with experiments to run."""
-    main_config = Config()
+    main_config = config.Config()
     log = logger.get(os.path.join(main_config.log_dir, 'prepare_experiments'))
     if reset_process:
         db.reset_in_process()

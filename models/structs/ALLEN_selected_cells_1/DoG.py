@@ -4,29 +4,21 @@ layer_structure = [
     {
         'layers': ['DoG'],
         'weights': [9],
-        'names': ['dog1'],
-        'filter_size': [5],
+        'names': ['dog1_1'],
+        'filter_size': [10],
         'activation': ['selu'],
-        'activation_target': ['post'],
-        'dropout': [0.5],
-        'dropout_target': ['post']
+        'activation_target': ['post']
     },
     {
         'layers': ['fc'],
         'weights': [64],
-        'filter_size': [1],
-        'names': ['fc2'],
+        'names': ['fc1'],
         'flatten': [True],
         'flatten_target': ['pre'],
-        'activation': ['selu'],
-        'activation_target': ['post']
-    },
-]
-
-output_structure = [
-    {
-        'layers': ['fc'],
-        'weights': [103],  # Output size
-        'names': ['fc3'],
+        'dropout': [0.5],
+        'dropout_target': ['post'],
+        'regularization_type': ['l2'],
+        'regularization_target': ['post'],
+        'regularization_strength': [1e-7]
     }
 ]
