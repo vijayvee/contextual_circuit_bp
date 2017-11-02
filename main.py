@@ -252,7 +252,9 @@ def main(
             train_op = loss_utils.optimizer_interpreter(
                 loss=train_loss,
                 lr=config.lr,
-                optimizer=config.optimizer)
+                optimizer=config.optimizer,
+                constraints=config.optimizer_constraints,
+                model=model)
             log.info('Built training loss function.')
 
             train_accuracy = eval_metrics.metric_interpreter(

@@ -5,7 +5,9 @@ from ops.eval_metrics import pearson_score
 def optimizer_interpreter(
         loss,
         lr,
-        optimizer):
+        optimizer,
+        model=None,
+        constraints=None):
     """Router for loss functions."""
     if optimizer == 'adam':
         return tf.train.AdamOptimizer(lr).minimize(loss)
@@ -15,6 +17,14 @@ def optimizer_interpreter(
         return momentum(loss=loss, lr=lr)
     elif optimizer == 'rmsprop':
         return tf.train.RMSPropOptimizer(lr).minimize(loss)
+    elif optimizer == 'hessian':
+        import ipdb;ipdb.set_trace()
+        var_constraints = {model[k]: v for k, v in constraints.iteritems()}
+        return tf.contrib.opt.ScipyOptimizerInterface(
+            loss,
+            options={'maxiter': 1000},
+            var_to_bounds=var_constraints,
+            method='fmin_tnc')
     else:
         raise RuntimeError('Cannot understand your loss function.')
 
