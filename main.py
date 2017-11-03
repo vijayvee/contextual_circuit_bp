@@ -109,6 +109,7 @@ def main(
             'python prepare_experiments.py --experiment=%s' % \
             exps[0].values()[0]
         return
+
     if experiment_name is None:
         print 'No experiment specified. Pulling one out of the DB.'
         experiment_name = db.get_experiment_name()
@@ -187,6 +188,7 @@ def main(
 
     # Load model specification
     struct_name = config.model_struct.split(os.path.sep)[-1]
+    import ipdb;ipdb.set_trace()
     try:
         model_dict = py_utils.import_module(
             dataset=struct_name,

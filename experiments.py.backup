@@ -313,11 +313,11 @@ class experiments():
         return exp
 
 
-    def BMGNUitEbvjPUYqY(self):
-        """BMGNUitEbvjPUYqY multi-experiment creation."""
-        model_folder = 'BMGNUitEbvjPUYqY'
+    def GXQsEIlMiBzOrqGd(self):
+        """VISp_Cux2-CreERT2_175_7900_7100_0 multi-experiment creation."""
+        model_folder = 'VISp_Cux2-CreERT2_175_7900_7100_0'
         exp = {
-            'experiment_name': ['BMGNUitEbvjPUYqY'],
+            'experiment_name': [VISp_Cux2-CreERT2_175_7900_7100_0],
             'lr': [1e-3],
             'loss_function': ['l2'],
             'optimizer': ['adam'],
@@ -328,62 +328,10 @@ class experiments():
                 os.path.join(model_folder, 'sep_conv2d'),
                 os.path.join(model_folder, 'DoG'),
             ],
-            'dataset': ['BMGNUitEbvjPUYqY']
+            'dataset': ['VISp_Cux2-CreERT2_175_7900_7100_0']
         }
         exp = self.add_globals(exp)  # Add globals to the experiment'
-        exp['data_augmentations'] = ['resize']
-        exp['epochs'] = 100
-        exp['validation_iters'] = 500
-        exp['num_validation_evals'] = 100
-        exp['batch_size'] = 32  # Train/val batch size.
-        return exp
-
-
-    def dvzOIhvOFrFpCnmJ(self):
-        """dvzOIhvOFrFpCnmJ multi-experiment creation."""
-        model_folder = 'dvzOIhvOFrFpCnmJ'
-        exp = {
-            'experiment_name': ['dvzOIhvOFrFpCnmJ'],
-            'lr': [1e-3],
-            'loss_function': ['l2'],
-            'optimizer': ['adam'],
-            'regularization_type': ['l2'],  # [None, 'l1', 'l2'],
-            'regularization_strength': [1e-7],
-            'model_struct': [
-                os.path.join(model_folder, 'conv2d'),
-                os.path.join(model_folder, 'sep_conv2d'),
-                os.path.join(model_folder, 'DoG'),
-            ],
-            'dataset': ['dvzOIhvOFrFpCnmJ']
-        }
-        exp = self.add_globals(exp)  # Add globals to the experiment'
-        exp['data_augmentations'] = ['resize']
-        exp['epochs'] = 100
-        exp['validation_iters'] = 500
-        exp['num_validation_evals'] = 100
-        exp['batch_size'] = 32  # Train/val batch size.
-        return exp
-
-
-    def fCLHeEjFuxnvDXjA(self):
-        """fCLHeEjFuxnvDXjA multi-experiment creation."""
-        model_folder = 'fCLHeEjFuxnvDXjA'
-        exp = {
-            'experiment_name': ['fCLHeEjFuxnvDXjA'],
-            'lr': [1e-3],
-            'loss_function': ['l2'],
-            'optimizer': ['adam'],
-            'regularization_type': ['l2'],  # [None, 'l1', 'l2'],
-            'regularization_strength': [1e-7],
-            'model_struct': [
-                os.path.join(model_folder, 'conv2d'),
-                os.path.join(model_folder, 'sep_conv2d'),
-                os.path.join(model_folder, 'DoG'),
-            ],
-            'dataset': ['fCLHeEjFuxnvDXjA']
-        }
-        exp = self.add_globals(exp)  # Add globals to the experiment'
-        exp['data_augmentations'] = ['resize']
+        exp['data_augmentations'] = [['resize']]
         exp['epochs'] = 100
         exp['validation_iters'] = 500
         exp['num_validation_evals'] = 100
