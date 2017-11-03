@@ -312,12 +312,11 @@ class experiments():
         exp['batch_size'] = 32  # Train/val batch size.
         return exp
 
-
-    def BMGNUitEbvjPUYqY(self):
-        """BMGNUitEbvjPUYqY multi-experiment creation."""
-        model_folder = 'BMGNUitEbvjPUYqY'
+    def MULTIALLEN_uIpnlvOOHpRSiuVN(self):
+        """MULTIALLEN_uIpnlvOOHpRSiuVN multi-experiment creation."""
+        model_folder = 'MULTIALLEN_uIpnlvOOHpRSiuVN'
         exp = {
-            'experiment_name': ['BMGNUitEbvjPUYqY'],
+            'experiment_name': ['MULTIALLEN_uIpnlvOOHpRSiuVN'],
             'lr': [1e-3],
             'loss_function': ['l2'],
             'optimizer': ['adam'],
@@ -328,22 +327,21 @@ class experiments():
                 os.path.join(model_folder, 'sep_conv2d'),
                 os.path.join(model_folder, 'DoG'),
             ],
-            'dataset': ['BMGNUitEbvjPUYqY']
+            'dataset': ['MULTIALLEN_uIpnlvOOHpRSiuVN']
         }
         exp = self.add_globals(exp)  # Add globals to the experiment'
         exp['data_augmentations'] = ['resize']
-        exp['epochs'] = 100
+        exp['epochs'] = 50
         exp['validation_iters'] = 500
         exp['num_validation_evals'] = 100
-        exp['batch_size'] = 32  # Train/val batch size.
+        exp['batch_size'] = 16  # Train/val batch size.
         return exp
 
-
-    def dvzOIhvOFrFpCnmJ(self):
-        """dvzOIhvOFrFpCnmJ multi-experiment creation."""
-        model_folder = 'dvzOIhvOFrFpCnmJ'
+    def MULTIALLEN_ivyUeddiplGMfWuq(self):
+        """MULTIALLEN_ivyUeddiplGMfWuq multi-experiment creation."""
+        model_folder = 'MULTIALLEN_ivyUeddiplGMfWuq'
         exp = {
-            'experiment_name': ['dvzOIhvOFrFpCnmJ'],
+            'experiment_name': ['MULTIALLEN_ivyUeddiplGMfWuq'],
             'lr': [1e-3],
             'loss_function': ['l2'],
             'optimizer': ['adam'],
@@ -354,22 +352,21 @@ class experiments():
                 os.path.join(model_folder, 'sep_conv2d'),
                 os.path.join(model_folder, 'DoG'),
             ],
-            'dataset': ['dvzOIhvOFrFpCnmJ']
+            'dataset': ['MULTIALLEN_ivyUeddiplGMfWuq']
         }
         exp = self.add_globals(exp)  # Add globals to the experiment'
         exp['data_augmentations'] = ['resize']
-        exp['epochs'] = 100
+        exp['epochs'] = 50
         exp['validation_iters'] = 500
         exp['num_validation_evals'] = 100
-        exp['batch_size'] = 32  # Train/val batch size.
+        exp['batch_size'] = 16  # Train/val batch size.
         return exp
 
-
-    def fCLHeEjFuxnvDXjA(self):
-        """fCLHeEjFuxnvDXjA multi-experiment creation."""
-        model_folder = 'fCLHeEjFuxnvDXjA'
+    def MULTIALLEN_TepFDdvzdwRCMADt(self):
+        """MULTIALLEN_TepFDdvzdwRCMADt multi-experiment creation."""
+        model_folder = 'MULTIALLEN_TepFDdvzdwRCMADt'
         exp = {
-            'experiment_name': ['fCLHeEjFuxnvDXjA'],
+            'experiment_name': ['MULTIALLEN_TepFDdvzdwRCMADt'],
             'lr': [1e-3],
             'loss_function': ['l2'],
             'optimizer': ['adam'],
@@ -380,13 +377,12 @@ class experiments():
                 os.path.join(model_folder, 'sep_conv2d'),
                 os.path.join(model_folder, 'DoG'),
             ],
-            'dataset': ['fCLHeEjFuxnvDXjA']
+            'dataset': ['MULTIALLEN_TepFDdvzdwRCMADt']
         }
         exp = self.add_globals(exp)  # Add globals to the experiment'
         exp['data_augmentations'] = ['resize']
-        exp['epochs'] = 100
+        exp['epochs'] = 50
         exp['validation_iters'] = 500
         exp['num_validation_evals'] = 100
-        exp['batch_size'] = 32  # Train/val batch size.
+        exp['batch_size'] = 16  # Train/val batch size.
         return exp
-

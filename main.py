@@ -188,7 +188,6 @@ def main(
 
     # Load model specification
     struct_name = config.model_struct.split(os.path.sep)[-1]
-    import ipdb;ipdb.set_trace()
     try:
         model_dict = py_utils.import_module(
             dataset=struct_name,

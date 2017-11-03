@@ -1,19 +1,13 @@
-"""2D sep convolutional model for Allen data."""
+"""2D convolutional model for Allen data."""
 
 layer_structure = [
     {
         'layers': ['conv'],
         'weights': [32],
-        'names': ['sep_conv1_1'],
-        'filter_size': [5],
+        'names': ['conv1_1'],
+        'filter_size': [10],
         'activation': ['selu'],
         'activation_target': ['post'],
-    },
-    {
-        'layers': ['pool'],
-        'weights': [None],
-        'names': ['pool2'],
-        'filter_size': [None]
     },
     {
         'layers': ['fc'],

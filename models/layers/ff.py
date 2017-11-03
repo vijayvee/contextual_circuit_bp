@@ -398,6 +398,7 @@ def dog_layer(
         output += [activities]
         dog_weights += [weight_vec]
     self.var_dict[('%s_weights' % name, 0)] = dog_weights
+    flat_bottom = tf.reshape(bottom, [rows, cols])
     return self, tf.concat(axis=1, values=output)
 
 
