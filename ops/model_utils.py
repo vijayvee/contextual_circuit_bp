@@ -475,3 +475,4 @@ def create_conv_tower(
             setattr(self, it_name, act)
             print 'Added layer: %s' % it_name
     return self, act, layer_summary
+

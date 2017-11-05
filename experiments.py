@@ -32,6 +32,7 @@ class experiments():
             'early_stop': False,  # Stop training if the loss stops improving.
             'save_weights': False,  # Save model weights on validation evals.
             'optimizer_constraints': None  # A {var name: bound} dictionary.
+            'normalize_labels': None
         }
 
     def add_globals(self, exp):
@@ -285,6 +286,7 @@ class experiments():
         exp['validation_iters'] = 500
         exp['num_validation_evals'] = 100
         exp['batch_size'] = 16  # Train/val batch size.
+        exp['normalize_labels'] = 'zscore'
         return exp
 
     def ALLEN_ss_cells_1_movies(self):

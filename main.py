@@ -86,10 +86,15 @@ def get_data_pointers(dataset, base_dir, cv, log):
         else:
             log.info('Loading means from npz for cv: %s.' % cv)
             data_means = np.load(alt_data_pointer)
-            data_means = data_means[data_means.keys()[0]].item()['image']
+            data_means_vol = data_means[data_means.keys()[0]].item()
+            data_means_image, data_means_label = None, None
+            if 'image' in data_means_vol.keys():
+                data_means_image = data_means_vol['image']
+            if 'label' in data_means_vol.keys():
+                data_means_label = data_means_vol['label'] 
     else:
         data_means = np.load(data_means)
-    return data_pointer, data_means
+    return data_pointer, data_means_image, data_means_label
 
 
 def main(
@@ -129,13 +134,13 @@ def main(
         model_dir=config.dataset_info,
         dataset=config.dataset)
     dataset_module = dataset_module.data_processing()  # hardcoded class name
-    train_data, train_means = get_data_pointers(
+    train_data, train_means_image, train_means_label = get_data_pointers(
         dataset=config.dataset,
         base_dir=config.tf_records,
         cv=dataset_module.folds.keys()[1],  # TODO: SEARCH FOR INDEX.
         log=log
     )
-    val_data, val_means = get_data_pointers(
+    val_data, val_means_image, val_means_label = get_data_pointers(
         dataset=config.dataset,
         base_dir=config.tf_records,
         cv=dataset_module.folds.keys()[0],
@@ -207,7 +212,15 @@ def main(
     # Prepare model on GPU
     with tf.device(gpu_device):
         with tf.variable_scope('cnn') as scope:
-
+            # Normalize labels if needed
+            if 'normalize_labels' in exp_params.keys():
+                if exp_params['normalize_labels'] == 'zscore':
+                    train_labels -= train_means_label['mean']
+                    train_labels /= train_means_label['std']
+                    log.info('Z-scoring labels.')
+                elif exp_params['normalize_labels'] == 'mean':
+                    train_labels -= train_means_label['mean']
+                    log.info('Mean-centering labels.')
             # Training model
             if len(dataset_module.output_size) > 1:
                 log.warning(
@@ -222,7 +235,7 @@ def main(
             else:
                 output_structure = None
             model = model_utils.model_class(
-                mean=train_means,
+                mean=train_means_image,
                 training=True,
                 output_size=dataset_module.output_size)
             train_scores, model_summary = model.build(
@@ -271,7 +284,7 @@ def main(
             # Validation model
             scope.reuse_variables()
             val_model = model_utils.model_class(
-                mean=train_means,  # Normalize with train data
+                mean=train_means_image,  # Normalize with train data
                 training=True,
                 output_size=dataset_module.output_size)
             val_scores, _ = val_model.build(  # Ignore summary
