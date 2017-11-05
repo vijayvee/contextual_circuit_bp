@@ -18,7 +18,6 @@ def optimizer_interpreter(
     elif optimizer == 'rmsprop':
         return tf.train.RMSPropOptimizer(lr).minimize(loss)
     elif optimizer == 'hessian':
-        import ipdb;ipdb.set_trace()
         var_constraints = {model[k]: v for k, v in constraints.iteritems()}
         return tf.contrib.opt.ScipyOptimizerInterface(
             loss,

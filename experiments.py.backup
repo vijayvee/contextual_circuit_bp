@@ -267,11 +267,11 @@ class experiments():
         model_folder = 'ALLEN_selected_cells_1'
         exp = {
             'experiment_name': [model_folder],
-            'lr': [1e-3],
-            'loss_function': ['l2'],
+            'lr': [3e-4],
+            'loss_function': ['pearson'],
             'optimizer': ['adam'],
-            'regularization_type': ['l2'],  # [None, 'l1', 'l2'],
-            'regularization_strength': [1e-7],
+            # 'regularization_type': ['l2'],  # [None, 'l1', 'l2'],
+            # 'regularization_strength': [1e-7],
             'model_struct': [
                 os.path.join(model_folder, 'conv2d'),
                 os.path.join(model_folder, 'sep_conv2d'),
@@ -281,10 +281,10 @@ class experiments():
         }
         exp = self.add_globals(exp)  # Add globals to the experiment'
         exp['data_augmentations'] = [['resize']]
-        exp['epochs'] = 100
+        exp['epochs'] = 50
         exp['validation_iters'] = 500
         exp['num_validation_evals'] = 100
-        exp['batch_size'] = 32  # Train/val batch size.
+        exp['batch_size'] = 16  # Train/val batch size.
         return exp
 
     def ALLEN_ss_cells_1_movies(self):
@@ -303,32 +303,6 @@ class experiments():
                 os.path.join(model_folder, 'DoG'),
             ],
             'dataset': ['ALLEN_ss_cells_1_movies']
-        }
-        exp = self.add_globals(exp)  # Add globals to the experiment'
-        exp['data_augmentations'] = [['resize']]
-        exp['epochs'] = 100
-        exp['validation_iters'] = 500
-        exp['num_validation_evals'] = 100
-        exp['batch_size'] = 32  # Train/val batch size.
-        return exp
-
-
-    def GXQsEIlMiBzOrqGd(self):
-        """VISp_Cux2-CreERT2_175_7900_7100_0 multi-experiment creation."""
-        model_folder = 'VISp_Cux2-CreERT2_175_7900_7100_0'
-        exp = {
-            'experiment_name': [VISp_Cux2-CreERT2_175_7900_7100_0],
-            'lr': [1e-3],
-            'loss_function': ['l2'],
-            'optimizer': ['adam'],
-            'regularization_type': ['l2'],  # [None, 'l1', 'l2'],
-            'regularization_strength': [1e-7],
-            'model_struct': [
-                os.path.join(model_folder, 'conv2d'),
-                os.path.join(model_folder, 'sep_conv2d'),
-                os.path.join(model_folder, 'DoG'),
-            ],
-            'dataset': ['VISp_Cux2-CreERT2_175_7900_7100_0']
         }
         exp = self.add_globals(exp)  # Add globals to the experiment'
         exp['data_augmentations'] = [['resize']]

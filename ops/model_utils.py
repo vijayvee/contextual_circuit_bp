@@ -35,6 +35,7 @@ class model_class(object):
         self.output_size = output_size
         self.share_vars = ['training', 'output_size']
         self.layer_vars = {k: self[k] for k in self.share_vars}
+        self.dict_norm_key = 'zscore'
 
     def build(
             self,
@@ -47,9 +48,17 @@ class model_class(object):
         """Main model creation method."""
         if self.mean is not None:
             if isinstance(self.mean, dict):
-                data /= (
-                    np.expand_dims(
-                        self.mean['max'], axis=0)).astype(np.float32)
+                if self.dict_norm_key == 'mean':
+                    data -= self.mean['mean']
+                elif self.dict_norm_key == 'max':
+                    data /= (
+                        np.expand_dims(
+                            self.mean['max'], axis=0)).astype(np.float32)
+                elif self.dict_norm_key == 'zscore':
+                    data -= self.mean['mean']
+                    data /= self.mean['std']
+                else:
+                    raise NotImplementedError
             else:
                 # If there's a mean shape mismatch default to channel means
                 test_shape = [int(x) for x in data.get_shape()]

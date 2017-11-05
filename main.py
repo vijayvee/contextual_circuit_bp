@@ -271,7 +271,7 @@ def main(
             # Validation model
             scope.reuse_variables()
             val_model = model_utils.model_class(
-                mean=val_means,
+                mean=train_means,  # Normalize with train data
                 training=True,
                 output_size=dataset_module.output_size)
             val_scores, _ = val_model.build(  # Ignore summary
