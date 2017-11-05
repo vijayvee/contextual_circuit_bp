@@ -91,6 +91,7 @@ class db(object):
             'hp_optim': ['experiments', 'hp_combo_history'],
             'hp_multiple': ['experiments', 'hp_combo_history'],
             'hp_current_iteration': ['experiments', 'hp_combo_history'],
+            'normalize_labels': ['experiments', 'hp_combo_history'],
             'experiment_iteration': ['experiments', 'hp_combo_history']
         }
 
@@ -173,7 +174,8 @@ class db(object):
             hp_optim,
             hp_multiple,
             hp_current_iteration,
-            experiment_iteration
+            experiment_iteration,
+            normalize_labels
             )
             VALUES
             (
@@ -202,7 +204,8 @@ class db(object):
             %(hp_optim)s,
             %(hp_multiple)s,
             %(hp_current_iteration)s,
-            %(experiment_iteration)s
+            %(experiment_iteration)s,
+            %(normalize_labels)s
             )
             """,
             namedict)
@@ -533,3 +536,4 @@ if __name__ == '__main__':
         help='Recreate your database.')
     args = parser.parse_args()
     main(**vars(args))
+

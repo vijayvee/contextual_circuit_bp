@@ -35,7 +35,7 @@ class model_class(object):
         self.output_size = output_size
         self.share_vars = ['training', 'output_size']
         self.layer_vars = {k: self[k] for k in self.share_vars}
-        self.dict_norm_key = 'zscore'
+        self.dict_norm_key = 'mean'
 
     def build(
             self,
