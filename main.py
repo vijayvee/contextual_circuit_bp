@@ -29,7 +29,6 @@ def print_model_architecture(model_summary):
 def add_to_config(d, config):
     """Add attributes to config class."""
     for k, v in d.iteritems():
-        print v
         if isinstance(v, list) and len(v) == 1:
             v = v[0]
         setattr(config, k, v)

@@ -21,13 +21,13 @@ layer_structure = [
         'names': ['fc1'],
         'flatten': [True],
         'flatten_target': ['pre'],
-        # 'dropout': [0.5],
-        # 'dropout_target': ['post'],
+        'dropout': [0.5],
+        'dropout_target': ['post'],
         'activation': ['selu'],
         'activation_target': ['post'],
         'regularization_type': ['l2'],
         'regularization_target': ['post'],
-        'regularization_strength': [1e-7]
+        'regularization_strength': [5e-7]
     }
 ]
 
@@ -38,7 +38,7 @@ output_structure = [
         'names': ['fc2'],
         'regularization_type': ['l2'],
         'regularization_target': ['post'],
-        'regularization_strength': [1e-7]
+        'regularization_strength': [5e-7]
     }
 ]
 

@@ -8,4 +8,6 @@ dist/
 config.py
 *.csv
 auto_generated*
+dataset_processing/MULTIALLEN*
+models/structs/MULTIALLEN_*
 
