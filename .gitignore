@@ -1,4 +1,5 @@
 *.pyc
+db_dumps/
 db/credentials.py
 # ALLEN_*
 build/
@@ -8,4 +9,7 @@ dist/
 config.py
 *.csv
 auto_generated*
+dataset_processing/MULTIALLEN*
+models/structs/MULTIALLEN_*
+tests/ALLEN_files
 

@@ -10,6 +10,7 @@ def int64_feature(values):
         values = [values]
     return tf.train.Feature(int64_list=tf.train.Int64List(value=values))
 
+
 def float_feature(values):
     if not isinstance(values, (tuple, list)):
         values = [values]
@@ -25,4 +26,3 @@ def fixed_len_feature(length=[], dtype='int64'):
         return tf.FixedLenFeature(length, tf.float32)
     else:
         raise RuntimeError('Cannot understand the fixed_len_feature dtype.')
-

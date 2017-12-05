@@ -47,6 +47,40 @@ class ff(object):
             name=name)
         return context, act
 
+    def dog_conv(
+            self,
+            context,
+            act,
+            in_channels,
+            out_channels,
+            filter_size,
+            name,
+            it_dict):
+        """Add a Difference of Gaussians layer."""
+        context, act = dog_conv_layer(
+            self=context,
+            bottom=act,
+            layer_weights=out_channels,
+            name=name)
+        return context, act
+
+    def gabor_conv(
+            self,
+            context,
+            act,
+            in_channels,
+            out_channels,
+            filter_size,
+            name,
+            it_dict):
+        """Add a Difference of Gaussians layer."""
+        context, act = gabor_conv_layer(
+            self=context,
+            bottom=act,
+            layer_weights=out_channels,
+            name=name)
+        return context, act
+
     def conv(
             self,
             context,
@@ -398,6 +432,7 @@ def dog_layer(
         output += [activities]
         dog_weights += [weight_vec]
     self.var_dict[('%s_weights' % name, 0)] = dog_weights
+    flat_bottom = tf.reshape(bottom, [rows, cols])
     return self, tf.concat(axis=1, values=output)
 
 
@@ -463,6 +498,54 @@ def conv_layer(
         stride=[1, 1, 1, 1],
         padding='SAME'):
     """2D convolutional layer."""
+    with tf.variable_scope(name):
+        if in_channels is None:
+            in_channels = int(bottom.get_shape()[-1])
+        self, filt, conv_biases = get_conv_var(
+            self=self,
+            filter_size=filter_size,
+            in_channels=in_channels,
+            out_channels=out_channels,
+            name=name)
+        conv = tf.nn.conv2d(bottom, filt, stride, padding=padding)
+        bias = tf.nn.bias_add(conv, conv_biases)
+        return self, bias
+
+
+def dog_conv_layer(
+        self,
+        bottom,
+        out_channels,
+        name,
+        in_channels=None,
+        filter_size=3,
+        stride=[1, 1, 1, 1],
+        padding='SAME'):
+    """2D convolutional layer. NOT IMPLEMENTED."""
+    with tf.variable_scope(name):
+        if in_channels is None:
+            in_channels = int(bottom.get_shape()[-1])
+        self, filt, conv_biases = get_conv_var(
+            self=self,
+            filter_size=filter_size,
+            in_channels=in_channels,
+            out_channels=out_channels,
+            name=name)
+        conv = tf.nn.conv2d(bottom, filt, stride, padding=padding)
+        bias = tf.nn.bias_add(conv, conv_biases)
+        return self, bias
+
+
+def gabor_conv_layer(
+        self,
+        bottom,
+        out_channels,
+        name,
+        in_channels=None,
+        filter_size=3,
+        stride=[1, 1, 1, 1],
+        padding='SAME'):
+    """2D convolutional layer. NOT IMPLEMENTED."""
     with tf.variable_scope(name):
         if in_channels is None:
             in_channels = int(bottom.get_shape()[-1])
@@ -772,10 +855,18 @@ def get_var(
                 initializer=value,
                 trainable=True)
     else:
-        var = tf.constant(
-            value,
-            dtype=tf.float32,
-            name=var_name)
+        # TODO: resolve this. It's the same as above. Maybe just trainable conditional.
+        if type(value) is list:
+            var = tf.get_variable(
+                name=var_name,
+                shape=value[0],
+                initializer=value[1],
+                trainable=False)
+        else:
+            var = tf.constant(
+                value,
+                dtype=tf.float32,
+                name=var_name)
     self.var_dict[(name, idx)] = var
     return self, var
 

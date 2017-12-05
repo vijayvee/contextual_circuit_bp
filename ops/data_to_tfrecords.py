@@ -78,3 +78,4 @@ def data_to_tfrecords(
             np.save('%s_%s_means' % (ds_name, fk), means / float(image_count))
             print 'Finished %s with %s images (dropped %s)' % (
                 it_ds_name, image_count, len(fv) - image_count)
+

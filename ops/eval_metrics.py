@@ -155,6 +155,13 @@ def pearson_score(pred, labels, eps_1=1e-4, eps_2=1e-12):
     """Pearson loss function."""
     x_shape = [int(x) for x in pred.get_shape()]
     y_shape = [int(x) for x in labels.get_shape()]
+    if x_shape[-1] == 1 and len(x_shape) == 2:
+        # If calculating score across exemplars
+        pred = tf.squeeze(pred)
+        x_shape = [x_shape[0]]
+        labels = tf.squeeze(labels)
+        y_shape = [y_shape[0]]
+
     if len(x_shape) > 2:
         # Reshape tensors
         x1_flat = tf.contrib.layers.flatten(pred)

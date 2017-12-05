@@ -35,6 +35,7 @@ class model_class(object):
         self.output_size = output_size
         self.share_vars = ['training', 'output_size']
         self.layer_vars = {k: self[k] for k in self.share_vars}
+        self.dict_norm_key = 'mean'
 
     def build(
             self,
@@ -47,9 +48,17 @@ class model_class(object):
         """Main model creation method."""
         if self.mean is not None:
             if isinstance(self.mean, dict):
-                data /= (
-                    np.expand_dims(
-                        self.mean['max'], axis=0)).astype(np.float32)
+                if self.dict_norm_key == 'mean':
+                    data -= self.mean['mean']
+                elif self.dict_norm_key == 'max':
+                    data /= (
+                        np.expand_dims(
+                            self.mean['max'], axis=0)).astype(np.float32)
+                elif self.dict_norm_key == 'zscore':
+                    data -= self.mean['mean']
+                    data /= self.mean['std']
+                else:
+                    raise NotImplementedError
             else:
                 # If there's a mean shape mismatch default to channel means
                 test_shape = [int(x) for x in data.get_shape()]
@@ -261,7 +270,8 @@ def ff_op(self, it_dict, act, layer_summary, ff_mod):
                 layer_summary=layer_summary,
                 op_name=ff_attr)
         else:
-            print 'Skipping %s operation in ff_op.' % ff_attr
+            raise NotImplementedError
+            # print 'Skipping %s operation in ff_op.' % ff_attr
     return self, act, layer_summary
 
 
@@ -465,3 +475,4 @@ def create_conv_tower(
             setattr(self, it_name, act)
             print 'Added layer: %s' % it_name
     return self, act, layer_summary
+

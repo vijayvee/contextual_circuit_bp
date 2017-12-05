@@ -91,7 +91,6 @@ class db(object):
             'hp_optim': ['experiments', 'hp_combo_history'],
             'hp_multiple': ['experiments', 'hp_combo_history'],
             'hp_current_iteration': ['experiments', 'hp_combo_history'],
-            'normalize_labels': ['experiments', 'hp_combo_history'],
             'experiment_iteration': ['experiments', 'hp_combo_history']
         }
 
@@ -174,8 +173,7 @@ class db(object):
             hp_optim,
             hp_multiple,
             hp_current_iteration,
-            experiment_iteration,
-            normalize_labels
+            experiment_iteration
             )
             VALUES
             (
@@ -204,8 +202,7 @@ class db(object):
             %(hp_optim)s,
             %(hp_multiple)s,
             %(hp_current_iteration)s,
-            %(experiment_iteration)s,
-            %(normalize_labels)s
+            %(experiment_iteration)s
             )
             """,
             namedict)
@@ -273,13 +270,14 @@ class db(object):
                 rand_string,
                 )
         )
+        get_id = self.cur.fetchone()['experiment_id']
         self.cur.execute(
             """
             SELECT * FROM experiments
             WHERE _id=%(_id)s
             """,
             {
-                '_id': self.cur.fetchone()['experiment_id']
+                '_id': get_id
             }
         )
         if self.status_message:
@@ -405,7 +403,6 @@ def get_parameters(experiment_name, log, random=False):
         param_dict = db_conn.get_parameters_and_reserve(
             experiment_name=experiment_name,
             random=random)
-        log.info('Using parameters: %s' % json.dumps(param_dict, indent=4))
         if param_dict is not None:
             experiment_id = param_dict['_id']
             # db_conn.update_in_process(
@@ -413,6 +410,7 @@ def get_parameters(experiment_name, log, random=False):
             #     experiment_name=experiment_name)
         else:
             experiment_id = None
+        log.info('Using parameters: %s' % json.dumps(param_dict, indent=4))
     if param_dict is None:
         raise RuntimeError('This experiment is complete.')
     return param_dict, experiment_id
@@ -475,27 +473,49 @@ def get_performance(experiment_name):
     return perf
 
 
-def query_hp_hist(exp_params, eval_on='validation_loss', init_top=1e10):
+def query_hp_hist(exp_params, eval_on='validation_loss'):
     """Query an experiment's history of hyperparameters and performance."""
     config = credentials.postgresql_connection()
     domain_param_map = hp_opt_utils.hp_opt_dict()
     experiment_name = exp_params['experiment_name']
     with db(config) as db_conn:
-        perf = db_conn.get_performance(experiment_name=experiment_name)
-        if len(perf):
-            # Sort performance by time elapsed
-            times = [x['time_elapsed'] for x in perf]
-            time_idx = np.argsort(times)
-            perf = [perf[idx][eval_on] for idx in time_idx]
-
-            # Sort hp parameters by history
-            times = [x['experiment_iteration'] for x in exp_params]
-            time_idx = np.argsort(times)
-            hp_history = [exp_params[idx] for idx in time_idx]
+        perf_all = db_conn.get_performance(experiment_name=experiment_name)
+        if len(perf_all) == 0:
+            perf = []
+            hp_hist = []
         else:
-            # Initialize perf and hp_history to empty lists
-            perf, hp_history = [], []
-    return perf, hp_history
+            # Sort performance by time elapsed
+            times = [x['time_elapsed'] for x in perf_all]
+            time_idx = np.argsort(times)
+            perf = [perf_all[idx][eval_on] for idx in time_idx]
+
+            hp_hist = []
+            perf = []
+
+            for i in time_idx:
+                hp_history = {}
+                for k, v in domain_param_map.iteritems():
+                    if exp_params[k] is not None:  # If searching this domain.
+                        hp_history[v] = perf_all[i][v]
+                perf.append(perf_all[i][eval_on])
+                hp_hist.append(hp_history)
+    return perf, hp_hist
+
+
+def update_hp_opt_params(proc_exp_params, to_opt):
+
+    config = credentials.postgresql_connection()
+    proc_id = proc_exp_params['_id']
+    with db(config) as db_conn:
+        for i in range(len(to_opt)):
+            var = to_opt[i]
+            db_conn.cur.execute(
+                """
+                UPDATE experiments
+                SET %s=%s
+                WHERE _id=%s"""
+                % (var,proc_exp_params[var],proc_id)
+                )
 
 
 def main(
@@ -523,4 +543,3 @@ if __name__ == '__main__':
         help='Recreate your database.')
     args = parser.parse_args()
     main(**vars(args))
-
