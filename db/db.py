@@ -475,26 +475,34 @@ def get_performance(experiment_name):
     return perf
 
 
-def query_hp_hist(exp_params, eval_on='validation_loss', init_top=1e10):
+def query_hp_hist(exp_params, it_perf, eval_on='validation_loss'):
     """Query an experiment's history of hyperparameters and performance."""
     config = credentials.postgresql_connection()
     experiment_name = exp_params['experiment_name']
     with db(config) as db_conn:
-        perf = db_conn.get_performance(experiment_name=experiment_name)
-        if len(perf):
-            # Sort performance by time elapsed
-            times = [x['time_elapsed'] for x in perf]
-            time_idx = np.argsort(times)
-            perf = [perf[idx][eval_on] for idx in time_idx]
+        past_perf = db_conn.get_performance(experiment_name=experiment_name)
 
-            # Sort hp parameters by history
-            times = [x['experiment_iteration'] for x in exp_params]
-            time_idx = np.argsort(times)
-            hp_history = [exp_params[idx] for idx in time_idx]
-        else:
-            # Initialize perf and hp_history to empty lists
-            perf, hp_history = [], []
+        # Sort performance by time elapsed
+        times = [x['time_elapsed'] for x in past_perf]
+        time_idx = np.argsort(times)
+        past_perf = [past_perf[idx][eval_on] for idx in time_idx]
+        import ipdb;ipdb.set_trace()
+        perf = past_perf + it_perf
+
+        # Sort hp parameters by history
+        times = [x['experiment_iteration'] for x in exp_params]
+        time_idx = np.argsort(times)
+        hp_history = [exp_params[idx] for idx in time_idx]
     return perf, hp_history
+
+
+def update_online_experiment(exp_combos):
+    """Add a new hyperparameter combination to the experiment table."""
+    config = credentials.postgresql_connection()
+    with db(config) as db_conn:
+        db.statusmessage = True
+        status = db_conn.populate_db(exp_combos)
+    return status
 
 
 def main(
@@ -522,4 +530,3 @@ if __name__ == '__main__':
         help='Recreate your database.')
     args = parser.parse_args()
     main(**vars(args))
-

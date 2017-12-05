@@ -27,24 +27,30 @@ def image_augmentations(
     if data_augmentations is not None:
         if 'random_crop' in data_augmentations and im_size_check:
             image = tf.random_crop(image, model_input_image_size)
+            print 'Applying random crop.'
         elif 'resize' in data_augmentations and im_size_check:
             if len(model_input_image_size) > 2:
                 model_input_image_size = model_input_image_size[:2]
             image = tf.image.resize_images(
                 tf.expand_dims(image, axis=0), model_input_image_size)
             image = tf.squeeze(image, axis=0)
+            print 'Applying resize.'
         else:
             pass
             # image = tf.image.resize_image_with_crop_or_pad(
             #     image, model_input_image_size[0], model_input_image_size[1])
         if 'left_right' in data_augmentations:
             image = tf.image.random_flip_left_right(image)
+            print 'Applying random flip left-right.'
         if 'up_down' in data_augmentations:
             image = tf.image.random_flip_up_down(image)
+            print 'Applying random flip up-down.'
         if 'random_contrast' in data_augmentations:
             image = tf.image.random_contrast(image, lower=0.2, upper=1.8)
+            print 'Applying random contrast.'
         if 'random_brightness' in data_augmentations:
             image = tf.image.random_brightness(image, max_delta=63.)
+            print 'Applying random brightness.'
     else:
         image = tf.image.resize_image_with_crop_or_pad(
             image, model_input_image_size[0], model_input_image_size[1])

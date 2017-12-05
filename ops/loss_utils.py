@@ -43,33 +43,47 @@ def loss_interpreter(
     if loss_type is None:
         loss_type = dataset_module.default_loss_function
     if loss_type == 'cce':
+        logits = tf.cast(logits, tf.float32)
+        labels = tf.cast(labels, tf.int64)
         return cce(
             logits=logits,
             labels=labels,
             weights=weights)
     elif loss_type == 'l2':
+        logits = tf.cast(logits, tf.float32)
+        labels = tf.cast(labels, tf.float32)
         return l2(
             logits=logits,
             labels=labels)
     elif loss_type == 'log_loss':
+        logits = tf.cast(logits, tf.float32)
+        labels = tf.cast(labels, tf.float32)
         return log_loss(
             logits=logits,
             labels=labels)
     elif loss_type == 'huber':
+        logits = tf.cast(logits, tf.float32)
+        labels = tf.cast(labels, tf.float32)
         return huber(
             logits=logits,
             labels=labels,
             weights=weights)
     elif loss_type == 'sigmoid':
+        logits = tf.cast(logits, tf.float32)
+        labels = tf.cast(labels, tf.int64)
         return sigmoid_ce(
             logits=logits,
             labels=labels,
             weights=weights)
     elif loss_type == 'pearson':
+        logits = tf.cast(logits, tf.float32)
+        labels = tf.cast(labels, tf.float32)
         return pearson_loss(
             logits=logits,
             labels=labels)
     elif loss_type == 'log_poisson':
+        logits = tf.cast(logits, tf.float32)
+        labels = tf.cast(labels, tf.float32)
         return log_poisson(
             logits=logits,
             labels=labels)

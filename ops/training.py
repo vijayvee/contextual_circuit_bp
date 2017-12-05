@@ -4,6 +4,7 @@ import tensorflow as tf
 import numpy as np
 from utils import py_utils
 from datetime import datetime
+from ops import hp_opt_utils
 
 
 def check_early_stop(
@@ -190,10 +191,26 @@ def training_loop(
     coord.join(threads)
     sess.close()
 
-    # If using hp optimization, store performance here
+    # If using online hp optimization, update the database with performance
     import ipdb;ipdb.set_trace()
     if exp_params['hp_current_iteration'] is not None:
+        # Iterate the iteration
         exp_params['hp_current_iteration'] += 1
+
+        # Database lookup to get all performance for this hp-thread
+        performance_history, hp_hist = db.query_hp_hist(
+            exp_params=exp_params,
+            it_perf=val_accs)
+
+        # Call on online optimization tools
+        exp_params = hp_opt_utils.hp_optim_interpreter(
+            hp_hist=hp_hist,
+            performance_history=performance_history,
+            exp_params=exp_params)
+
+        # Update the database with the new hyperparameters
+        status = db.update_online_experiment(exp_params)
+        assert status, 'Failed to update DB with online hyperparameters.'
 
     # Package output variables into a dictionary
     output_dict = {

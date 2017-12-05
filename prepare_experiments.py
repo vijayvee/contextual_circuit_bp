@@ -7,15 +7,23 @@ import pandas as pd
 import itertools as it
 from db import db
 from db import credentials
-from utils import logger
+from utils import logger, py_utils
 from experiments import experiments
 
 
-def hp_optim_parameters(parameter_dict, log, ms_key='model_struct'):
+def protected_keys():
+    """Keys for which lists are allowed."""
+    return [
+        'data_augmentations',
+    ]
+
+
+def online_hp_optim_parameters(parameter_dict, log, ms_key='model_struct'):
     """Experiment parameters in the case of hp_optimization algorithms."""
     model_structs = parameter_dict[ms_key]
     parameter_dict = {
         k: v for k, v in parameter_dict.iteritems() if k is not ms_key}
+    pk = protected_keys()
     combos = []
     for ms in model_structs:
         it_dict = {}
@@ -30,11 +38,13 @@ def hp_optim_parameters(parameter_dict, log, ms_key='model_struct'):
             else:
                 # Transform data from lists
                 if isinstance(v, list):
-                    v = v[0]
-                assert not isinstance(v, list),\
-                    'Parameter %s must not be in a list.' % k
+                    v = py_utils.flatten_list(v, log)
+                    if k not in pk:
+                        v = v[0]
             it_dict[k] = v  # Handle special-case hp optim flags here.
         it_dict[ms_key] = ms
+        # Hard code hp_current_iteration=0
+        it_dict['hp_current_iteration'] = 0
         combos += [it_dict]
     return combos
 
@@ -66,7 +76,7 @@ def main(reset_process, initialize_db, experiment_name, remove=None):
         experiment_dict = experiments()[experiment_name]()
         if 'hp_optim' in experiment_dict.keys() and\
                 experiment_dict['hp_optim'] is not None:
-            exp_combos = hp_optim_parameters(experiment_dict, log)
+            exp_combos = online_hp_optim_parameters(experiment_dict, log)
             log.info('Preparing an hp-optimization experiment.')
         else:
             exp_combos = package_parameters(experiment_dict, log)

@@ -340,3 +340,32 @@ class experiments():
         exp['num_validation_evals'] = 1
         exp['batch_size'] = 32  # Train/val batch size.
         return exp
+
+    def mlp_hp(self):
+        """Each key in experiment_dict must be manually added to the schema."""
+        model_folder = 'mlp_hp'
+        exp = {
+            'experiment_name': model_folder,
+            'hp_optim': 'gpyopt',
+            'hp_multiple': 10,
+            'lr': 1e-3,
+            'lr_domain': [1e-5, 1e-1],
+            'loss_function': 'cce',
+            'optimizer': 'adam',
+            'regularization_type': None,  # [None, 'l1', 'l2'],
+            'regularization_strength': 1e-5,
+            'regularization_strength_domain': [1e-7, 1e-1],
+            'model_struct': [
+                os.path.join(model_folder, 'divisive'),
+                os.path.join(model_folder, 'batch'),
+                os.path.join(model_folder, 'layer'),
+            ],
+            'dataset': 'cifar_10'
+        }
+        exp = self.add_globals(exp)  # Add globals to the experiment
+        # exp['data_augmentations'] = None
+        exp['epochs'] = 1
+        exp['validation_iters'] = 100
+        exp['num_validation_evals'] = 1
+        exp['batch_size'] = 32  # Train/val batch size.
+        return exp  # Add globals to the experiment

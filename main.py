@@ -50,7 +50,6 @@ def process_DB_exps(experiment_name, log, config):
                 exp_params=exp_params,
                 performance_history=performance_history
             )
-
     if exp_id is None:
         err = 'No empty experiments found.' + \
             'Did you select the correct experiment name?'
@@ -78,6 +77,7 @@ def get_data_pointers(dataset, base_dir, cv, log):
         data_pointer, log, '%s not found.' % data_pointer)
     mean_loc = py_utils.check_path(
         data_means, log, '%s not found for cv: %s.' % (data_means, cv))
+    data_means_image, data_means_label = None, None
     if not mean_loc:
         alt_data_pointer = data_means.replace('.npy', '.npz')
         alt_data_pointer = py_utils.check_path(
@@ -90,7 +90,6 @@ def get_data_pointers(dataset, base_dir, cv, log):
             log.info('Loading means from npz for cv: %s.' % cv)
             data_means = np.load(alt_data_pointer)
             data_means_vol = data_means[data_means.keys()[0]].item()
-            data_means_image, data_means_label = None, None
             if 'image' in data_means_vol.keys():
                 data_means_image = data_means_vol['image']
             if 'label' in data_means_vol.keys():
@@ -168,9 +167,10 @@ def main(
     [py_utils.make_dir(v) for v in dir_list.values()]
 
     # Prepare data loaders on the cpu
-    config.data_augmentations = py_utils.flatten_list(
-        config.data_augmentations,
-        log)
+    if all(isinstance(i, list) for i in config.data_augmentations):
+        config.data_augmentations = py_utils.flatten_list(
+            config.data_augmentations,
+            log)
     with tf.device('/cpu:0'):
         train_images, train_labels = data_loader.inputs(
             dataset=train_data,
