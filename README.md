@@ -50,6 +50,7 @@
 	a. Add a folder with the kind of model you are creating. Follow the template of `models/structs/two_layer_conv_mlp/`.
 	b. Coordinate the models you create with `experiments.py`. This script will allow you to build workers that run through any number of hyperparameter/model/dataset combinations of your experiment. For instance, if you want to measure the performance of models containing different kinds of normalization. Each model (same architecture but different normalizations) has a structure documented in `models/structs/two_layer_conv_mlp/`. The name of each model is added to the `two_layer_conv_mlp` method in `experiments.py` in the field "model_struct". Adding multiple entries in other fields, such as "dataset", will have the workers run through those combinations.
 	c. See "Model construction" below for details on model construction
+	d. If using online hyperparameter optimization (e.g. GPyOpt), only experiment domain parameters should be in lists.
 
 6. Populate database with experiments.
 	a. Running with the example laid out in (3), populate your postgres DB with all possible experiment combinations: `python prepare_experiments.py --experiment=two_layer_conv_mlp --initialize`.
@@ -66,6 +67,9 @@
 8. Running models on the cluster.
 	a. Build your workers on the cluster with `sh docker_deploy_workers.sh`
 	b. Kill your processes with `docker rm $(docker stop $(docker ps -a -q --filter ancestor=serrep3.services.brown.edu:5000/contextual_circuit_bp --format="{{.ID}}"))`
+
+9. Dumping your database:
+	```pg_dump -h 127.0.0.1 contextual_DCN > 12_5_17.sql```
 
 
 ## Model construction:

@@ -2,7 +2,7 @@
 
 layer_structure = [
     {
-        'layers': ['DoG'],
+        'layers': ['dog'],
         'weights': [32],
         'names': ['dog1'],
         'filter_size': [5],

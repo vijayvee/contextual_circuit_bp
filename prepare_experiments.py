@@ -22,11 +22,17 @@ def hp_optim_parameters(parameter_dict, log, ms_key='model_struct'):
         for k, v in parameter_dict.iteritems():
             if '_domain' in k:
                 if isinstance(v, np.ndarray):
-                    v = pd.Series(v).to_json(orient='values')
+                    v = pd.Series(np.sort(v)).to_json(orient='values')
                 elif isinstance(v, basestring):
                     pass
                 else:
                     v = json.dumps(v)
+            else:
+                # Transform data from lists
+                if isinstance(v, list):
+                    v = v[0]
+                assert not isinstance(v, list),\
+                    'Parameter %s must not be in a list.' % k
             it_dict[k] = v  # Handle special-case hp optim flags here.
         it_dict[ms_key] = ms
         combos += [it_dict]
@@ -58,7 +64,8 @@ def main(reset_process, initialize_db, experiment_name, remove=None):
     if experiment_name is not None:  # TODO: add capability for bayesian opt.
         db_config = credentials.postgresql_connection()
         experiment_dict = experiments()[experiment_name]()
-        if 'hp_optim' in experiment_dict.keys() and experiment_dict['hp_optim'] is not None:
+        if 'hp_optim' in experiment_dict.keys() and\
+                experiment_dict['hp_optim'] is not None:
             exp_combos = hp_optim_parameters(experiment_dict, log)
             log.info('Preparing an hp-optimization experiment.')
         else:

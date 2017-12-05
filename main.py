@@ -41,14 +41,15 @@ def process_DB_exps(experiment_name, log, config):
         experiment_name=experiment_name,
         log=log)
     if 'hp_optim' in exp_params.keys() and exp_params['hp_optim'] is not None:
-        performance_history, hp_hist = db.query_hp_hist(exp_params)
-        proc_exp_params = hp_opt_utils.hp_optim_interpreter(
-            hp_hist=hp_hist,
-            exp_params=exp_params,
-            performance_history=performance_history
-        )
-    else:
-        proc_exp_params = exp_params
+        # Update exp_params with a online-hp optimizer.
+        if exp_params['experiment_iteration']:
+            performance_history, hp_hist = db.query_hp_hist(exp_params)
+            import ipdb;ipdb.set_trace()
+            exp_params = hp_opt_utils.hp_optim_interpreter(
+                hp_hist=hp_hist,
+                exp_params=exp_params,
+                performance_history=performance_history
+            )
 
     if exp_id is None:
         err = 'No empty experiments found.' + \
@@ -61,7 +62,7 @@ def process_DB_exps(experiment_name, log, config):
         setattr(config, k, v)
     if not hasattr(config, '_id'):
         config._id = exp_id
-    return config, proc_exp_params
+    return config, exp_params
 
 
 def get_data_pointers(dataset, base_dir, cv, log):
@@ -93,7 +94,7 @@ def get_data_pointers(dataset, base_dir, cv, log):
             if 'image' in data_means_vol.keys():
                 data_means_image = data_means_vol['image']
             if 'label' in data_means_vol.keys():
-                data_means_label = data_means_vol['label'] 
+                data_means_label = data_means_vol['label']
     else:
         data_means = np.load(data_means)
     return data_pointer, data_means_image, data_means_label
@@ -287,7 +288,7 @@ def main(
             scope.reuse_variables()
             val_model = model_utils.model_class(
                 mean=train_means_image,  # Normalize with train data
-                training=False,
+                training=True,  # TODO: DREW FIX THIS! FALSE BREAKS THE MODEL.
                 output_size=dataset_module.output_size)
             val_scores, _ = val_model.build(  # Ignore summary
                 data=val_images,

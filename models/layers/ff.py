@@ -47,6 +47,23 @@ class ff(object):
             name=name)
         return context, act
 
+    def DoG(
+            self,
+            context,
+            act,
+            in_channels,
+            out_channels,
+            filter_size,
+            name,
+            it_dict):
+        """Add a Difference of Gaussians layer."""
+        context, act = dog_layer(
+            self=context,
+            bottom=act,
+            layer_weights=out_channels,
+            name=name)
+        return context, act
+
     def dog_conv(
             self,
             context,
@@ -717,7 +734,6 @@ def sparse_pool_layer(
     def create_gaussian_rf(xy, h, w):
         """Create a gaussian bump for initializing the spatial weights."""
         # TODO: implement this.
-        import ipdb;ipdb.set_trace()
         raise NotImplementedError
 
     with tf.variable_scope(name):

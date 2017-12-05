@@ -21,8 +21,8 @@ class data_processing(object):
         self.preprocess = [None]
         self.shuffle = True  # Preshuffle data?
         self.folds = {
-            'train': 'train',
-            'test': 'test'
+            'train': 'training',
+            'test': 'testing'
         }
         self.targets = {
             'image': tf_fun.bytes_feature,

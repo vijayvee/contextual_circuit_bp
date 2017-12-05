@@ -191,6 +191,7 @@ def training_loop(
     sess.close()
 
     # If using hp optimization, store performance here
+    import ipdb;ipdb.set_trace()
     if exp_params['hp_current_iteration'] is not None:
         exp_params['hp_current_iteration'] += 1
 

@@ -478,7 +478,6 @@ def get_performance(experiment_name):
 def query_hp_hist(exp_params, eval_on='validation_loss', init_top=1e10):
     """Query an experiment's history of hyperparameters and performance."""
     config = credentials.postgresql_connection()
-    domain_param_map = hp_opt_utils.hp_opt_dict()
     experiment_name = exp_params['experiment_name']
     with db(config) as db_conn:
         perf = db_conn.get_performance(experiment_name=experiment_name)

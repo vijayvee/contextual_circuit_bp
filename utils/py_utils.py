@@ -16,9 +16,10 @@ def get_dt_stamp():
         '_')
 
 
-def flatten_list(l, log):
+def flatten_list(l, log=None):
     """Flatten a list of lists."""
     warning_msg = 'Warning: returning None.'
+    assert len(l), 'Encountered empty list.'
     if l is None or l[0] is None:
         if log is not None:
             log.info(warning_msg)
