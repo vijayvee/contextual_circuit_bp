@@ -18,6 +18,27 @@ def protected_keys():
     ]
 
 
+def prepare_hp_params(parameter_dict, pk, log=None):
+    """Jsonify HP domains for online updates."""
+    it_dict = {}
+    for k, v in parameter_dict.iteritems():
+        if '_domain' in k:
+            if isinstance(v, np.ndarray):
+                v = pd.Series(np.sort(v)).to_json(orient='values')
+            elif isinstance(v, basestring):
+                pass
+            else:
+                v = json.dumps(v)
+        else:
+            # Transform data from lists
+            if isinstance(v, list):
+                v = py_utils.flatten_list(v, log)
+                if k not in pk:
+                    v = v[0]
+        it_dict[k] = v  # Handle special-case hp optim flags here.
+    return it_dict
+
+
 def online_hp_optim_parameters(parameter_dict, log, ms_key='model_struct'):
     """Experiment parameters in the case of hp_optimization algorithms."""
     model_structs = parameter_dict[ms_key]
@@ -26,22 +47,10 @@ def online_hp_optim_parameters(parameter_dict, log, ms_key='model_struct'):
     pk = protected_keys()
     combos = []
     for ms in model_structs:
-        it_dict = {}
-        for k, v in parameter_dict.iteritems():
-            if '_domain' in k:
-                if isinstance(v, np.ndarray):
-                    v = pd.Series(np.sort(v)).to_json(orient='values')
-                elif isinstance(v, basestring):
-                    pass
-                else:
-                    v = json.dumps(v)
-            else:
-                # Transform data from lists
-                if isinstance(v, list):
-                    v = py_utils.flatten_list(v, log)
-                    if k not in pk:
-                        v = v[0]
-            it_dict[k] = v  # Handle special-case hp optim flags here.
+        it_dict = prepare_hp_params(
+            parameter_dict=parameter_dict,
+            pk=pk,
+            log=log)
         it_dict[ms_key] = ms
         # Hard code hp_current_iteration=0
         it_dict['hp_current_iteration'] = 0

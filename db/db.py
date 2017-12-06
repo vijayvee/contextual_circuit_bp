@@ -137,12 +137,12 @@ class db(object):
                     label, self.cur.statusmessage
                     )
 
-    def populate_db(self, namedict):
+    def populate_db(self, namedict, experiment_link=False):
         """
         Add a combination of parameter_dict to the db.
         ::
         experiment_name: name of experiment to add
-        parent_experiment: linking a child (e.g. clickme) -> parent (ILSVRC12)
+        experiment_link: linking a child (e.g. clickme) -> parent (ILSVRC12)
         """
         namedict = self.fix_namedict(namedict, 'experiments')
         self.cur.executemany(
@@ -209,13 +209,23 @@ class db(object):
             )
             """,
             namedict)
-        self.cur.execute(
-            """
-            UPDATE experiments
-            SET experiment_link=_id
-            WHERE experiment_name=%(experiment_name)s
-            """,
-            namedict[0])
+        if not experiment_link:
+            # TODO: FIX THIS
+            self.cur.execute(
+                """
+                UPDATE experiments
+                SET experiment_link=_id
+                WHERE experiment_name=%(experiment_name)s
+                """,
+                namedict[0])
+        else:
+            self.cur.execute(
+                """
+                UPDATE experiments
+                SET experiment_link=%(experiment_link)s
+                WHERE experiment_name=%(experiment_name)s
+                """,
+                namedict[0])
         if self.status_message:
             self.return_status('INSERT')
 
@@ -336,35 +346,40 @@ class db(object):
             aggregator='max'):
         """Get performance by experiment link for online hp optimization."""
         if aggregator == 'max':
-            self.cur.execute(
-                """
-                SELECT MAX(%(performance_metric)s), E.*
-                FROM performance as P
-                LEFT JOIN experiments as E
-                ON E._id = P.experiment_id
-                WHERE E.experiment_link=%(experiment_link)s
-                GROUP BY E._id
-                """,
-                {
-                    'performance_metric': performance_metric,
-                    'experiment_link': experiment_link
-                }
-            )
+            if performance_metric == 'validation_loss':
+                # TODO: @NATHAN TRY AND CLEAN THIS UP
+                self.cur.execute(
+                    """
+                    SELECT MAX(validation_loss), E.*
+                    FROM performance as P
+                    LEFT JOIN experiments as E
+                    ON E._id = P.experiment_id
+                    WHERE E.experiment_link=%(experiment_link)s
+                    GROUP BY E._id
+                    """,
+                    {
+                        'experiment_link': experiment_link
+                    }
+                )
+            else:
+                raise NotImplementedError
         elif aggregator == 'min':
-            self.cur.execute(
-                """
-                SELECT MIN(%(performance_metric)s), E.*
-                FROM performance as P
-                LEFT JOIN experiments as E
-                ON E._id = P.experiment_id
-                WHERE E.experiment_link=%(experiment_link)s
-                GROUP BY E._id
-                """,
-                {
-                    'performance_metric': performance_metric,
-                    'experiment_link': experiment_link
-                }
-            )
+            if performance_metric == 'validation_loss':
+                self.cur.execute(
+                    """
+                    SELECT MIN(validation_loss), E.*
+                    FROM performance as P
+                    LEFT JOIN experiments as E
+                    ON E._id = P.experiment_id
+                    WHERE E.experiment_link=%(experiment_link)s
+                    GROUP BY E._id
+                    """,
+                    {
+                        'experiment_link': experiment_link
+                    }
+                )
+            else:
+                raise NotImplementedError
         else:
             raise NotImplementedError
         if self.status_message:
@@ -534,13 +549,13 @@ def query_hp_hist(
     return perf
 
 
-def update_online_experiment(exp_combos):
+def update_online_experiment(exp_combos, experiment_link):
     """Add a new hyperparameter combination to the experiment table."""
     config = credentials.postgresql_connection()
     with db(config) as db_conn:
-        db.statusmessage = True
-        status = db_conn.populate_db(exp_combos)
-    return status
+        db_conn.populate_db(
+            exp_combos,
+            experiment_link=experiment_link)
 
 
 def main(

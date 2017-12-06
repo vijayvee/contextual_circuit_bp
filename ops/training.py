@@ -2,6 +2,7 @@ import os
 import time
 import tensorflow as tf
 import numpy as np
+import prepare_experiments
 from utils import py_utils
 from datetime import datetime
 from ops import hp_opt_utils
@@ -204,18 +205,28 @@ def training_loop(
             # Database lookup to get all performance for this hp-thread
             performance_history = db.query_hp_hist(
                 exp_params=exp_params,
-                it_perf=val_accs,
                 performance_metric=performance_metric,
                 aggregator=aggregator)
 
             # Call on online optimization tools
             exp_params = hp_opt_utils.hp_optim_interpreter(
                 performance_history=performance_history,
-                performance_metric=performance_metric)
+                aggregator=aggregator)
+
+            # Prepare parameters for DB
+            pk = prepare_experiments.protected_keys()
+            exp_params = prepare_experiments.prepare_hp_params(
+                parameter_dict=exp_params,
+                pk=pk)
+            for k, v in exp_params.iteritems():
+                if isinstance(v, basestring) and 'null' in v:
+                    exp_params[k] = None
 
             # Update the database with the new hyperparameters
-            status = db.update_online_experiment([exp_params])
-            assert status, 'Failed to update DB with online hyperparameters.'
+            import ipdb;ipdb.set_trace()
+            db.update_online_experiment(
+                exp_combos=[exp_params],
+                experiment_link=exp_params['experiment_link'])
 
     # Package output variables into a dictionary
     output_dict = {

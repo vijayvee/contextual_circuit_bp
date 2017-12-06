@@ -5,7 +5,7 @@ from utils import py_utils
 
 def hp_optim_interpreter(
         performance_history,
-        performance_metric):
+        aggregator):
     """Pass hyperparameter and performance history to HP optimization alg.
 
     Parameters
@@ -25,7 +25,7 @@ def hp_optim_interpreter(
 
     # Pull performance into a list for Y
     experiment_performance = [
-        p[performance_metric] for p in performance_history]
+        p[aggregator] for p in performance_history]
 
     # Derive next hyperparameters
     if hp_type == 'gpyopt':
