@@ -50,7 +50,7 @@ class experiments():
         exp = {
             'experiment_name': model_folder,
             'hp_optim': 'gpyopt',
-            'hp_multiple': 10,
+            'hp_max_studies': 10,
             'lr': 1e-4,
             'lr_domain': [1e-1, 1e-5],
             'loss_function': None,  # Leave as None to use dataset default
@@ -318,7 +318,7 @@ class experiments():
         exp = {
             'experiment_name': model_folder,
             'hp_optim': 'gpyopt',
-            'hp_multiple': 10,
+            'hp_max_studies': 10,
             'lr': 1e-3,
             'lr_domain': [1e-5, 1e-1],
             'loss_function': 'l2',
@@ -347,7 +347,7 @@ class experiments():
         exp = {
             'experiment_name': model_folder,
             'hp_optim': 'gpyopt',
-            'hp_multiple': 10,
+            'hp_max_studies': 10,
             'lr': 1e-3,
             'lr_domain': [1e-5, 1e-1],
             'loss_function': 'cce',

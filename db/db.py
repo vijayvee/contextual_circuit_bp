@@ -89,7 +89,7 @@ class db(object):
             't_t': ['experiments', 'hp_combo_history'],
             'p_t': ['experiments', 'hp_combo_history'],
             'hp_optim': ['experiments', 'hp_combo_history'],
-            'hp_multiple': ['experiments', 'hp_combo_history'],
+            'hp_max_studies': ['experiments', 'hp_combo_history'],
             'hp_current_iteration': ['experiments', 'hp_combo_history'],
             'normalize_labels': ['experiments', 'hp_combo_history'],
             'experiment_iteration': ['experiments', 'hp_combo_history']
@@ -172,7 +172,7 @@ class db(object):
             t_t,
             p_t,
             hp_optim,
-            hp_multiple,
+            hp_max_studies,
             hp_current_iteration,
             experiment_iteration,
             normalize_labels
@@ -202,7 +202,7 @@ class db(object):
             %(t_t)s,
             %(p_t)s,
             %(hp_optim)s,
-            %(hp_multiple)s,
+            %(hp_max_studies)s,
             %(hp_current_iteration)s,
             %(experiment_iteration)s,
             %(normalize_labels)s
@@ -325,6 +325,48 @@ class db(object):
                 'experiment_name': experiment_name
             }
         )
+        if self.status_message:
+            self.return_status('SELECT')
+        return self.cur.fetchall()
+
+    def get_performance_by_experiment_link(
+            self,
+            experiment_link,
+            performance_metric='validation_loss',
+            aggregator='max'):
+        """Get performance by experiment link for online hp optimization."""
+        if aggregator == 'max':
+            self.cur.execute(
+                """
+                SELECT MAX(%(performance_metric)s), E.*
+                FROM performance as P
+                LEFT JOIN experiments as E
+                ON E._id = P.experiment_id
+                WHERE E.experiment_link=%(experiment_link)s
+                GROUP BY E._id
+                """,
+                {
+                    'performance_metric': performance_metric,
+                    'experiment_link': experiment_link
+                }
+            )
+        elif aggregator == 'min':
+            self.cur.execute(
+                """
+                SELECT MIN(%(performance_metric)s), E.*
+                FROM performance as P
+                LEFT JOIN experiments as E
+                ON E._id = P.experiment_id
+                WHERE E.experiment_link=%(experiment_link)s
+                GROUP BY E._id
+                """,
+                {
+                    'performance_metric': performance_metric,
+                    'experiment_link': experiment_link
+                }
+            )
+        else:
+            raise NotImplementedError
         if self.status_message:
             self.return_status('SELECT')
         return self.cur.fetchall()
@@ -475,25 +517,21 @@ def get_performance(experiment_name):
     return perf
 
 
-def query_hp_hist(exp_params, it_perf, eval_on='validation_loss'):
+def query_hp_hist(
+        exp_params,
+        eval_on='validation_loss',
+        performance_metric='validation_loss',
+        aggregator='max'):
     """Query an experiment's history of hyperparameters and performance."""
     config = credentials.postgresql_connection()
-    experiment_name = exp_params['experiment_name']
+    experiment_link = exp_params['experiment_link']
     with db(config) as db_conn:
-        past_perf = db_conn.get_performance(experiment_name=experiment_name)
-
-        # Sort performance by time elapsed
-        times = [x['time_elapsed'] for x in past_perf]
-        time_idx = np.argsort(times)
-        past_perf = [past_perf[idx][eval_on] for idx in time_idx]
-        import ipdb;ipdb.set_trace()
-        perf = past_perf + it_perf
-
-        # Sort hp parameters by history
-        times = [x['experiment_iteration'] for x in exp_params]
-        time_idx = np.argsort(times)
-        hp_history = [exp_params[idx] for idx in time_idx]
-    return perf, hp_history
+        perf = db_conn.get_performance_by_experiment_link(
+            experiment_link=experiment_link,
+            performance_metric=performance_metric,
+            aggregator=aggregator)
+        assert perf is not None, 'Error: No performance history found.'
+    return perf
 
 
 def update_online_experiment(exp_combos):

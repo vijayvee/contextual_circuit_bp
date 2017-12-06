@@ -53,7 +53,9 @@ def training_loop(
         val_dict,
         train_model,
         val_model,
-        exp_params):
+        exp_params,
+        performance_metric='validation_loss',
+        aggregator='max'):
     """Run the model training loop."""
     step, time_elapsed = 0, 0
     train_losses, train_accs, timesteps = {}, {}, {}
@@ -192,25 +194,28 @@ def training_loop(
     sess.close()
 
     # If using online hp optimization, update the database with performance
-    import ipdb;ipdb.set_trace()
     if exp_params['hp_current_iteration'] is not None:
-        # Iterate the iteration
-        exp_params['hp_current_iteration'] += 1
 
-        # Database lookup to get all performance for this hp-thread
-        performance_history, hp_hist = db.query_hp_hist(
-            exp_params=exp_params,
-            it_perf=val_accs)
+        # If we have not exceeded the maximum online hp optimizations:
+        if exp_params['hp_current_iteration'] < exp_params['hp_max_studies']:
+            # Iterate the iteration
+            exp_params['hp_current_iteration'] += 1
 
-        # Call on online optimization tools
-        exp_params = hp_opt_utils.hp_optim_interpreter(
-            hp_hist=hp_hist,
-            performance_history=performance_history,
-            exp_params=exp_params)
+            # Database lookup to get all performance for this hp-thread
+            performance_history = db.query_hp_hist(
+                exp_params=exp_params,
+                it_perf=val_accs,
+                performance_metric=performance_metric,
+                aggregator=aggregator)
 
-        # Update the database with the new hyperparameters
-        status = db.update_online_experiment(exp_params)
-        assert status, 'Failed to update DB with online hyperparameters.'
+            # Call on online optimization tools
+            exp_params = hp_opt_utils.hp_optim_interpreter(
+                performance_history=performance_history,
+                performance_metric=performance_metric)
+
+            # Update the database with the new hyperparameters
+            status = db.update_online_experiment([exp_params])
+            assert status, 'Failed to update DB with online hyperparameters.'
 
     # Package output variables into a dictionary
     output_dict = {

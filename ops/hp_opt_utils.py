@@ -3,19 +3,42 @@ import numpy as np
 from utils import py_utils
 
 
-def hp_optim_interpreter(hp_hist, performance_history, exp_params):
-    """Pass hyperparameter and performance history to HP optimization alg."""
-    if isinstance(exp_params, list):
-        exp_params = exp_params[-1]
-    hp_type = exp_params['hp_optim']
-    domain = gather_domains(exp_params=exp_params, hp_type=hp_type)
+def hp_optim_interpreter(
+        performance_history,
+        performance_metric):
+    """Pass hyperparameter and performance history to HP optimization alg.
+
+    Parameters
+    ----------
+    performance_history : list of dictionaries
+    performance_metric : str
+
+    Returns
+    -------
+    hp_dict : dictionary of the next experiment's hyperparameters
+    """
+    exp_row = performance_history[0]
+    hp_type = exp_row['hp_optim']
+    domain = gather_domains(
+        exp_params=exp_row,
+        hp_type=hp_type)
+
+    # Pull performance into a list for Y
+    experiment_performance = [
+        p[performance_metric] for p in performance_history]
+
+    # Derive next hyperparameters
     if hp_type == 'gpyopt':
-        hp_hist_values = np.asarray([v.values() for v in hp_hist])
         next_step = gpyopt_wrapper(
-            X=hp_hist_values,
-            Y=np.asarray(performance_history),
+            X=performance_history,
+            Y=experiment_performance,
             domain=domain)
-        return {k: v for k, v in zip(hp_hist[0].keys(), next_step.ravel())}
+        opted = [x['name'] for x in domain]
+        next_params = dict(zip(opted, next_step[0]))
+        for k, v in next_params.iteritems():
+            # Update the experiment template with the next study's HPs
+            exp_row[k] = v
+        return exp_row
     else:
         raise RuntimeError('Hp-optimizer not implemented.')
 
@@ -30,7 +53,17 @@ def package_domain(hp_dict):
 
 
 def gather_domains(exp_params, hp_type):
-    """Convert experiment params to a hp-optim ready domain dict."""
+    """Convert experiment params to a hp-optim ready domain dict.
+
+    Parameters
+    ----------
+    exp_params : dictionary
+    hp_type : str
+
+    Returns
+    -------
+    dlist : list of dictionaries
+    """
     hps = hp_opt_dict()
     dlist = []
     for k, v in hps.iteritems():
@@ -45,7 +78,7 @@ def gather_domains(exp_params, hp_type):
                     }
                 ]
             else:
-                raise RuntimeError('Hp-optimizer not implemented.')
+                raise NotImplementedError
     return dlist
 
 
@@ -69,11 +102,17 @@ def gpyopt_wrapper(
         evaluator_type='local_penalization',
         hp_type='bayesian'):
     """Wrapper for gpyopt optimization."""
-    import ipdb;ipdb.set_trace()
+    to_opt = [x['name'] for x in domain]
+
+    # Preprocess X
+    X_hist = np.asarray([[v[z] for z in to_opt] for v in X])
+
+    # Preprocess Y
+    Y_hist = np.asarray([[h] for h in Y])
     my_prob = GPyOpt.methods.BayesianOptimization(
         f=f,
-        X=X,
-        Y=Y,
+        X=X_hist,
+        Y=Y_hist,
         domain=domain,
         evaluator_type=evaluator_type,
         batch_size=bs,
