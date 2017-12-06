@@ -40,16 +40,6 @@ def process_DB_exps(experiment_name, log, config):
     exp_params, exp_id = db.get_parameters(
         experiment_name=experiment_name,
         log=log)
-    if 'hp_optim' in exp_params.keys() and exp_params['hp_optim'] is not None:
-        # Update exp_params with a online-hp optimizer.
-        if exp_params['experiment_iteration']:
-            performance_history, hp_hist = db.query_hp_hist(exp_params)
-            import ipdb;ipdb.set_trace()
-            exp_params = hp_opt_utils.hp_optim_interpreter(
-                hp_hist=hp_hist,
-                exp_params=exp_params,
-                performance_history=performance_history
-            )
     if exp_id is None:
         err = 'No empty experiments found.' + \
             'Did you select the correct experiment name?'

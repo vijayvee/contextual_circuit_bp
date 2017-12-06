@@ -44,6 +44,8 @@ def online_hp_optim_parameters(parameter_dict, log, ms_key='model_struct'):
     model_structs = parameter_dict[ms_key]
     parameter_dict = {
         k: v for k, v in parameter_dict.iteritems() if k is not ms_key}
+    assert 'aggregator' in parameter_dict.keys(),\
+        'You must specify an aggregator as \'max\' or \'min\'.'
     pk = protected_keys()
     combos = []
     for ms in model_structs:

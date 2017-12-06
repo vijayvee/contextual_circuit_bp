@@ -7,9 +7,7 @@ import psycopg2
 import psycopg2.extras
 import psycopg2.extensions
 import credentials
-import numpy as np
 from config import Config
-from ops import hp_opt_utils
 sshtunnel.DAEMON = True  # Prevent hanging process due to forward thread
 main_config = Config()
 
@@ -75,11 +73,14 @@ class db(object):
             'lr': ['experiments', 'hp_combo_history'],
             'dataset': ['experiments', 'hp_combo_history'],
             'regularization_type_domain': ['experiments', 'hp_combo_history'],
-            'regularization_strength_domain': ['experiments', 'hp_combo_history'],
+            'regularization_strength_domain': [
+                'experiments', 'hp_combo_history'],
             'optimizer_domain': ['experiments', 'hp_combo_history'],
             'lr_domain': ['experiments', 'hp_combo_history'],
             'timesteps': ['experiments', 'hp_combo_history'],
             'timesteps_domain': ['experiments', 'hp_combo_history'],
+            'filter_size': ['experiments', 'hp_combo_history'],
+            'filter_size_domain': ['experiments', 'hp_combo_history'],
             'u_t_domain': ['experiments', 'hp_combo_history'],
             'q_t_domain': ['experiments', 'hp_combo_history'],
             't_t_domain': ['experiments', 'hp_combo_history'],
@@ -176,7 +177,9 @@ class db(object):
                 hp_max_studies,
                 hp_current_iteration,
                 experiment_iteration,
-                normalize_labels
+                normalize_labels,
+                filter_size,
+                filter_size_domain
                 )
                 VALUES
                 (
@@ -206,7 +209,9 @@ class db(object):
                 %(hp_max_studies)s,
                 %(hp_current_iteration)s,
                 %(experiment_iteration)s,
-                %(normalize_labels)s
+                %(normalize_labels)s,
+                %(filter_size)s,
+                %(filter_size_domain)s
                 )
                 """,
                 namedict)
@@ -249,6 +254,8 @@ class db(object):
                 hp_current_iteration,
                 experiment_iteration,
                 normalize_labels,
+                filter_size,
+                filter_size_domain,
                 experiment_link
                 )
                 VALUES
@@ -280,6 +287,8 @@ class db(object):
                 %(hp_current_iteration)s,
                 %(experiment_iteration)s,
                 %(normalize_labels)s,
+                %(filter_size)s,
+                %(filter_size_domain)s,
                 %(experiment_link)s
                 )
                 """,

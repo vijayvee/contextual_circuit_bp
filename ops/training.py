@@ -199,8 +199,6 @@ def training_loop(
 
         # If we have not exceeded the maximum online hp optimizations:
         if exp_params['hp_current_iteration'] < exp_params['hp_max_studies']:
-            # Iterate the iteration
-            exp_params['hp_current_iteration'] += 1
 
             # Database lookup to get all performance for this hp-thread
             performance_history = db.query_hp_hist(
@@ -218,6 +216,9 @@ def training_loop(
             exp_params = prepare_experiments.prepare_hp_params(
                 parameter_dict=exp_params,
                 pk=pk)
+
+            # Iterate the count
+            exp_params['hp_current_iteration'] += 1
             for k, v in exp_params.iteritems():
                 if isinstance(v, basestring) and 'null' in v:
                     exp_params[k] = None

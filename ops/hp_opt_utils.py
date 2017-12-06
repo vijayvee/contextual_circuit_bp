@@ -17,15 +17,26 @@ def hp_optim_interpreter(
     -------
     hp_dict : dictionary of the next experiment's hyperparameters
     """
-    exp_row = performance_history[0]
+    exp_row = performance_history[-1]
+    max_iteration = np.max(
+        [x['hp_current_iteration'] for x in performance_history])
+    exp_row['hp_current_iteration'] = max_iteration
+
+    # Prepare hp domains
     hp_type = exp_row['hp_optim']
     domain = gather_domains(
         exp_params=exp_row,
         hp_type=hp_type)
 
+    # Minimize or maximize
+    if aggregator == 'max':
+        mfun = lambda x: x * -1  # TODO: Make an optimizer interpreter
+    else:
+        mfun = lambda x: x
+
     # Pull performance into a list for Y
     experiment_performance = [
-        p[aggregator] for p in performance_history]
+        mfun(p[aggregator]) for p in performance_history]
 
     # Derive next hyperparameters
     if hp_type == 'gpyopt':
@@ -109,7 +120,7 @@ def gpyopt_wrapper(
 
     # Preprocess Y
     Y_hist = np.asarray([[h] for h in Y])
-    my_prob = GPyOpt.methods.BayesianOptimization(
+    my_prob = GPyOpt.methods.BayesianOptimization(  # TODO: Check discrete domains.
         f=f,
         X=X_hist,
         Y=Y_hist,
@@ -134,6 +145,7 @@ def hp_opt_dict():
         't_t_domain': 'tuning_t',
         'q_t_domain': 'tuning_q',
         'p_t_domain': 'tuning_p',
+        'filter_size_domain': 'filter_size',
     }
 
 
@@ -172,20 +184,29 @@ def inject_model_with_hps(layer_structure, exp_params):
     """Inject model description with hyperparameters from database."""
     # TODO Change API so this isn't hardcoded.
     for idx, layer in enumerate(layer_structure):
-        if 'normalization_aux' in layer.keys():
-            aux_dict = layer['normalization_aux']
-            if 'u_t' in aux_dict and exp_params['u_t'] is not None:
-                aux_dict['u_t'] = exp_params['u_t']
-            if 'q_t' in aux_dict and exp_params['q_t'] is not None:
-                aux_dict['q_t'] = exp_params['q_t']
-            if 't_t' in aux_dict and exp_params['t_t'] is not None:
-                aux_dict['t_t'] = exp_params['t_t']
-            if 'p_t' in aux_dict and exp_params['p_t'] is not None:
-                aux_dict['p_t'] = exp_params['p_t']
-            if 'timesteps' in aux_dict and exp_params['timesteps'] is not None:
-                aux_dict['timesteps'] = int(exp_params['timesteps'])
-            layer['normalization_aux'] = aux_dict
-            layer_structure[idx] = layer
+        if 'hp_optimize' in layer.keys():
+            # If the layer has been designated as optimizable:
+            if 'normalization_aux' in layer.keys():
+                aux_dict = layer['normalization_aux']
+                if 'u_t' in aux_dict and exp_params['u_t'] is not None:
+                    aux_dict['u_t'] = exp_params['u_t']
+                if 'q_t' in aux_dict and exp_params['q_t'] is not None:
+                    aux_dict['q_t'] = exp_params['q_t']
+                if 't_t' in aux_dict and exp_params['t_t'] is not None:
+                    aux_dict['t_t'] = exp_params['t_t']
+                if 'p_t' in aux_dict and exp_params['p_t'] is not None:
+                    aux_dict['p_t'] = exp_params['p_t']
+                if 'timesteps' in aux_dict and\
+                        exp_params['timesteps'] is not None:
+                    aux_dict['timesteps'] = int(exp_params['timesteps'])
+                layer['normalization_aux'] = aux_dict
+                layer_structure[idx] = layer
+            if 'filter_size' in layer.keys() and\
+                    exp_params['filter_size'] is not None:
+                assert len(layer['filter_size']) == 1,\
+                    'Only optimize a single layer of filters at once.'
+                layer_structure[idx]['filter_size'] = [
+                    exp_params['filter_size']]
     return layer_structure
 
 

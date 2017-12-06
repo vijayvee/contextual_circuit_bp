@@ -6,6 +6,7 @@ layer_structure = [
         'weights': [64],
         'names': ['conv1_1'],
         'filter_size': [3],
+        'hp_optimize': True,
         'normalization': ['batch'],
         'normalization_target': ['post'],
         'activation': ['relu'],
