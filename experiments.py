@@ -283,6 +283,30 @@ class experiments():
         exp['batch_size'] = 32  # Train/val batch size.
         return exp
 
+    def ALLEN_st_selected_cells_1(self):
+        """Each key in experiment_dict must be manually added to the schema."""
+        model_folder = 'ALLEN_st_selected_cells_1'
+        exp = {
+            'experiment_name': [model_folder],
+            'lr': [3e-4],
+            'loss_function': ['pearson'],
+            'optimizer': ['adam'],
+            # 'regularization_type': ['l2'],  # [None, 'l1', 'l2'],
+            # 'regularization_strength': [1e-7],
+            'model_struct': [
+                os.path.join(model_folder, 'conv3d'),
+                # os.path.join(model_folder, 'sep_conv3d'),
+            ],
+            'dataset': [model_folder]
+        }
+        exp = self.add_globals(exp)  # Add globals to the experiment'
+        exp['data_augmentations'] = [['resize']]
+        exp['epochs'] = 50
+        exp['validation_iters'] = 500
+        exp['num_validation_evals'] = 100
+        exp['batch_size'] = 16  # Train/val batch size.
+        return exp
+
     def mlp_hp(self):
         """Each key in experiment_dict must be manually added to the schema."""
         model_folder = 'mlp_hp'

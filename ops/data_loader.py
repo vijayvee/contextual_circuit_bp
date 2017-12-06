@@ -31,8 +31,18 @@ def image_augmentations(
         elif 'resize' in data_augmentations and im_size_check:
             if len(model_input_image_size) > 2:
                 model_input_image_size = model_input_image_size[:2]
-            image = tf.image.resize_images(
-                tf.expand_dims(image, axis=0), model_input_image_size)
+            if len(image.get_shape()) > 3:
+                # Spatiotemporal image set.
+                nt = int(image.get_shape()[0])
+                sims = tf.split(image, nt)
+                for idx, im in sims:
+                    sims[idx] = tf.image.resize_images(
+                        tf.expand_dims(im, axis=0),
+                        model_input_image_size)
+            else:
+                image = tf.image.resize_images(
+                    tf.expand_dims(image, axis=0),
+                    model_input_image_size)
             image = tf.squeeze(image, axis=0)
             print 'Applying resize.'
         else:

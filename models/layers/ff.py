@@ -626,7 +626,8 @@ def conv_3d_layer(
         stride=[1, 1, 1, 1, 1],
         padding='SAME',
         aux=None):
-    """NOT YET IMPLEMENTED: 3D convolutional layer."""
+    """3D convolutional layer."""
+    import ipdb;ipdb.set_trace()
     with tf.variable_scope(name):
         if in_channels is None:
             in_channels = int(bottom.get_shape()[-1])
