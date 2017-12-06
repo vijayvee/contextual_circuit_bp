@@ -145,72 +145,71 @@ class db(object):
         experiment_link: linking a child (e.g. clickme) -> parent (ILSVRC12)
         """
         namedict = self.fix_namedict(namedict, 'experiments')
-        self.cur.executemany(
-            """
-            INSERT INTO experiments
-            (
-            experiment_name,
-            model_struct,
-            loss_function,
-            regularization_type,
-            regularization_strength,
-            optimizer,
-            lr,
-            dataset,
-            regularization_type_domain,
-            regularization_strength_domain,
-            optimizer_domain,
-            lr_domain,
-            timesteps,
-            timesteps_domain,
-            u_t_domain,
-            q_t_domain,
-            t_t_domain,
-            p_t_domain,
-            u_t,
-            q_t,
-            t_t,
-            p_t,
-            hp_optim,
-            hp_max_studies,
-            hp_current_iteration,
-            experiment_iteration,
-            normalize_labels
-            )
-            VALUES
-            (
-            %(experiment_name)s,
-            %(model_struct)s,
-            %(loss_function)s,
-            %(regularization_type)s,
-            %(regularization_strength)s,
-            %(optimizer)s,
-            %(lr)s,
-            %(dataset)s,
-            %(regularization_type_domain)s,
-            %(regularization_strength_domain)s,
-            %(optimizer_domain)s,
-            %(lr_domain)s,
-            %(timesteps)s,
-            %(timesteps_domain)s,
-            %(u_t_domain)s,
-            %(q_t_domain)s,
-            %(t_t_domain)s,
-            %(p_t_domain)s,
-            %(u_t)s,
-            %(q_t)s,
-            %(t_t)s,
-            %(p_t)s,
-            %(hp_optim)s,
-            %(hp_max_studies)s,
-            %(hp_current_iteration)s,
-            %(experiment_iteration)s,
-            %(normalize_labels)s
-            )
-            """,
-            namedict)
         if not experiment_link:
-            # TODO: FIX THIS
+            self.cur.executemany(
+                """
+                INSERT INTO experiments
+                (
+                experiment_name,
+                model_struct,
+                loss_function,
+                regularization_type,
+                regularization_strength,
+                optimizer,
+                lr,
+                dataset,
+                regularization_type_domain,
+                regularization_strength_domain,
+                optimizer_domain,
+                lr_domain,
+                timesteps,
+                timesteps_domain,
+                u_t_domain,
+                q_t_domain,
+                t_t_domain,
+                p_t_domain,
+                u_t,
+                q_t,
+                t_t,
+                p_t,
+                hp_optim,
+                hp_max_studies,
+                hp_current_iteration,
+                experiment_iteration,
+                normalize_labels
+                )
+                VALUES
+                (
+                %(experiment_name)s,
+                %(model_struct)s,
+                %(loss_function)s,
+                %(regularization_type)s,
+                %(regularization_strength)s,
+                %(optimizer)s,
+                %(lr)s,
+                %(dataset)s,
+                %(regularization_type_domain)s,
+                %(regularization_strength_domain)s,
+                %(optimizer_domain)s,
+                %(lr_domain)s,
+                %(timesteps)s,
+                %(timesteps_domain)s,
+                %(u_t_domain)s,
+                %(q_t_domain)s,
+                %(t_t_domain)s,
+                %(p_t_domain)s,
+                %(u_t)s,
+                %(q_t)s,
+                %(t_t)s,
+                %(p_t)s,
+                %(hp_optim)s,
+                %(hp_max_studies)s,
+                %(hp_current_iteration)s,
+                %(experiment_iteration)s,
+                %(normalize_labels)s
+                )
+                """,
+                namedict)
             self.cur.execute(
                 """
                 UPDATE experiments
@@ -219,13 +218,72 @@ class db(object):
                 """,
                 namedict[0])
         else:
-            self.cur.execute(
+            self.cur.executemany(
                 """
-                UPDATE experiments
-                SET experiment_link=%(experiment_link)s
-                WHERE experiment_name=%(experiment_name)s
+                INSERT INTO experiments
+                (
+                experiment_name,
+                model_struct,
+                loss_function,
+                regularization_type,
+                regularization_strength,
+                optimizer,
+                lr,
+                dataset,
+                regularization_type_domain,
+                regularization_strength_domain,
+                optimizer_domain,
+                lr_domain,
+                timesteps,
+                timesteps_domain,
+                u_t_domain,
+                q_t_domain,
+                t_t_domain,
+                p_t_domain,
+                u_t,
+                q_t,
+                t_t,
+                p_t,
+                hp_optim,
+                hp_max_studies,
+                hp_current_iteration,
+                experiment_iteration,
+                normalize_labels,
+                experiment_link
+                )
+                VALUES
+                (
+                %(experiment_name)s,
+                %(model_struct)s,
+                %(loss_function)s,
+                %(regularization_type)s,
+                %(regularization_strength)s,
+                %(optimizer)s,
+                %(lr)s,
+                %(dataset)s,
+                %(regularization_type_domain)s,
+                %(regularization_strength_domain)s,
+                %(optimizer_domain)s,
+                %(lr_domain)s,
+                %(timesteps)s,
+                %(timesteps_domain)s,
+                %(u_t_domain)s,
+                %(q_t_domain)s,
+                %(t_t_domain)s,
+                %(p_t_domain)s,
+                %(u_t)s,
+                %(q_t)s,
+                %(t_t)s,
+                %(p_t)s,
+                %(hp_optim)s,
+                %(hp_max_studies)s,
+                %(hp_current_iteration)s,
+                %(experiment_iteration)s,
+                %(normalize_labels)s,
+                %(experiment_link)s
+                )
                 """,
-                namedict[0])
+                namedict)
         if self.status_message:
             self.return_status('INSERT')
 

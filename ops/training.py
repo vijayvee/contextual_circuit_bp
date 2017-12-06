@@ -223,7 +223,6 @@ def training_loop(
                     exp_params[k] = None
 
             # Update the database with the new hyperparameters
-            import ipdb;ipdb.set_trace()
             db.update_online_experiment(
                 exp_combos=[exp_params],
                 experiment_link=exp_params['experiment_link'])
