@@ -40,6 +40,35 @@ class experiments():
             exp[k] = v
         return exp
 
+    def perceptual_iq_hp_optimization(self):
+        """Each key in experiment_dict must be manually added to the schema.
+
+        If using grid-search -- put hps in lists.
+        If using hp-optim, do not use lists except for domains.
+        """
+        model_folder = 'perceptual_iq_hp_optimization'
+        exp = {
+            'experiment_name': model_folder,
+            'hp_optim': 'gpyopt',
+            'hp_multiple': 10,
+            'lr': 1e-4,
+            'lr_domain': [1e-1, 1e-5],
+            'loss_function': None,  # Leave as None to use dataset default
+            'optimizer': 'adam',
+            'regularization_type': None,  # [None, 'l1', 'l2'],
+            'regularization_strength': 1e-5,
+            'regularization_strength_domain': [1e-1, 1e-7],
+            # 'timesteps': True,
+            'model_struct': [
+                os.path.join(model_folder, 'divisive_1l'),
+                os.path.join(model_folder, 'layer_1l'),
+                os.path.join(model_folder, 'divisive_2l'),
+                os.path.join(model_folder, 'layer_2l'),
+            ],
+            'dataset': 'ChallengeDB_release'
+        }
+        return self.add_globals(exp)  # Add globals to the experiment
+
     def two_layer_conv_mlp(self):
         """Each key in experiment_dict must be manually added to the schema."""
         model_folder = 'two_layer_conv_mlp'
@@ -258,6 +287,29 @@ class experiments():
         exp['batch_size'] = 16  # Train/val batch size.
         return exp
 
+    def ALLEN_st_selected_cells_1(self):
+        """Each key in experiment_dict must be manually added to the schema."""
+        model_folder = 'ALLEN_st_selected_cells_1'
+        exp = {
+            'experiment_name': [model_folder],
+            'lr': [3e-4],
+            'loss_function': ['pearson'],
+            'optimizer': ['adam'],
+            'regularization_type': ['l2'],  # [None, 'l1', 'l2'],
+            'regularization_strength': [1e-7],
+            'model_struct': [
+                os.path.join(model_folder, 'conv3d'),
+            ],
+            'dataset': ['ALLEN_selected_cells_1']
+        }
+        exp = self.add_globals(exp)  # Add globals to the experiment'
+        exp['data_augmentations'] = [['resize']]
+        exp['epochs'] = 50
+        exp['validation_iters'] = 500
+        exp['num_validation_evals'] = 100
+        exp['batch_size'] = 16  # Train/val batch size.
+        return exp
+
     def ALLEN_ss_cells_1_movies(self):
         """Each key in experiment_dict must be manually added to the schema."""
         model_folder = 'ALLEN_ss_cells_1_movies'
@@ -283,58 +335,33 @@ class experiments():
         exp['batch_size'] = 32  # Train/val batch size.
         return exp
 
-    def ALLEN_st_selected_cells_1(self):
-        """Each key in experiment_dict must be manually added to the schema."""
-        model_folder = 'ALLEN_st_selected_cells_1'
-        exp = {
-            'experiment_name': [model_folder],
-            'lr': [3e-4],
-            'loss_function': ['pearson'],
-            'optimizer': ['adam'],
-            # 'regularization_type': ['l2'],  # [None, 'l1', 'l2'],
-            # 'regularization_strength': [1e-7],
-            'model_struct': [
-                os.path.join(model_folder, 'conv3d'),
-                # os.path.join(model_folder, 'sep_conv3d'),
-            ],
-            'dataset': [model_folder]
-        }
-        exp = self.add_globals(exp)  # Add globals to the experiment'
-        exp['data_augmentations'] = [['resize']]
-        exp['epochs'] = 50
-        exp['validation_iters'] = 500
-        exp['num_validation_evals'] = 100
-        exp['batch_size'] = 16  # Train/val batch size.
-        return exp
+    def perceptual_iq_hp_optimization(self):
+        """Each key in experiment_dict must be manually added to the schema.
 
-    def mlp_hp(self):
-        """Each key in experiment_dict must be manually added to the schema."""
-        model_folder = 'mlp_hp'
+        If using grid-search -- put hps in lists.
+        If using hp-optim, do not use lists except for domains.
+        """
+        model_folder = 'perceptual_iq_hp_optimization'
         exp = {
             'experiment_name': model_folder,
             'hp_optim': 'gpyopt',
-            'aggregator': 'max',  # Maximize validation accuracy
-            'hp_max_studies': 10,
-            'lr': 1e-3,
-            'lr_domain': [1e-5, 1e-1],
-            'loss_function': 'cce',
-            'optimizer': 'adam',
-            'regularization_type': None,  # [None, 'l1', 'l2'],
-            'regularization_strength': 1e-7,
-            'regularization_strength_domain': [1e-10, 1e-5],
+            'hp_multiple': 10,
+            'lr': 1e-4,
+            'lr_domain': [1e-1, 1e-5],
             'filter_size': 5,
             'filter_size_domain': range(3, 20),
+            'loss_function': None,  # Leave as None to use dataset default
+            'optimizer': 'adam',
+            'regularization_type': None,  # [None, 'l1', 'l2'],
+            'regularization_strength': 1e-5,
+            'regularization_strength_domain': [1e-1, 1e-7],
+            # 'timesteps': True,
             'model_struct': [
-                # os.path.join(model_folder, 'divisive'),
-                os.path.join(model_folder, 'batch'),
-                # os.path.join(model_folder, 'layer'),
+                os.path.join(model_folder, 'divisive_1l'),
+                # os.path.join(model_folder, 'layer_1l'),
+                # os.path.join(model_folder, 'divisive_2l'),
+                # os.path.join(model_folder, 'layer_2l'),
             ],
-            'dataset': 'cifar_10'
+            'dataset': 'ChallengeDB_release'
         }
-        exp = self.add_globals(exp)  # Add globals to the experiment
-        # exp['data_augmentations'] = None
-        exp['epochs'] = 1
-        exp['validation_iters'] = 100
-        exp['num_validation_evals'] = 1
-        exp['batch_size'] = 32  # Train/val batch size.
-        return exp  # Add globals to the experiment
+        return self.add_globals(exp)  # Add globals to the experiment

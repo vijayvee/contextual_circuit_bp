@@ -35,10 +35,13 @@ def image_augmentations(
                 # Spatiotemporal image set.
                 nt = int(image.get_shape()[0])
                 sims = tf.split(image, nt)
-                for idx, im in sims:
+                import ipdb;ipdb.set_trace()
+                for idx in range(len(sims)):
+                    im = tf.squeeze(sims[idx])
                     sims[idx] = tf.image.resize_images(
-                        tf.expand_dims(im, axis=0),
+                        im,
                         model_input_image_size)
+                image = tf.stack(sims)
             else:
                 image = tf.image.resize_images(
                     tf.expand_dims(image, axis=0),
