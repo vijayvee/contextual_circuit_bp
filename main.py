@@ -14,6 +14,7 @@ from ops import loss_utils
 from ops import eval_metrics
 from ops import training
 from ops import hp_opt_utils
+from ops import tf_fun
 
 
 def print_model_architecture(model_summary):
@@ -268,8 +269,7 @@ def main(
                 metric=dataset_module.score_metric,
                 pred=train_scores,
                 labels=train_labels)  # training accuracy
-            if int(train_images.get_shape()[-1]) <= 3:
-                tf.summary.image('train images', train_images)
+            tf_fun.image_summaries(train_images, tag='Training')
             tf.summary.scalar('training loss', train_loss)
             tf.summary.scalar('training accuracy', train_accuracy)
             log.info('Added training summaries.')
@@ -297,8 +297,7 @@ def main(
                 metric=dataset_module.score_metric,
                 pred=val_scores,
                 labels=val_labels)  # training accuracy
-            if int(train_images.get_shape()[-1]) <= 3:
-                tf.summary.image('val images', val_images)
+            tf_fun.image_summaries(val_images, tag='Validation')
             tf.summary.scalar('validation loss', val_loss)
             tf.summary.scalar('validation accuracy', val_accuracy)
             log.info('Added validation summaries.')

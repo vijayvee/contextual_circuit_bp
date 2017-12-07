@@ -127,7 +127,7 @@ class ff(object):
             name,
             it_dict):
         """Add a 3D convolution layer."""
-        context, act = conv_3d_layer(
+        context, act = conv3d_layer(
             self=context,
             bottom=act,
             in_channels=in_channels,
@@ -147,6 +147,44 @@ class ff(object):
             it_dict):
         """Add a separable 2D convolution layer."""
         context, act = sep_conv_layer(
+            self=context,
+            bottom=act,
+            in_channels=in_channels,
+            out_channels=out_channels,
+            name=name,
+            filter_size=filter_size)
+        return context, act
+
+    def time_sep_conv3d(
+            self,
+            context,
+            act,
+            in_channels,
+            out_channels,
+            filter_size,
+            name,
+            it_dict):
+        """Add a separable 3D convolution layer."""
+        context, act = time_sep_conv3d_layer(
+            self=context,
+            bottom=act,
+            in_channels=in_channels,
+            out_channels=out_channels,
+            name=name,
+            filter_size=filter_size)
+        return context, act
+
+    def complete_sep_conv3d(
+            self,
+            context,
+            act,
+            in_channels,
+            out_channels,
+            filter_size,
+            name,
+            it_dict):
+        """Add a separable 3D convolution layer."""
+        context, act = complete_sep_conv3d_layer(
             self=context,
             bottom=act,
             in_channels=in_channels,
@@ -265,18 +303,18 @@ class ff(object):
             it_dict):
         """Wrapper for 3d pool. TODO: add op flexibility."""
         if filter_size is None:
-            filter_size = [1, 2, 2, 1]
-        stride_size = it_dict.get('stride', [1, 2, 2, 1])
+            filter_size = [1, 2, 2, 2, 1]
+        stride_size = it_dict.get('stride', [1, 2, 2, 2, 1])
         if not isinstance(filter_size, list):
-            filter_size = [1, filter_size, filter_size, 1]
+            filter_size = [1, filter_size, filter_size, filter_size, 1]
         if not isinstance(stride_size, list):
-            filter_size = [1, stride_size, stride_size, 1]
+            filter_size = [1, stride_size, stride_size, stride_size, 1]
         if 'aux' in it_dict and 'pool_type' in it_dict['aux']:
             pool_type = it_dict['aux']['pool_type']
         else:
             pool_type = 'max'
 
-        context, act = self.pool_class.max_pool_3d(
+        context, act = self.pool_class.interpret_3dpool(
             context=context,
             bottom=act,
             name=name,
@@ -616,7 +654,7 @@ def sep_conv_layer(
         return self, bias
 
 
-def conv_3d_layer(
+def time_sep_conv3d_layer(
         self,
         bottom,
         out_channels,
@@ -627,17 +665,129 @@ def conv_3d_layer(
         padding='SAME',
         aux=None):
     """3D convolutional layer."""
-    import ipdb;ipdb.set_trace()
     with tf.variable_scope(name):
         if in_channels is None:
             in_channels = int(bottom.get_shape()[-1])
+        timesteps = int(bottom.get_shape()[1])
+        # T/H/W/In/Out
+        # 1. HW Convolution (3x3)
+        hwk_kernel = [1, filter_size, filter_size]
+        self, hwk_filt, _ = get_conv_var(
+            self=self,
+            filter_size=filter_size,
+            in_channels=out_channels,
+            out_channels=out_channels,
+            name='%s_hw' % name,
+            kernel=hwk_kernel)
+        hw_conv = tf.nn.conv3d(
+            bottom,
+            hwk_filt,
+            stride,
+            padding=padding)
+
+        # 2. Time convolution (3x3)
+        t_kernel = [timesteps, 1, 1]
+        self, t_filt, conv_biases = get_conv_var(
+            self=self,
+            filter_size=filter_size,
+            in_channels=in_channels,
+            out_channels=out_channels,
+            name='%s_t' % name,
+            kernel=t_kernel)
+        t_conv = tf.nn.conv3d(
+            hw_conv,
+            t_filt,
+            stride,
+            padding=padding)
+
+        bias = tf.nn.bias_add(t_conv, conv_biases)
+        return self, bias
+
+
+def complete_sep_conv3d_layer(
+        self,
+        bottom,
+        out_channels,
+        name,
+        in_channels=None,
+        filter_size=3,
+        stride=[1, 1, 1, 1, 1],
+        padding='SAME',
+        multiplier=4,
+        aux=None):
+    """3D convolutional layer."""
+    with tf.variable_scope(name):
+        if in_channels is None:
+            in_channels = int(bottom.get_shape()[-1])
+        timesteps = int(bottom.get_shape()[1])
+        # T/H/W/In/Out
+        # 1. Sep Convolution per timepoint (3x3)
+        self, dfilt, _ = get_conv_var(
+            self=self,
+            filter_size=filter_size,
+            in_channels=1 * multiplier,
+            out_channels=out_channels,
+            name='d_%s' % name)
+        self, pfilt, conv_biases = get_conv_var(
+            self=self,
+            filter_size=filter_size,
+            in_channels=1 * multiplier,
+            out_channels=out_channels,
+            name='d_%s' % name)
+
+        # Inefficient. TODO: Develop the C++ code for this
+        t_bottom = tf.split(bottom, timesteps, axis=1)
+        t_convs = []
+        for ts in range(timesteps):
+            t_convs += [tf.nn.separable_conv2d(
+                input=t_bottom[ts],
+                depthwise_filter=dfilt,
+                pointwise_filt=pfilt,
+                strides=stride,
+                padding=padding)]
+        t_convs = tf.concat(tf.split(t_convs, 3, axis=1), axis=1)
+
+        # 2. Time convolution (3x3)
+        t_kernel = [timesteps, 1, 1]
+        self, t_filt, conv_biases = get_conv_var(
+            self=self,
+            filter_size=filter_size,
+            in_channels=in_channels,
+            out_channels=out_channels,
+            name='%s_t' % name,
+            kernel=t_kernel)
+        t_conv = tf.nn.conv3d(
+            t_convs,
+            t_filt,
+            stride,
+            padding=padding)
+        bias = tf.nn.bias_add(t_conv, conv_biases)
+        return self, bias
+
+
+def conv3d_layer(
+        self,
+        bottom,
+        out_channels,
+        name,
+        in_channels=None,
+        filter_size=3,
+        stride=[1, 1, 1, 1, 1],
+        padding='SAME',
+        aux=None):
+    """3D convolutional layer."""
+    with tf.variable_scope(name):
+        if in_channels is None:
+            in_channels = int(bottom.get_shape()[-1])
+        timesteps = int(bottom.get_shape()[1])
+        kernel = [timesteps, filter_size, filter_size]
         self, filt, conv_biases = get_conv_var(
             self=self,
             filter_size=filter_size,
             in_channels=in_channels,
             out_channels=out_channels,
             name=name,
-            kernel_dimensionality=3)
+            kernel=kernel)
         if aux is not None and 'dilation' in aux.keys():
             conv = tf.nn.convolution(
                 input=bottom,
@@ -695,7 +845,7 @@ def st_resnet_layer(
         ac = lambda x: x
     for idx, lw in enumerate(layer_weights):
         ln = '%s_%s' % (name, idx)
-        self, rlayer = conv_3d_layer(
+        self, rlayer = conv3d_layer(
             self=self,
             bottom=rlayer,
             in_channels=int(rlayer.get_shape()[-1]),
@@ -787,9 +937,10 @@ def get_conv_var(
         out_channels,
         name,
         init_type='xavier',
-        kernel_dimensionality=2):
+        kernel=None):
     """Prepare convolutional kernel weights."""
-    kernel = [filter_size] * kernel_dimensionality
+    if kernel is None:
+        kernel = [filter_size] * 2
     if init_type == 'xavier':
         weight_init = [
             kernel + [in_channels, out_channels],

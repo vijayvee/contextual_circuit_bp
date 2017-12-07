@@ -77,11 +77,11 @@ class pool(object):
             kwargs=None):
         """Apply the appropriate 3D pooling type."""
         if filter_size is None:
-            raise RuntimeError('Failed to pass a kernel to avg_pool3d.')
+            filter_size = self.k
         if stride_size is None:
-            raise RuntimeError('Failed to pass a stride to avg_pool3d.')
+            stride_size = self.s
         if padding is None:
-            raise RuntimeError('Failed to pass a padding to avg_pool3d.')
+            padding = self.p
         if kwargs is not None:
             self.update_params(kwargs)
         if pool_type == 'max':

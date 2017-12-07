@@ -2,6 +2,10 @@ import numpy as np
 import tensorflow as tf
 
 
+# def resize_to_target(x, target):
+#     target_shape = 
+
+
 def repeat_elements(x, rep, axis):
     '''Repeats the elements of a tensor along an axis, like np.repeat
     If x has shape (s1, s2, s3) and axis=1, the output
@@ -35,18 +39,20 @@ def image_augmentations(
                 # Spatiotemporal image set.
                 nt = int(image.get_shape()[0])
                 sims = tf.split(image, nt)
-                import ipdb;ipdb.set_trace()
                 for idx in range(len(sims)):
-                    im = tf.squeeze(sims[idx])
+                    # im = tf.squeeze(sims[idx])
+                    im = sims[idx]
                     sims[idx] = tf.image.resize_images(
                         im,
                         model_input_image_size)
-                image = tf.stack(sims)
+                image = tf.squeeze(tf.stack(sims))
+                if len(image.get_shape()) < 4:
+                    image = tf.expand_dims(image, axis=-1)
             else:
                 image = tf.image.resize_images(
                     tf.expand_dims(image, axis=0),
                     model_input_image_size)
-            image = tf.squeeze(image, axis=0)
+                image = tf.squeeze(image, axis=0)
             print 'Applying resize.'
         else:
             pass

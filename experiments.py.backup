@@ -298,6 +298,8 @@ class experiments():
             'regularization_type': ['l2'],  # [None, 'l1', 'l2'],
             'regularization_strength': [1e-7],
             'model_struct': [
+                os.path.join(model_folder, 'all_sep_conv3d'),
+                os.path.join(model_folder, 'time_sep_conv3d'),
                 os.path.join(model_folder, 'conv3d'),
             ],
             'dataset': ['ALLEN_selected_cells_1']
@@ -334,34 +336,3 @@ class experiments():
         exp['num_validation_evals'] = 100
         exp['batch_size'] = 32  # Train/val batch size.
         return exp
-
-    def perceptual_iq_hp_optimization(self):
-        """Each key in experiment_dict must be manually added to the schema.
-
-        If using grid-search -- put hps in lists.
-        If using hp-optim, do not use lists except for domains.
-        """
-        model_folder = 'perceptual_iq_hp_optimization'
-        exp = {
-            'experiment_name': model_folder,
-            'hp_optim': 'gpyopt',
-            'hp_multiple': 10,
-            'lr': 1e-4,
-            'lr_domain': [1e-1, 1e-5],
-            'filter_size': 5,
-            'filter_size_domain': range(3, 20),
-            'loss_function': None,  # Leave as None to use dataset default
-            'optimizer': 'adam',
-            'regularization_type': None,  # [None, 'l1', 'l2'],
-            'regularization_strength': 1e-5,
-            'regularization_strength_domain': [1e-1, 1e-7],
-            # 'timesteps': True,
-            'model_struct': [
-                os.path.join(model_folder, 'divisive_1l'),
-                # os.path.join(model_folder, 'layer_1l'),
-                # os.path.join(model_folder, 'divisive_2l'),
-                # os.path.join(model_folder, 'layer_2l'),
-            ],
-            'dataset': 'ChallengeDB_release'
-        }
-        return self.add_globals(exp)  # Add globals to the experiment
