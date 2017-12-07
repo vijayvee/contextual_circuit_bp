@@ -2,7 +2,7 @@
 
 layer_structure = [
     {
-        'layers': ['sep_conv3d'],
+        'layers': ['complete_sep_conv3d'],
         'weights': [32],
         'names': ['conv1_1'],
         'filter_size': [5],
