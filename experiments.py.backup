@@ -298,7 +298,7 @@ class experiments():
             'regularization_type': ['l2'],  # [None, 'l1', 'l2'],
             'regularization_strength': [1e-7],
             'model_struct': [
-                os.path.join(model_folder, 'all_sep_conv3d'),
+                os.path.join(model_folder, 'complete_sep_conv3d'),
                 os.path.join(model_folder, 'time_sep_conv3d'),
                 os.path.join(model_folder, 'conv3d'),
             ],

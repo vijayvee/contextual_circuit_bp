@@ -2,10 +2,6 @@ import numpy as np
 import tensorflow as tf
 
 
-# def resize_to_target(x, target):
-#     target_shape = 
-
-
 def repeat_elements(x, rep, axis):
     '''Repeats the elements of a tensor along an axis, like np.repeat
     If x has shape (s1, s2, s3) and axis=1, the output

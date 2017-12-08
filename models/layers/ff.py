@@ -635,15 +635,15 @@ def sep_conv_layer(
         self, dfilt, _ = get_conv_var(
             self=self,
             filter_size=filter_size,
-            in_channels=1 * multiplier,
-            out_channels=out_channels,
+            in_channels=in_channels,
+            out_channels=multiplier,
             name='d_%s' % name)
         self, pfilt, conv_biases = get_conv_var(
             self=self,
-            filter_size=filter_size,
-            in_channels=1 * multiplier,
+            filter_size=1,
+            in_channels=multiplier,
             out_channels=out_channels,
-            name='d_%s' % name)
+            name='p_%s' % name)
         conv = tf.nn.separable_conv2d(
             input=bottom,
             depthwise_filter=dfilt,
@@ -669,23 +669,9 @@ def time_sep_conv3d_layer(
         if in_channels is None:
             in_channels = int(bottom.get_shape()[-1])
         timesteps = int(bottom.get_shape()[1])
-        # T/H/W/In/Out
-        # 1. HW Convolution (3x3)
-        hwk_kernel = [1, filter_size, filter_size]
-        self, hwk_filt, _ = get_conv_var(
-            self=self,
-            filter_size=filter_size,
-            in_channels=out_channels,
-            out_channels=out_channels,
-            name='%s_hw' % name,
-            kernel=hwk_kernel)
-        hw_conv = tf.nn.conv3d(
-            bottom,
-            hwk_filt,
-            stride,
-            padding=padding)
 
-        # 2. Time convolution (3x3)
+        # T/H/W/In/Out
+        # 1. Time convolution
         t_kernel = [timesteps, 1, 1]
         self, t_filt, conv_biases = get_conv_var(
             self=self,
@@ -695,12 +681,30 @@ def time_sep_conv3d_layer(
             name='%s_t' % name,
             kernel=t_kernel)
         t_conv = tf.nn.conv3d(
-            hw_conv,
+            bottom,
             t_filt,
             stride,
             padding=padding)
 
-        bias = tf.nn.bias_add(t_conv, conv_biases)
+        # 1b. Add nonlinearity between separable convolutions
+        if aux is not None and 'activation' in aux.keys():
+            t_conv = activations()[aux['activation']](t_conv)
+
+        # 2. HW Convolution
+        hwk_kernel = [1, filter_size, filter_size]
+        self, hwk_filt, _ = get_conv_var(
+            self=self,
+            filter_size=filter_size,
+            in_channels=out_channels,
+            out_channels=out_channels,
+            name='%s_hw' % name,
+            kernel=hwk_kernel)
+        hwk_conv = tf.nn.conv3d(
+            t_conv,
+            hwk_filt,
+            stride,
+            padding=padding)
+        bias = tf.nn.bias_add(hwk_conv, conv_biases)
         return self, bias
 
 
@@ -711,7 +715,8 @@ def complete_sep_conv3d_layer(
         name,
         in_channels=None,
         filter_size=3,
-        stride=[1, 1, 1, 1, 1],
+        stride2d=[1, 1, 1, 1],
+        stride3d=[1, 1, 1, 1, 1],
         padding='SAME',
         multiplier=4,
         aux=None):
@@ -720,34 +725,9 @@ def complete_sep_conv3d_layer(
         if in_channels is None:
             in_channels = int(bottom.get_shape()[-1])
         timesteps = int(bottom.get_shape()[1])
+
         # T/H/W/In/Out
-        # 1. Sep Convolution per timepoint (3x3)
-        self, dfilt, _ = get_conv_var(
-            self=self,
-            filter_size=filter_size,
-            in_channels=1 * multiplier,
-            out_channels=out_channels,
-            name='d_%s' % name)
-        self, pfilt, conv_biases = get_conv_var(
-            self=self,
-            filter_size=filter_size,
-            in_channels=1 * multiplier,
-            out_channels=out_channels,
-            name='d_%s' % name)
-
-        # Inefficient. TODO: Develop the C++ code for this
-        t_bottom = tf.split(bottom, timesteps, axis=1)
-        t_convs = []
-        for ts in range(timesteps):
-            t_convs += [tf.nn.separable_conv2d(
-                input=t_bottom[ts],
-                depthwise_filter=dfilt,
-                pointwise_filt=pfilt,
-                strides=stride,
-                padding=padding)]
-        t_convs = tf.concat(tf.split(t_convs, 3, axis=1), axis=1)
-
-        # 2. Time convolution (3x3)
+        # 1. Time convolution
         t_kernel = [timesteps, 1, 1]
         self, t_filt, conv_biases = get_conv_var(
             self=self,
@@ -757,11 +737,44 @@ def complete_sep_conv3d_layer(
             name='%s_t' % name,
             kernel=t_kernel)
         t_conv = tf.nn.conv3d(
-            t_convs,
+            bottom,
             t_filt,
-            stride,
+            stride3d,
             padding=padding)
+
+        # 1b. Add nonlinearity between separable convolutions
+        if aux is not None and 'activation' in aux.keys():
+            t_conv = activations()[aux['activation']](t_conv)
+
+        # 2. Sep Convolution shared across timepoints
+        self, dfilt, _ = get_conv_var(
+            self=self,
+            filter_size=filter_size,
+            in_channels=out_channels,
+            out_channels=multiplier,
+            name='d_%s' % name)
+        self, pfilt, conv_biases = get_conv_var(
+            self=self,
+            filter_size=1,
+            in_channels=out_channels * multiplier,
+            out_channels=out_channels,
+            name='p_%s' % name)
+
+        # Inefficient. TODO: Develop the C++ code for this
+        t_bottom = tf.split(t_conv, timesteps, axis=1)
+        t_convs = []
+        for ts in range(timesteps):
+            t_convs += [tf.expand_dims(
+                    tf.nn.separable_conv2d(
+                        input=tf.squeeze(t_bottom[ts], axis=1),
+                        depthwise_filter=dfilt,
+                        pointwise_filter=pfilt,
+                        strides=stride2d,
+                        padding=padding),
+                    axis=1)]
+        t_convs = tf.concat(t_convs, axis=1)
         bias = tf.nn.bias_add(t_conv, conv_biases)
+
         return self, bias
 
 
