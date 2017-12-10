@@ -1,6 +1,6 @@
 #!/bin/bash
 
-echo "Which node do you want to use? [1, 2, 3]"
+echo "Which node do you want to use? [1, 2, 3, 4, 5]"
 read node
 
 for gpu in 0 1 2 3 4 5 6 7
