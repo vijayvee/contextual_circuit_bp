@@ -42,7 +42,7 @@
 3. Fix your credentials file.
 	a. `cp db/credentials.py.template db/credentials.py` then edit the file to match your system and preferences.
 
-4. Create datasets with `encode_dataset.py` 
+4. Create datasets with `encode_dataset.py`
 	a. For each dataset you want to encode, create a class in `dataset_processing/` by following the `mnist.py` or `cifar.py` templates.
 	b. To create a dataset: `python encode_dataset.py --dataset=mnist`
 
@@ -128,6 +128,34 @@
 		}
 	]
 ```
+
+
+## Hyperparameter Optimization
+
+1. To add parameters to your experiment that you want to optimize, you must do the following (using filter_size as an example):
+	- add the parameter name and parameter domain to `experiments.py` in the experiment's `exp` dict:
+		```
+		'filter_size': 4,
+		'filter_size_domain': [3,4,5],
+		```
+		Note: for a continuous range, pass in a list with only two items (i.e. `'filter_size_domain': [5,7]` would indicate to try the continuous range between 5 and 7)
+	- add `filter_size` and `filter_size_domain` to `db/db_schema.txt` in the experiment table:
+		```
+		CREATE TABLE experiments ( id bigserial primary key, . . . filter_size int, filter_size_domain json)
+		```
+	- add the following to the `experiment_fields` function in `db/db.py`
+		```            
+		'filter_size' : ['experiments', 'hp_combo_history'],
+		'filter_size_domain' : ['experiments', 'hp_combo_history'],
+		```
+	- add `filter_size` and `filter_size_domain` to `db/db.py` in the `populate_db` function, following how the other variables are added
+	- add the following to the `hp_opt_dict` function in `hp_opt_utils.py`
+		```
+		'filter_size_domain': 'filter_size'
+		```
+2. Currently, this functionality uses [GPyOpt](https://github.com/SheffieldML/GPyOpt) to do Bayesian Optimization of hyperparameters. In the future, other methods will be added.
+
+TODO: STREAMLINE THIS
 
 TODO:
 
