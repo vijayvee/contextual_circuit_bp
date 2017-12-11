@@ -16,4 +16,4 @@ RUN pip install --requirement /tmp/gpyopt_requirements.txt
 COPY . /tmp/
 COPY . .
 
-CMD ["cd", "/media/data_cifs/cluster_projects/monkey_tracker"]
+CMD ["cd", "/media/data_cifs/cluster_projects/contextual_circuit_bp"]

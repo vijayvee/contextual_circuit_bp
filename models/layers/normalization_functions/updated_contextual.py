@@ -9,6 +9,7 @@ from ops import initialization
 # 2. Combine P/Q into single weight matrix (think about the normalization)
 # 3. Association field by turning P into a Full conv matrix
 # 4. Frobenius norm regularization for the association field
+# 5. Accept timeseries data
 class ContextualCircuit(object):
     def __getitem__(self, name):
         return getattr(self, name)

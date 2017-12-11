@@ -1,6 +1,9 @@
-import GPyOpt
 import numpy as np
 from utils import py_utils
+try:
+    import GPyOpt
+except:
+    print 'Could not install GPyOpt.'
 
 
 def hp_optim_interpreter(

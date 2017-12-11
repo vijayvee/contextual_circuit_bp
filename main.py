@@ -103,9 +103,12 @@ def main(
         for l in exps:
             print l.values()[0]
         print '_' * 30
-        print 'You can add to the DB with: '\
-            'python prepare_experiments.py --experiment=%s' % \
-            exps[0].values()[0]
+        if len(exps) == 0:
+            print 'No experiments found.'
+        else:
+            print 'You can add to the DB with: '\
+                'python prepare_experiments.py --experiment=%s' % \
+                exps[0].values()[0]
         return
 
     if experiment_name is None:

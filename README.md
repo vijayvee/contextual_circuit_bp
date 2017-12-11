@@ -155,12 +155,8 @@
 		```
 2. Currently, this functionality uses [GPyOpt](https://github.com/SheffieldML/GPyOpt) to do Bayesian Optimization of hyperparameters. In the future, other methods will be added.
 
-TODO: STREAMLINE THIS
-
 TODO:
 
-- Evaluation script: Visualizations w/ LRP.
+- Evaluation script: Visualizations w/ LRP/smoothed gradient.
 - Add documentation for creating 3d conv models (should be as simple as changing the data-loader shapes)
-- Clean up inconsistent filter/kernel variable names.
-- Pass stride information to layers.
-- Pass padding information to layers.
+
