@@ -155,7 +155,7 @@
 		```
 2. Currently, this functionality uses [GPyOpt](https://github.com/SheffieldML/GPyOpt) to do Bayesian Optimization of hyperparameters. In the future, other methods will be added.
 
-TODO: STREAMLINE THIS
+TODO: STREAMLINE THIS, ADD MORE THINGS
 
 TODO:
 
