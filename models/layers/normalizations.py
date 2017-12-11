@@ -4,13 +4,8 @@ from utils import py_utils
 from ops.eRF_calculator import eRF_calculator
 from models.layers.normalization_functions import div_norm
 from models.layers.normalization_functions import layer_norm
-from models.layers.normalization_functions import contextual_alt_learned_transition_learned_connectivity_vector_modulation
-from models.layers.normalization_functions import contextual_alt_learned_transition_learned_connectivity_scalar_modulation
-from models.layers.normalization_functions import contextual_adjusted_recurrent
-from models.layers.normalization_functions import contextual_vector_separable
-from models.layers.normalization_functions import contextual_vector_separable_random
-from models.layers.normalization_functions import contextual_vector_separable_zero_vd
-from models.layers.normalization_functions import contextual_vector_separable_zero_zoneout
+from models.layers.normalization_functions import contextual
+from models.layers.normalization_functions import contextual_zoneout
 
 
 class normalizations(object):
@@ -131,11 +126,11 @@ class normalizations(object):
             else:
                 self.SSF = SSF
 
-    def contextual_alt_learned_transition_learned_connectivity_vector_modulation(self, x, layer, eRF, aux):
+    def contextual(self, x, layer, eRF, aux):
         """Contextual model from paper with frozen U & eCRFs."""
         self.update_params(aux)
         self.set_RFs(layer=layer, eRF=eRF)
-        contextual_layer = contextual_alt_learned_transition_learned_connectivity_vector_modulation.ContextualCircuit(
+        contextual_layer = contextual.ContextualCircuit(
             X=x,
             timesteps=self.timesteps,
             lesions=self.lesions,
@@ -146,86 +141,11 @@ class normalizations(object):
             padding=self.padding)
         return contextual_layer.build()
 
-    def contextual_alt_learned_transition_learned_connectivity_scalar_modulation(self, x, layer, eRF, aux):
+    def contextual_zoneout(self, x, layer, eRF, aux):
         """Contextual model from paper with frozen U & eCRFs."""
         self.update_params(aux)
         self.set_RFs(layer=layer, eRF=eRF)
-        contextual_layer = contextual_alt_learned_transition_learned_connectivity_scalar_modulation.ContextualCircuit(
-            X=x,
-            timesteps=self.timesteps,
-            lesions=self.lesions,
-            SRF=self.SRF,
-            SSN=self.SSN,
-            SSF=self.SSF,
-            strides=self.strides,
-            padding=self.padding)
-        return contextual_layer.build()
-
-    def contextual_vector_separable_zero_vd(self, x, layer, eRF, aux):
-        """Contextual model from paper with frozen U & eCRFs."""
-        self.update_params(aux)
-        self.set_RFs(layer=layer, eRF=eRF)
-        contextual_layer = contextual_vector_separable_zero_vd.ContextualCircuit(
-            X=x,
-            timesteps=self.timesteps,
-            lesions=self.lesions,
-            SRF=self.SRF,
-            SSN=self.SSN,
-            SSF=self.SSF,
-            strides=self.strides,
-            padding=self.padding)
-        return contextual_layer.build()
-
-    def contextual_vector_separable_zero_zoneout(self, x, layer, eRF, aux):
-        """Contextual model from paper with frozen U & eCRFs."""
-        self.update_params(aux)
-        self.set_RFs(layer=layer, eRF=eRF)
-        contextual_layer = contextual_vector_separable_zero_vd.ContextualCircuit(
-            X=x,
-            timesteps=self.timesteps,
-            lesions=self.lesions,
-            SRF=self.SRF,
-            SSN=self.SSN,
-            SSF=self.SSF,
-            strides=self.strides,
-            padding=self.padding)
-        return contextual_layer.build()
-
-    def contextual_adjusted_recurrent(self, x, layer, eRF, aux):
-        """Contextual model from paper with frozen U & eCRFs."""
-        self.update_params(aux)
-        self.set_RFs(layer=layer, eRF=eRF)
-        contextual_layer = contextual_adjusted_recurrent.ContextualCircuit(
-            X=x,
-            timesteps=self.timesteps,
-            lesions=self.lesions,
-            SRF=self.SRF,
-            SSN=self.SSN,
-            SSF=self.SSF,
-            strides=self.strides,
-            padding=self.padding)
-        return contextual_layer.build()
-
-    def contextual_vector_separable(self, x, layer, eRF, aux):
-        """Contextual model from paper with frozen U & eCRFs."""
-        self.update_params(aux)
-        self.set_RFs(layer=layer, eRF=eRF)
-        contextual_layer = contextual_vector_separable.ContextualCircuit(
-            X=x,
-            timesteps=self.timesteps,
-            lesions=self.lesions,
-            SRF=self.SRF,
-            SSN=self.SSN,
-            SSF=self.SSF,
-            strides=self.strides,
-            padding=self.padding)
-        return contextual_layer.build()
-
-    def contextual_vector_separable_random(self, x, layer, eRF, aux):
-        """Contextual model from paper with frozen U & eCRFs."""
-        self.update_params(aux)
-        self.set_RFs(layer=layer, eRF=eRF)
-        contextual_layer = contextual_vector_separable_random.ContextualCircuit(
+        contextual_layer = contextual_zoneout.ContextualCircuit(
             X=x,
             timesteps=self.timesteps,
             lesions=self.lesions,

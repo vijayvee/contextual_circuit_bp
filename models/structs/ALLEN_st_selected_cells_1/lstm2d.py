@@ -2,7 +2,7 @@
 
 layer_structure = [
     {
-        'layers': ['conv3d'],
+        'layers': ['lstm2d'],
         'weights': [32],
         'names': ['conv1_1'],
         'filter_size': [5],
@@ -10,7 +10,7 @@ layer_structure = [
         'activation_target': ['post'],
     },
     {
-        'layers': ['pool3d'],
+        'layers': ['pool'],
         'weights': [None],
         'names': ['pool2'],
         'filter_size': [None]

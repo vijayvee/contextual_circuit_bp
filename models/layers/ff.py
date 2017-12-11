@@ -133,7 +133,8 @@ class ff(object):
             in_channels=in_channels,
             out_channels=out_channels,
             name=name,
-            filter_size=filter_size)
+            filter_size=filter_size,
+            aux=it_dict)
         return context, act
 
     def sep_conv(
@@ -171,7 +172,8 @@ class ff(object):
             in_channels=in_channels,
             out_channels=out_channels,
             name=name,
-            filter_size=filter_size)
+            filter_size=filter_size,
+            aux=it_dict)
         return context, act
 
     def complete_sep_conv3d(
@@ -185,6 +187,26 @@ class ff(object):
             it_dict):
         """Add a separable 3D convolution layer."""
         context, act = complete_sep_conv3d_layer(
+            self=context,
+            bottom=act,
+            in_channels=in_channels,
+            out_channels=out_channels,
+            name=name,
+            filter_size=filter_size,
+            aux=it_dict)
+        return context, act
+
+    def lstm2d(
+            self,
+            context,
+            act,
+            in_channels,
+            out_channels,
+            filter_size,
+            name,
+            it_dict):
+        """Add a separable 3D convolution layer."""
+        context, act = lstm2d_layer(
             self=context,
             bottom=act,
             in_channels=in_channels,
@@ -627,8 +649,9 @@ def sep_conv_layer(
         multiplier=4,
         aux=None):
     """2D convolutional layer."""
-    if aux is not None and 'multiplier' in aux:
-        multiplier = aux['multiplier']
+    if aux is not None and 'ff_aux' in aux.keys():
+        if 'multiplier' in aux['ff_aux']:
+            multiplier = aux['multiplier']
     with tf.variable_scope(name):
         if in_channels is None:
             in_channels = int(bottom.get_shape()[-1])
@@ -687,8 +710,9 @@ def time_sep_conv3d_layer(
             padding=padding)
 
         # 1b. Add nonlinearity between separable convolutions
-        if aux is not None and 'activation' in aux.keys():
-            t_conv = activations()[aux['activation']](t_conv)
+        if aux is not None and 'ff_aux' in aux.keys():
+            if 'activation' in aux['ff_aux']:
+                t_conv = activations()[aux['ff_aux']['activation']](t_conv)
 
         # 2. HW Convolution
         hwk_kernel = [1, filter_size, filter_size]
@@ -743,8 +767,9 @@ def complete_sep_conv3d_layer(
             padding=padding)
 
         # 1b. Add nonlinearity between separable convolutions
-        if aux is not None and 'activation' in aux.keys():
-            t_conv = activations()[aux['activation']](t_conv)
+        if aux is not None and 'ff_aux' in aux.keys():
+            if 'activation' in aux['ff_aux']:
+                t_conv = activations()[aux['ff_aux']['activation']](t_conv)
 
         # 2. Sep Convolution shared across timepoints
         self, dfilt, _ = get_conv_var(
@@ -778,6 +803,185 @@ def complete_sep_conv3d_layer(
         return self, bias
 
 
+def lstm2d_layer(
+        self,
+        bottom,
+        out_channels,
+        name,
+        in_channels=None,
+        filter_size=3,
+        multiplier=4,
+        aux=None):
+    """2D LSTM convolutional layer."""
+    def lstm_condition(
+            step,
+            timesteps,
+            split_bottom,
+            h,
+            gate_filters,
+            gate_biases):
+        """Condition for ending LSTM."""
+        return step < timesteps
+
+    def lstm_body(
+            step,
+            timesteps,
+            split_bottom,
+            h,
+            gate_filters,
+            gate_biases):
+        """Calculate updates for 2d lstm."""
+
+        # Concatenate X_t and the hidden state
+        X = tf.gather(split_bottom, step)
+        if isinstance(h, list):
+            h_prev = tf.gather(h, step)
+        else:
+            h_prev = h
+        cat_states = tf.concat([X, h_prev], axis=-1)
+
+        # Perform convolutions
+        gate_convs = tf.nn.conv2d(
+            cat_states,
+            gate_filters,
+            [1, 1, 1, 1],
+            padding='SAME')
+        gate_activites = tf.nn.bias_add(gate_convs, gate_biases)
+
+        # Reshape and split into appropriate gates
+        gate_sizes = [int(x) for x in gate_activites.get_shape()]
+        div_g = gate_sizes[:-1] + [gate_sizes[-1] // 4, 4]
+        res_gates = tf.reshape(
+                gate_activites,
+                div_g)
+        split_gates = tf.split(res_gates, 4, axis=4)
+        f, i, o, c = split_gates
+        f = tf.squeeze(gate_nl(f))
+        i = tf.squeeze(gate_nl(i))
+        o = tf.squeeze(gate_nl(o))
+        c = tf.squeeze(cell_nl(c))
+        c_update = c * i + h * f
+        if isinstance(h, list):
+            # If we are storing the hidden state at each step
+            h[step] = o * c_update
+        else:
+            # If we are only keeping the final hidden state
+            h = o * c_update
+        return (
+                step,
+                timesteps,
+                split_bottom,
+                h,
+                gate_filters,
+                gate_biases
+                )
+
+    # Scope the 2d lstm
+    with tf.variable_scope(name):
+        if in_channels is None:
+            in_channels = int(bottom.get_shape()[-1])
+        timesteps = int(bottom.get_shape()[1])
+
+        if aux is not None and 'gate_nl' in aux.keys():
+            gate_nl = aux['gate_nl']
+        else:
+            gate_nl = tf.sigmoid
+
+        if aux is not None and 'cell_nl' in aux.keys():
+            cell_nl = aux['cell_nl']
+        else:
+            cell_nl = tf.tanh
+
+        if aux is not None and 'random_init' in aux.keys():
+            random_init = aux['random_init']
+        else:
+            random_init = True
+
+        # LSTM: pack i/o/f/c gates into a single tensor
+        # X_facing tensor, H_facing tensor for both weights and biases
+        weights = []
+        biases = []
+        gates = ['f', 'i', 'o', 'c']
+        for idx, g in enumerate(gates):
+            self, iW, ib = get_conv_var(
+                self=self,
+                filter_size=filter_size,
+                in_channels=in_channels + out_channels,  # For the hidden state
+                out_channels=out_channels,
+                name='%s_gate_%s' % (name, g))
+            weights += [iW]
+            biases += [ib]
+
+        # Concatenate each into 3d tensors
+        gate_filters = tf.concat(weights, axis=-1)
+        gate_biases = tf.concat(biases, axis=0)
+
+        # Initialize cell and hidden states
+        split_bottom = tf.split(bottom, timesteps, axis=1)
+        split_bottom = [tf.squeeze(x, axis=1) for x in split_bottom]  # Time
+        h_size = [
+            int(x) for x in split_bottom[0].get_shape()[:-1]] + [out_channels]
+        if aux is not None and 'ff_aux' in aux.keys():
+            if 'store_hidden_states' in aux['ff_aux']:
+                if random_init:
+                    hidden_state = [
+                        tf.random_normal(
+                            shape=h_size,
+                            mean=0.0,
+                            stddev=0.1) for x in range(timesteps)]
+                else:
+                    hidden_state = [
+                        tf.zeros_like(split_bottom[0])
+                        for x in range(timesteps)]
+        else:
+            if random_init:
+                hidden_state = tf.random_normal(
+                    shape=h_size,
+                    mean=0.0,
+                    stddev=0.1)
+            else:
+                hidden_state = tf.zeros_like(h_size)
+
+        # While loop
+        step = tf.constant(0)  # timestep iterator
+        elems = [
+            step,
+            timesteps,
+            split_bottom,
+            hidden_state,
+            gate_filters,
+            gate_biases
+        ]
+
+        if aux is not None and 'ff_aux' in aux.keys():
+            if 'swap_memory' in aux['ff_aux']:
+                swap_memory = aux['ff_aux']['swap_memory']
+        else:
+            swap_memory = False
+        returned = tf.while_loop(
+            lstm_condition,
+            lstm_body,
+            loop_vars=elems,
+            back_prop=True,
+            swap_memory=swap_memory)
+
+        # Prepare output
+        _, _, _, h_updated, gate_filters, gate_biases = returned
+        gate_sizes = [int(x) for x in gate_filters.get_shape()]
+        split_gates = tf.split(
+            tf.reshape(
+                gate_filters, gate_sizes[:-1] + [
+                    gate_sizes[-1] // 4,
+                    4]),
+            4,
+            axis=4)
+
+        # Assign gates to the model
+        for g, gf in zip(gates, split_gates):
+            setattr(self, '%s_%s' % (name, g), gf)
+        return self, h_updated
+
+
 def conv3d_layer(
         self,
         bottom,
@@ -801,19 +1005,11 @@ def conv3d_layer(
             out_channels=out_channels,
             name=name,
             kernel=kernel)
-        if aux is not None and 'dilation' in aux.keys():
-            conv = tf.nn.convolution(
-                input=bottom,
-                filter=filt,
-                strides=stride,
-                padding=padding,
-                dilation_rate=aux['dilation'])
-        else:
-            conv = tf.nn.conv3d(
-                bottom,
-                filt,
-                stride,
-                padding=padding)
+        conv = tf.nn.conv3d(
+            bottom,
+            filt,
+            stride,
+            padding=padding)
         bias = tf.nn.bias_add(conv, conv_biases)
         return self, bias
 
@@ -833,12 +1029,12 @@ def st_resnet_layer(
             activation = aux['activation']
         if 'normalization' in aux.keys():
             normalization = aux['normalization']
-        if 'combination' in aux.keys():
-            if aux['combination'] == 'add':
+        if 'ff_aux' in aux.keys():
+            if aux['ff_aux']['combination'] == 'add':
                 combination = tf.add
-            elif aux['combination'] == 'prod':
+            elif aux['ff_aux']['combination'] == 'prod':
                 combination = tf.multiply
-            elif aux['combination'] == 'add_prod':
+            elif aux['ff_aux']['combination'] == 'add_prod':
                 combination = lambda x, y: tf.concat(
                         tf.add(x, y),
                         tf.multiply(x, y)
@@ -1088,7 +1284,7 @@ def pool_ff_interpreter(
             filter_size=it_dict['filter_size'][0]
         )
     elif it_neuron_op == 'conv3d':
-        self, act = conv_3d_layer(
+        self, act = conv3d_layer(
             self=self,
             bottom=act,
             in_channels=int(act.get_shape()[-1]),

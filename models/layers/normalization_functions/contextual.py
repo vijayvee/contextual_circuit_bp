@@ -4,12 +4,13 @@ from utils import py_utils
 from ops import initialization
 
 
-# TODO: 
+# TODO:
 # 1. Separable HW/Feature weights
-# 2. Combine P/Q into single weight matrix (think about the normalization)
+# 2. Combine P/Q into single weight matrix (prob a dead end)
 # 3. Association field by turning P into a Full conv matrix
 # 4. Frobenius norm regularization for the association field
 # 5. Accept timeseries data
+# 6. Spatial Anisotropies between P and T tensors
 class ContextualCircuit(object):
     def __getitem__(self, name):
         return getattr(self, name)
