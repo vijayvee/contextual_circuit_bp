@@ -104,10 +104,13 @@ class data_processing(object):
                 im_data = misc.imread(im)
                 if not np.all(self.im_size == list(im_data.shape)):
                     im_data = np.swapaxes(im_data, 0, 1)
-                assert np.all(self.im_size == list(im_data.shape)), 'Mismatched dimensions.'
+                assert np.all(
+                    self.im_size == list(im_data.shape)
+                    ), 'Mismatched dimensions.'
 
                 # Loop through all labels
                 for idx, lab in enumerate(label_data):
+
                     # Process labels
                     ip_lab = lab.item()[1]
                     it_im_name = '%s_%s' % (idx, it_label)
@@ -117,7 +120,8 @@ class data_processing(object):
 
                     # Process images
                     proc_im = os.path.join(proc_image_dir, it_im_name)
-                    shutil.copy(im, proc_im)
+                    # shutil.copy(im, proc_im)
+                    misc.imsave(proc_im, im_data)
                     file_vec += [proc_im]
             labels[k] = label_vec
             new_files[k] = file_vec

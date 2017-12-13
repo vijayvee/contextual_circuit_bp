@@ -253,6 +253,25 @@ class ff(object):
             filter_size=filter_size)
         return context, act
 
+    def rnn2d(
+            self,
+            context,
+            act,
+            in_channels,
+            out_channels,
+            filter_size,
+            name,
+            it_dict):
+        """Convolutional RNN."""
+        context, act = rnn2d_layer(
+            self=context,
+            bottom=act,
+            in_channels=in_channels,
+            out_channels=out_channels,
+            name=name,
+            filter_size=filter_size)
+        return context, act
+
     def fc(
             self,
             context,
@@ -914,6 +933,7 @@ def lstm2d_layer(
         else:
             # If we are only keeping the final hidden state
             h = o * c_update
+        step += 1
         return (
                 step,
                 timesteps,
@@ -1040,6 +1060,7 @@ def gru2d_layer(
         gate_filter_size=1,
         aux=None):
     """2D GRU convolutional layer."""
+    raise NotImplementedError
 
     def gru_condition(
             step,
@@ -1122,6 +1143,7 @@ def gru2d_layer(
         else:
             # If we are only keeping the final hidden state
             h = h_update
+        step += 1
         return (
                 step,
                 timesteps,
@@ -1339,6 +1361,7 @@ def mru2d_layer(
         else:
             # If we are only keeping the final hidden state
             h = h_update
+        step += 1
         return (
                 step,
                 timesteps,
@@ -1424,6 +1447,7 @@ def mru2d_layer(
             int(x) for x in res_bottom.get_shape()][1: -1] + [out_channels]
         if aux is not None and 'ff_aux' in aux.keys():
             if 'store_hidden_states' in aux['ff_aux']:
+                # Store all hidden states in a list
                 if random_init:
                     hidden_state = [
                         tf.random_normal(
@@ -1473,6 +1497,163 @@ def mru2d_layer(
         # Prepare output
         _, _, _, h_updated, _, _, _, _, _, _ = returned
         return self, h_updated
+
+
+def rnn2d_layer(
+        self,
+        bottom,
+        out_channels,
+        name,
+        in_channels=None,
+        filter_size=3,
+        gate_filter_size=1,
+        aux=None):
+    """2D RNN convolutional layer."""
+
+    def rnn_condition(
+            step,
+            timesteps,
+            split_bottom,
+            h,
+            x_filter,
+            h_filter,
+            h_bias):
+        """Condition for ending MRU."""
+        return step < timesteps
+
+    def rnn_body(
+            step,
+            timesteps,
+            split_bottom,
+            h,
+            x_filter,
+            h_filter,
+            h_bias):
+        """Calculate updates for 2D MRU."""
+        # Concatenate X_t and the hidden state
+        X = tf.gather(split_bottom, step)
+        if isinstance(h, list):
+            h_prev = tf.gather(h, step)
+        else:
+            h_prev = h
+
+        # Perform FF/REC convolutions
+        x_convs = tf.nn.conv2d(
+            X,
+            x_filter,
+            [1, 1, 1, 1],
+            padding='SAME')
+        h_convs = tf.nn.conv2d(
+            h_prev,
+            h_filter,
+            [1, 1, 1, 1],
+            padding='SAME')
+
+        # Integrate circuit
+        h_update = cell_nl(x_convs + h_convs + h_bias)
+        if isinstance(h, list):
+            # If we are storing the hidden state at each step
+            h[step] = h_update
+        else:
+            # If we are only keeping the final hidden state
+            h = h_update
+        step += 1
+        return (
+                step,
+                timesteps,
+                split_bottom,
+                h,
+                x_filter,
+                h_filter,
+                h_bias
+                )
+
+    # Scope the 2D RNN
+    with tf.variable_scope(name):
+        if in_channels is None:
+            in_channels = int(bottom.get_shape()[-1])
+        timesteps = int(bottom.get_shape()[1])
+
+        if aux is not None and 'cell_nl' in aux.keys():
+            cell_nl = aux['cell_nl']
+        else:
+            cell_nl = activations()['selu']
+
+        if aux is not None and 'random_init' in aux.keys():
+            random_init = aux['random_init']
+        else:
+            random_init = True
+
+        # Only X/H weights
+        self, h_filter, h_bias = get_conv_var(
+            self=self,
+            filter_size=filter_size,
+            in_channels=out_channels,  # For the hidden state
+            out_channels=out_channels,
+            # init_type='identity',  # https://arxiv.org/abs/1504.00941
+            name='%s_H_gate_%s' % (name, 'h'))
+        self, x_filter, _ = get_conv_var(
+            self=self,
+            filter_size=filter_size,
+            in_channels=in_channels,  # For the hidden state
+            out_channels=out_channels,
+            name='%s_X_gate_%s' % (name, 'x'))
+
+        # Reshape bottom so that timesteps are first
+        res_bottom = tf.reshape(
+            bottom,
+            np.asarray([int(x) for x in bottom.get_shape()])[[1, 0, 2, 3, 4]])
+        h_size = [
+            int(x) for x in res_bottom.get_shape()][1: -1] + [out_channels]
+        if aux is not None and 'ff_aux' in aux.keys():
+            if 'store_hidden_states' in aux['ff_aux']:
+                # Store all hidden states in a list
+                if random_init:
+                    hidden_state = [
+                        tf.random_normal(
+                            shape=h_size,
+                            mean=0.0,
+                            stddev=0.1) for x in range(timesteps)]
+                else:
+                    hidden_state = [
+                        tf.zeros(h_size, dtype=tf.float32)
+                        for x in range(timesteps)]
+        else:
+            if random_init:
+                hidden_state = tf.random_normal(
+                    shape=h_size,
+                    mean=0.0,
+                    stddev=0.1)
+            else:
+                hidden_state = tf.zeros(h_size, dtype=tf.float32)
+
+        # While loop
+        step = tf.constant(0)  # timestep iterator
+        elems = [
+            step,
+            timesteps,
+            res_bottom,
+            hidden_state,
+            x_filter,
+            h_filter,
+            h_bias
+        ]
+
+        if aux is not None and 'ff_aux' in aux.keys():
+            if 'swap_memory' in aux['ff_aux']:
+                swap_memory = aux['ff_aux']['swap_memory']
+        else:
+            swap_memory = False
+        returned = tf.while_loop(
+            rnn_condition,
+            rnn_body,
+            loop_vars=elems,
+            back_prop=True,
+            swap_memory=swap_memory)
+
+        # Prepare output
+        _, _, _, h_updated, _, _, _ = returned
+        return self, hidden_state
 
 
 def conv3d_layer(
@@ -1647,6 +1828,11 @@ def get_conv_var(
         weight_init = [
             kernel + [in_channels, out_channels],
             tf.contrib.layers.xavier_initializer_conv2d(uniform=False)]
+    elif init_type == 'identity':
+        raise NotImplementedError  # TODO: Update TF and fix this
+        weight_init = [
+            kernel + [in_channels, out_channels],
+            initialization.Identity()]
     else:
         weight_init = tf.truncated_normal(
             [filter_size, filter_size, in_channels, out_channels],

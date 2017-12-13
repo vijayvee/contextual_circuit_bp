@@ -303,7 +303,8 @@ class experiments():
                 os.path.join(model_folder, 'complete_sep_nl_conv3d'),
                 os.path.join(model_folder, 'time_sep_nl_conv3d'),
                 os.path.join(model_folder, 'conv3d'),
-                # os.path.join(model_folder, 'lstm2d'),
+                os.path.join(model_folder, 'lstm2d'),
+                os.path.join(model_folder, 'rnn2d')
             ],
             'dataset': ['ALLEN_selected_cells_1']
         }
