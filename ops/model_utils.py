@@ -92,10 +92,20 @@ class model_class(object):
             eRFs=tower_eRFs,
             layer_summary=None)
 
+        # Add output layer if one is not specified
         if output_structure is None:
             assert self.output_size is not None, 'Give model an output shape.'
             output_structure = self.default_output_layer()
 
+        # Correct output neurons if needed
+        output_neurons = output_structure[-1]['weights'][0]
+        if output_neurons != self.output_size:
+            output_structure[-1]['weights'][0] = self.output_size
+            log.warning('Adjusted output neurons from %s to %s.' % (
+                output_neurons,
+                self.output_size))
+
+        # Calculate output effective receptive fields
         if tower_eRFs is not None:
             output_eRFs = eRF.calculate(
                 output_structure,
@@ -476,4 +486,3 @@ def create_conv_tower(
             setattr(self, it_name, act)
             print 'Added layer: %s' % it_name
     return self, act, layer_summary
-
