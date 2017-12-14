@@ -212,8 +212,8 @@ class experiments():
         model_folder = 'contours'
         exp = {
             'experiment_name': [model_folder],
-            'lr': [1e-3],
-            'loss_function': ['sigmoid_logits'],
+            'lr': [3e-4],
+            'loss_function': ['sigmoid_logits', 'l2'],
             'optimizer': ['adam'],
             # 'q_t': [1e-3, 1e-1],
             # 'p_t': [1e-2, 1e-1, 1],
@@ -222,16 +222,16 @@ class experiments():
             'model_struct': [
                 os.path.join(
                     model_folder, 'context_association_conv2d'),
-                os.path.join(
-                    model_folder, 'context_association_dropout_conv2d'),
+                # os.path.join(
+                #     model_folder, 'context_association_dropout_conv2d'),
                 os.path.join(
                     model_folder, 'context_association_l1_conv2d'),
-                os.path.join(
-                    model_folder, 'context_association_dropout_l1_conv2d'),
+                # os.path.join(
+                #     model_folder, 'context_association_dropout_l1_conv2d'),
                 os.path.join(
                     model_folder, 'context_conv2d'),
-                os.path.join(
-                    model_folder, 'context_dropout_conv2d'),
+                # os.path.join(
+                #     model_folder, 'context_dropout_conv2d'),
                 os.path.join(
                     model_folder, 'conv2d'),
             ],

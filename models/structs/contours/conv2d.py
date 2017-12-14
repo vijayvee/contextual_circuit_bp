@@ -35,4 +35,3 @@ output_structure = [
         'filter_size': [1],
     }
 ]
-

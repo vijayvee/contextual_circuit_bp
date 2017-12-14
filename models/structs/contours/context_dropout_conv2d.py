@@ -27,7 +27,7 @@ layer_structure = [
         'normalization': ['contextual'],
         'normalization_target': ['pre'],
         'normalization_aux': {
-            'timesteps': 4,
+            'timesteps': 3,
             'association_field': False,
             'dropout': 0.5,
             'regularization_targets': {  # Modulate sparsity

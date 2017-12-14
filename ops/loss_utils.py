@@ -50,6 +50,13 @@ def loss_interpreter(
             logits=logits,
             labels=labels,
             weights=weights)
+    elif loss_type == 'cce_ns':
+        logits = tf.cast(logits, tf.float32)
+        labels = tf.cast(labels, tf.int64)
+        return cce_ns(
+            logits=logits,
+            labels=labels,
+            weights=weights)
     elif loss_type == 'l2':
         logits = tf.cast(logits, tf.float32)
         labels = tf.cast(labels, tf.float32)
@@ -157,7 +164,28 @@ def cce(logits, labels, weights=None):
         return tf.reduce_mean(
             tf.nn.sparse_softmax_cross_entropy_with_logits(
                 logits=logits,
-                labels=labels)
+                labels=labels) * weights
+            ), tf.nn.softmax(logits)
+
+
+def cce_ns(logits, labels, weights=None):
+    """Categorical cross entropy with weights."""
+    if weights is not None:
+        weights = tf.get_variable(
+            name='weights', initializer=weights)[None, :]
+        weights_per_label = tf.matmul(
+            tf.one_hot(labels, 2), tf.transpose(tf.cast(weights, tf.float32)))
+        return tf.reduce_mean(
+            tf.multiply(
+                weights_per_label,
+                tf.nn.softmax_cross_entropy_with_logits(
+                    logits=logits, labels=labels))), tf.nn.softmax(logits)
+    else:
+        weights = 1.
+        return tf.reduce_mean(
+            tf.nn.softmax_cross_entropy_with_logits(
+                logits=logits,
+                labels=labels) * weights
             ), tf.nn.softmax(logits)
 
 
