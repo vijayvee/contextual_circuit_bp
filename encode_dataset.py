@@ -13,6 +13,10 @@ def encode_dataset(dataset):
     targets = data_proc.targets
     im_size = data_proc.im_size
     preproc_list = data_proc.preprocess
+    if hasattr(data_proc, 'label_size'):
+        label_size = data_proc.label_size
+    else:
+        label_size = None
     ds_name = os.path.join(config.tf_records, data_proc.name)
     data_to_tfrecords(
         files=files,
@@ -20,6 +24,7 @@ def encode_dataset(dataset):
         targets=targets,
         ds_name=ds_name,
         im_size=im_size,
+        label_size=label_size,
         preprocess=preproc_list)
 
 

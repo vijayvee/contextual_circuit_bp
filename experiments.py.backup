@@ -211,6 +211,34 @@ class experiments():
         exp['save_weights'] = True
         return exp
 
+    def contours(self):
+        """Each key in experiment_dict must be manually added to the schema."""
+        model_folder = 'contours'
+        exp = {
+            'experiment_name': [model_folder],
+            'lr': [1e-3],
+            'loss_function': ['l2'],
+            'optimizer': ['adam'],
+            # 'q_t': [1e-3, 1e-1],
+            # 'p_t': [1e-2, 1e-1, 1],
+            # 't_t': [1e-2, 1e-1, 1],
+            # 'timesteps': [5, 10],
+            'model_struct': [
+                os.path.join(model_folder, 'context_association_conv2d'),
+                os.path.join(model_folder, 'context_association_dropout_conv2d'),
+                os.path.join(model_folder, 'context_conv2d'),
+                os.path.join(model_folder, 'context_dropout_conv2d'),
+                os.path.join(model_folder, 'conv2d'),
+            ],
+            'dataset': ['BSDS500']
+        }
+        exp = self.add_globals(exp)  # Add globals to the experiment'
+        exp['data_augmentations'] = [[None]]
+        # TODO: Add an option for label_augmentations
+        exp['epochs'] = 100
+        exp['save_weights'] = True
+        return exp
+
     def ALLEN_selected_cells_103(self):
         """Each key in experiment_dict must be manually added to the schema."""
         model_folder = 'ALLEN_selected_cells_103'

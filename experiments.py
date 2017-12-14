@@ -85,10 +85,6 @@ class experiments():
                 os.path.join(model_folder, 'layer'),
                 os.path.join(model_folder, 'lrn'),
                 os.path.join(model_folder, 'contextual'),
-                os.path.join(model_folder, 'contextual_rnn'),
-                os.path.join(model_folder, 'contextual_rnn_no_relu'),
-                # os.path.join(model_folder, 'contextual_selu'),
-                # os.path.join(model_folder, 'contextual_rnn_selu'),
             ],
             'dataset': ['cifar_10']
         }
@@ -208,6 +204,45 @@ class experiments():
         exp = self.add_globals(exp)  # Add globals to the experiment'
         exp['data_augmentations'] = [[None]]
         exp['epochs'] = 1000
+        exp['save_weights'] = True
+        return exp
+
+    def contours(self):
+        """Each key in experiment_dict must be manually added to the schema."""
+        model_folder = 'contours'
+        exp = {
+            'experiment_name': [model_folder],
+            'lr': [1e-3],
+            'loss_function': ['sigmoid_logits'],
+            'optimizer': ['adam'],
+            # 'q_t': [1e-3, 1e-1],
+            # 'p_t': [1e-2, 1e-1, 1],
+            # 't_t': [1e-2, 1e-1, 1],
+            # 'timesteps': [5, 10],
+            'model_struct': [
+                os.path.join(
+                    model_folder, 'context_association_conv2d'),
+                os.path.join(
+                    model_folder, 'context_association_dropout_conv2d'),
+                os.path.join(
+                    model_folder, 'context_association_l1_conv2d'),
+                os.path.join(
+                    model_folder, 'context_association_dropout_l1_conv2d'),
+                os.path.join(
+                    model_folder, 'context_conv2d'),
+                os.path.join(
+                    model_folder, 'context_dropout_conv2d'),
+                os.path.join(
+                    model_folder, 'conv2d'),
+            ],
+            'dataset': ['BSDS500']
+        }
+        exp = self.add_globals(exp)  # Add globals to the experiment'
+        exp['data_augmentations'] = [['random_crop_image_label']]  # [['resize_nn_image_label']]
+        exp['val_augmentations'] = [['center_crop_image_label']]
+        # TODO: Add an option for label_augmentations
+        exp['batch_size'] = 4  # Train/val batch size.
+        exp['epochs'] = 100
         exp['save_weights'] = True
         return exp
 

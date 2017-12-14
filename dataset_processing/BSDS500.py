@@ -1,5 +1,4 @@
 import os
-import shutil
 import numpy as np
 import tensorflow as tf
 from glob import glob
@@ -20,14 +19,16 @@ class data_processing(object):
         self.processed_images = 'processed_images'
         self.config = Config()
         self.im_size = [321, 481, 3]
-        self.model_input_image_size = [321, 481, 3]
+        self.model_input_image_size = [224, 224, 3]  # [107, 160, 3]
         self.output_size = [321, 481, 1]
-        self.default_loss_function = 'cce'
-        self.score_metric = 'accuracy'
-        self.preprocess = [None]
+        self.label_size = self.output_size
+        self.default_loss_function = 'sigmoid_logits'
+        self.score_metric = 'sigmoid_pearson'
+        self.preprocess = [None]  # ['resize_nn']
         self.folds = {
             'train': 'train',
-            'val': 'val'}
+            'val': 'val'
+        }
         self.targets = {
             'image': tf_fun.bytes_feature,
             'label': tf_fun.bytes_feature
@@ -102,8 +103,10 @@ class data_processing(object):
                 label_data = io.loadmat(
                     it_label_path)['groundTruth'].reshape(-1)
                 im_data = misc.imread(im)
+                transpose_labels = False
                 if not np.all(self.im_size == list(im_data.shape)):
                     im_data = np.swapaxes(im_data, 0, 1)
+                    transpose_labels = True
                 assert np.all(
                     self.im_size == list(im_data.shape)
                     ), 'Mismatched dimensions.'
@@ -112,10 +115,14 @@ class data_processing(object):
                 for idx, lab in enumerate(label_data):
 
                     # Process labels
-                    ip_lab = lab.item()[1]
+                    ip_lab = lab.item()[1].astype(np.float32)
+                    if transpose_labels:
+                        ip_lab = np.swapaxes(ip_lab, 0, 1)
                     it_im_name = '%s_%s' % (idx, it_label)
-                    out_lab = os.path.join(proc_dir, it_im_name)
-                    misc.imsave(out_lab, ip_lab)
+                    it_lab_name = '%s.npy' % it_im_name.split('.')[0]
+                    out_lab = os.path.join(proc_dir, it_lab_name)
+                    # misc.imsave(out_lab, ip_lab)
+                    np.save(out_lab, ip_lab)
                     label_vec += [out_lab]
 
                     # Process images

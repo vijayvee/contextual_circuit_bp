@@ -11,6 +11,34 @@ from ops import initialization
 # 4. Frobenius norm regularization for the association field
 # 5. Accept timeseries data
 # 6. Spatial Anisotropies between P and T tensors
+def auxilliary_variables():
+    """A dictionary containing defaults for auxilliary variables.
+
+    These are adjusted by a passed aux dict variable."""
+    return {
+        'lesions': [None],
+        'dtype': tf.float32,
+        'return_weights': True,
+        'hidden_init': 'random',
+        'association_field': False,
+        'tuning_nl': 'relu',
+        'train': True,
+        'dropout': None
+    }
+
+
+def interpret_nl(nl):
+    """Returns appropriate nonlinearity."""
+    if nl is not None or nl is not 'pass':
+        # Rectification on the "tuned" activities
+        if nl == 'relu':
+            return tf.nn.relu
+        elif nl == 'selu':
+            return tf.nn.selu
+        else:
+            raise NotImplementedError
+
+
 class ContextualCircuit(object):
     def __getitem__(self, name):
         return getattr(self, name)
@@ -21,30 +49,35 @@ class ContextualCircuit(object):
     def __init__(
             self,
             X,
-            model_version='full',
             timesteps=1,
-            lesions=[None],
             SRF=1,
             SSN=9,
             SSF=29,
             strides=[1, 1, 1, 1],
             padding='SAME',
-            dtype=tf.float32,
-            return_weights=True,
-            initialization='random'):
-
+            aux=None):
+        """Global initializations and settings."""
         self.X = X
         self.n, self.h, self.w, self.k = [int(x) for x in X.get_shape()]
-        self.model_version = model_version
         self.timesteps = timesteps
-        self.lesions = lesions
         self.strides = strides
         self.padding = padding
-        self.dtype = dtype
-        self.SRF, self.SSN, self.SSF = SRF, SSN, SSF
 
+        # Sort through and assign the auxilliary variables
+        aux_vars = auxilliary_variables()
+        if aux is not None and isinstance(aux, dict):
+            for k, v in aux.iteritems():
+                aux_vars[k] = v
+        self.update_params(aux_vars)
+
+        # Kernel shapes
+        self.SRF, self.SSN, self.SSF = SRF, SSN, SSF
         self.SSN_ext = 2 * py_utils.ifloor(SSN / 2.0) + 1
         self.SSF_ext = 2 * py_utils.ifloor(SSF / 2.0) + 1
+        if self.SSN is None:
+            self.SSN = self.SRF * 3
+        if self.SSF is None:
+            self.SSF = self.SRF * 5
         self.q_shape = [self.SRF, self.SRF, self.k, self.k]
         self.u_shape = [self.SRF, self.SRF, self.k, 1]
         self.p_shape = [self.SSN_ext, self.SSN_ext, self.k, self.k]
@@ -52,23 +85,28 @@ class ContextualCircuit(object):
         self.i_shape = self.q_shape
         self.o_shape = self.q_shape
         self.bias_shape = [1, 1, 1, self.k]
+
+        if self.association_field:
+            self.tuning_params = ['Q', 'T']
+        else:
+            self.tuning_params = ['Q', 'P', 'T']  # Learned connectivity
+        self.tuning_shape = [1, 1, self.k, self.k]
+
+        # Nonlinearities and initializations
         self.u_nl = tf.identity
         self.t_nl = tf.identity
         self.q_nl = tf.identity
         self.p_nl = tf.identity
-        self.tuning_nl = tf.nn.relu
-        self.tuning_shape = [1, 1, self.k, self.k]
-        self.tuning_params = ['Q', 'P', 'T']  # Learned connectivity
+        self.tuning_nl = interpret_nl(self.tuning_nl)
         self.recurrent_nl = tf.nn.relu
         self.gate_nl = tf.nn.sigmoid
-        self.initialization = initialization
-
-        self.return_weights = return_weights
         self.normal_initializer = False
-        if self.SSN is None:
-            self.SSN = self.SRF * 3
-        if self.SSF is None:
-            self.SSF = self.SRF * 5
+
+    def update_params(self, kwargs):
+        """Update the class attributes with kwargs."""
+        if kwargs is not None:
+            for k, v in kwargs.iteritems():
+                setattr(self, k, v)
 
     def prepare_tensors(self):
         """ Prepare recurrent/forward weight matrices."""
@@ -204,6 +242,11 @@ class ContextualCircuit(object):
             :] = 0.0
         p_array = p_array / p_array.sum()
 
+        # Association field is fully learnable
+        if self.association_field:
+            p_trainable = True
+        else:
+            p_trainable = False
         setattr(
             self,
             self.weight_dict['P']['r']['weight'],
@@ -211,7 +254,7 @@ class ContextualCircuit(object):
                 name=self.weight_dict['P']['r']['weight'],
                 dtype=self.dtype,
                 initializer=p_array.astype(np.float32),
-                trainable=False))
+                trainable=p_trainable))
 
         # weakly tuned suppression: pooling in h, w dimensions
         ###############################################
@@ -246,16 +289,18 @@ class ContextualCircuit(object):
                     shape=self.tuning_shape,
                     uniform=self.normal_initializer,
                     mask=None)))
-        setattr(
-            self,
-            self.weight_dict['P']['r']['tuning'],
-            tf.get_variable(
-                name=self.weight_dict['P']['r']['tuning'],
-                dtype=self.dtype,
-                initializer=initialization.xavier_initializer(
-                    shape=self.tuning_shape,
-                    uniform=self.normal_initializer,
-                    mask=None)))
+        if not self.association_field:
+            # Need a tuning tensor for near surround
+            setattr(
+                self,
+                self.weight_dict['P']['r']['tuning'],
+                tf.get_variable(
+                    name=self.weight_dict['P']['r']['tuning'],
+                    dtype=self.dtype,
+                    initializer=initialization.xavier_initializer(
+                        shape=self.tuning_shape,
+                        uniform=self.normal_initializer,
+                        mask=None)))
         setattr(
             self,
             self.weight_dict['T']['r']['tuning'],
@@ -369,6 +414,16 @@ class ContextualCircuit(object):
                     return data
         return data
 
+    def zoneout(self, dropout):
+        """Calculate a dropout mask for update gates."""
+        return tf.cast(
+            tf.greater(tf.random_uniform(
+                [1, 1, 1, self.k],
+                minval=0,
+                maxval=1.),
+                dropout),  # zone-out dropout mask
+            tf.float32)
+
     def full(self, i0, O, I):
         """Published CM with learnable weights.
 
@@ -404,6 +459,15 @@ class ContextualCircuit(object):
         I_update = self.gate_nl(
             I_update_input + I_update_input + self[
                 self.weight_dict['I']['r']['bias']])
+
+        # Calculate and apply dropout if requested
+        if self.train and self.dropout is not None:
+            I_update = self.zoneout(self.dropout) * self.gate_nl(
+                I_update_input + I_update_recurrent)
+        elif not self.train and self.dropout is not None:
+            I_update = (1 / self.dropout) * self.gate_nl(
+                I_update_input + I_update_recurrent)
+
         # Circuit input
         I_summand = self.recurrent_nl(
             (self.xi * self.X)
@@ -412,6 +476,14 @@ class ContextualCircuit(object):
         I = (I_update * I) + ((1 - I_update) * I_summand)
 
         # Circuit output
+        P = self.conv_2d_op(
+            data=self.apply_tuning(I, 'P'),
+            weight_key=self.weight_dict['P']['r']['weight']
+        )
+        Q = self.conv_2d_op(
+            data=self.apply_tuning(I, 'Q'),
+            weight_key=self.weight_dict['Q']['r']['weight']
+        )
         O_update_input = self.conv_2d_op(
             data=self.X,
             weight_key=self.weight_dict['O']['f']['weight']
@@ -423,14 +495,14 @@ class ContextualCircuit(object):
         O_update = self.gate_nl(
             O_update_input + O_update_recurrent + self[
                 self.weight_dict['O']['r']['bias']])
-        P = self.conv_2d_op(
-            data=self.apply_tuning(I, 'P'),
-            weight_key=self.weight_dict['P']['r']['weight']
-        )
-        Q = self.conv_2d_op(
-            data=self.apply_tuning(I, 'Q'),
-            weight_key=self.weight_dict['Q']['r']['weight']
-        )
+
+        # Calculate and apply dropout if requested
+        if self.train and self.dropout is not None:
+            O_update = self.zoneout(self.dropout) * self.gate_nl(
+                O_update_input + O_update_recurrent)
+        elif not self.train and self.dropout is not None:
+            O_update = (1 / self.dropout) * self.gate_nl(
+                O_update_input + O_update_recurrent)
         O_summand = self.recurrent_nl(
             self.zeta * I
             + self.gamma * P
@@ -456,10 +528,10 @@ class ContextualCircuit(object):
         """Run the backprop version of the CCircuit."""
         self.prepare_tensors()
         i0 = tf.constant(0)
-        if self.initialization == 'identity':
+        if self.hidden_init == 'identity':
             I = tf.identity(self.X)
             O = tf.identity(self.X)
-        elif self.initialization == 'random':
+        elif self.hidden_init == 'random':
             I = initialization.xavier_initializer(
                 shape=[self.n, self.h, self.w, self.k],
                 uniform=self.normal_initializer,
@@ -468,13 +540,16 @@ class ContextualCircuit(object):
                 shape=[self.n, self.h, self.w, self.k],
                 uniform=self.normal_initializer,
                 mask=None)
-        elif self.initialization == 'zeros':
+        elif self.hidden_init == 'zeros':
             I = tf.zeros_like(self.X)
             O = tf.zeros_like(self.X)
+        else:
+            raise RuntimeError
+
         if reduce_memory:
             print 'Warning: Using FF version of the model.'
             for t in range(self.timesteps):
-                i0, O, I = self[self.model_version](i0, O, I)
+                i0, O, I = self.full(i0, O, I)
         else:
             # While loop
             elems = [
@@ -485,13 +560,14 @@ class ContextualCircuit(object):
 
             returned = tf.while_loop(
                 self.condition,
-                self[self.model_version],
+                self.full,
                 loop_vars=elems,
                 back_prop=True,
                 swap_memory=False)
 
             # Prepare output
             i0, O, I = returned  # i0, O, I
+
         if self.return_weights:
             weights = self.gather_tensors(wak='weight')
             tuning = self.gather_tensors(wak='tuning')
@@ -501,6 +577,9 @@ class ContextualCircuit(object):
                 new_tuning[key_name] = v
             weights = dict(weights, **new_tuning)
             activities = self.gather_tensors(wak='activity')
+            # Attach weights if using association field
+            if self.association_field:
+                weights['p_t'] = self.p_r  # Make available for regularization
             return O, weights, activities
         else:
             return O

@@ -176,16 +176,19 @@ def main(
             tf_reader_settings=dataset_module.tf_reader,
             shuffle=config.shuffle
         )
+        if hasattr(config, 'val_augmentations'):
+            val_augmentations = config.val_augmentations
+        else:
+            val_augmentations = config.data_augmentations
         val_images, val_labels = data_loader.inputs(
             dataset=val_data,
             batch_size=config.batch_size,
             model_input_image_size=dataset_module.model_input_image_size,
             tf_dict=dataset_module.tf_dict,
-            data_augmentations=config.data_augmentations,
+            data_augmentations=val_augmentations,
             num_epochs=config.epochs,
             tf_reader_settings=dataset_module.tf_reader,
-            shuffle=config.shuffle
-        )
+            shuffle=config.shuffle)
     log.info('Created tfrecord dataloader tensors.')
 
     # Load model specification

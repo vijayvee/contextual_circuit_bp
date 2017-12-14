@@ -1,3 +1,4 @@
+import numpy as np
 import tensorflow as tf
 from ops.eval_metrics import pearson_score
 
@@ -75,6 +76,13 @@ def loss_interpreter(
             logits=logits,
             labels=labels,
             weights=weights)
+    elif loss_type == 'sigmoid_logits':
+        logits = tf.cast(logits, tf.float32)
+        labels = tf.cast(labels, tf.int64)
+        return sigmoid_logit_ce(
+            logits=logits,
+            labels=labels,
+            weights=weights)
     elif loss_type == 'pearson':
         logits = tf.cast(logits, tf.float32)
         labels = tf.cast(labels, tf.float32)
@@ -106,12 +114,31 @@ def wd_loss(
 
 
 def interpret_reg_loss(weight, loss_type):
+    # TODO: Use Regularization class instead of this.
     if loss_type == 'l2' or loss_type == 'L2':
         return tf.nn.l2_loss(weight)
     elif loss_type == 'l1' or loss_type == 'L1':
         return tf.reduce_sum(tf.abs(weight))
+    elif loss_type == 'frobenius':
+        return frobenius(weight)
     else:
-        raise RuntimeError('Cannot understand regularization type.')
+        raise NotImplementedError
+
+
+def frobenius(x):
+    """Norm on 2 - the trace of the correlation of x."""
+    x_shape = [int(dx) for dx in x.get_shape()]
+    conv_dim = np.prod(x_shape[:2])
+    ch_dim = np.prod(x_shape[2:])
+    x = tf.transpose(
+        tf.reshape(tf.reshape(x, x_shape[:2] + [ch_dim]),
+            [conv_dim, ch_dim]))
+    mean_t = tf.reduce_mean(x, axis=1, keep_dims=True)
+    cov_t = tf.matmul((x - mean_t), tf.transpose(x - mean_t))/(
+        int(x.get_shape()[-1]) - 1)
+    cov2_t = tf.diag(1. / tf.sqrt(tf.diag_part(cov_t)))
+    cor = tf.matmul(tf.matmul(cov2_t, cov_t), cov2_t)
+    return tf.trace((2 - cor) ** 2)
 
 
 def cce(logits, labels, weights=None):
@@ -186,8 +213,8 @@ def pearson_loss(logits, labels):
     return mean_rhos, rhos
 
 
-def sigmoid_ce(logits, labels, weights, force_dtype=tf.float32):
-    """Wrapper for sigmoid cross entropy loss."""
+def sigmoid_logit_ce(logits, labels, weights, force_dtype=tf.float32):
+    """Wrapper for sigmoid logit cross entropy loss."""
     if force_dtype:
         if logits.dtype != force_dtype:
             logits = tf.cast(logits, force_dtype)
@@ -200,4 +227,22 @@ def sigmoid_ce(logits, labels, weights, force_dtype=tf.float32):
             labels=labels,
             logits=logits) * weights)
     return sig_loss, sig_loss
+
+
+def sigmoid_ce(logits, labels, weights, force_dtype=tf.float32):
+    """Wrapper for sigmoid cross entropy loss."""
+    if force_dtype:
+        if logits.dtype != force_dtype:
+            logits = tf.cast(logits, force_dtype)
+        if labels.dtype != force_dtype:
+            labels = tf.cast(labels, force_dtype)
+    if weights is None:
+        weights = 1.
+
+    # Note logits are have a sigmoid activation
+    sig_loss = labels * -tf.log(logits) + (1 - labels) * -tf.log(1 - logits)
+    sig_loss *= weights
+    sig_loss = tf.reduce_mean(sig_loss)
+    return sig_loss, sig_loss
+
 

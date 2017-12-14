@@ -41,3 +41,8 @@ class activations(object):
     def logistic(self, x, coef=1.0, t=0.0, **kwargs):
         """Antilok et al., 2016 logistic activation function."""
         return coef * tf.log(1 + tf.exp(coef * (x - t)))
+
+    def sigmoid(self, x, **kwargs):
+        """Elementwise sigmoid."""
+        return tf.sigmoid(x)
+

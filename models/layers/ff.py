@@ -970,7 +970,7 @@ def lstm2d_layer(
         x_weights, h_weights = [], []
         biases = []
         gates = ['f', 'i', 'o', 'c']
-        filter_sizes = [gate_filter_size] * 3 + [filter_size]
+        filter_sizes = len(gates) * [filter_size]
         for idx, (g, fs) in enumerate(zip(gates, filter_sizes)):
             self, iW, ib = get_conv_var(
                 self=self,

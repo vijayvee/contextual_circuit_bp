@@ -24,7 +24,6 @@ class normalizations(object):
         self.timesteps = 3
         self.scale_CRF = True
         self.bias_CRF = True
-        self.lesions = [None]
         self.training = None
         self.strides = [1, 1, 1, 1]
         self.padding = 'SAME'
@@ -133,12 +132,12 @@ class normalizations(object):
         contextual_layer = contextual.ContextualCircuit(
             X=x,
             timesteps=self.timesteps,
-            lesions=self.lesions,
             SRF=self.SRF,
             SSN=self.SSN,
             SSF=self.SSF,
             strides=self.strides,
-            padding=self.padding)
+            padding=self.padding,
+            aux=aux)
         return contextual_layer.build()
 
     def contextual_zoneout(self, x, layer, eRF, aux):
@@ -148,12 +147,12 @@ class normalizations(object):
         contextual_layer = contextual_zoneout.ContextualCircuit(
             X=x,
             timesteps=self.timesteps,
-            lesions=self.lesions,
             SRF=self.SRF,
             SSN=self.SSN,
             SSF=self.SSF,
             strides=self.strides,
-            padding=self.padding)
+            padding=self.padding,
+            aux=aux)
         return contextual_layer.build()
 
     def divisive_2d(self, x, layer, eRF, aux):

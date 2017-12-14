@@ -99,7 +99,9 @@ class model_class(object):
 
         # Correct output neurons if needed
         output_neurons = output_structure[-1]['weights'][0]
-        if output_neurons != self.output_size:
+        size_check = output_neurons != self.output_size
+        conv_check = output_structure[-1]['layers'] == 'fc'
+        if size_check and conv_check:
             output_structure[-1]['weights'][0] = self.output_size
             log.warning('Adjusted output neurons from %s to %s.' % (
                 output_neurons,

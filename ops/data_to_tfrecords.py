@@ -6,10 +6,10 @@ from tqdm import tqdm
 from utils import image_processing
 
 
-def load_image(f, im_size):
+def load_image(f, im_size, reshape=True):
     """Load image and convert it to a 4D tensor."""
     image = misc.imread(f).astype(np.float32)
-    if len(image.shape) < 3:  # Force H/W/C
+    if len(image.shape) < 3 and reshape:  # Force H/W/C
         image = np.repeat(image[:, :, None], im_size[-1], axis=-1)
     return image
 
@@ -37,12 +37,22 @@ def preprocess_image(image, preprocess, im_size):
     return image
 
 
+def encode_tf(encoder, x):
+    """Process data for TFRecords."""
+    encoder_name = encoder.func_name
+    if 'bytes' in encoder_name:
+        return encoder(x.tostring())
+    else:
+        return encoder(x)
+
+
 def data_to_tfrecords(
         files,
         labels,
         targets,
         ds_name,
         im_size,
+        label_size,
         preprocess):
     """Convert dataset to tfrecords."""
     print 'Building dataset: %s' % ds_name
@@ -57,14 +67,25 @@ def data_to_tfrecords(
             for it_f, it_l in tqdm(
                     zip(fv, lv), total=len(fv), desc='Building %s' % fk):
                 if isinstance(it_f, basestring):
-                    image = load_image(it_f, im_size).astype(np.float32)
-                    image = preprocess_image(image, preprocess, im_size)
+                    if '.npy' in it_f:
+                        image = np.load(it_f)
+                    else:
+                        image = load_image(it_f, im_size).astype(np.float32)
+                        image = preprocess_image(image, preprocess, im_size)
                 else:
                     image = it_f
                 means += image
+                if isinstance(it_l, basestring):
+                    if '.npy' in it_l:
+                        it_l = np.load(it_l)
+                    else:
+                        it_l = load_image(it_l, label_size, reshape=False).astype(np.float32)
+                        it_l = preprocess_image(it_l, preprocess, label_size)
+                else:
+                    image = it_f
                 data_dict = {
-                    'image': targets['image'](image.tostring()),
-                    'label': targets['label'](it_l)
+                    'image': encode_tf(targets['image'], image),
+                    'label': encode_tf(targets['label'], it_l)
                 }
                 example = create_example(data_dict)
                 if example is not None:

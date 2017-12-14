@@ -14,10 +14,64 @@ def repeat_elements(x, rep, axis):
     return tf.concat(axis=axis, values=x_rep)
 
 
+def resize_image_label(im, model_input_image_size, f='bilinear'):
+    """Resize images filter."""
+    if f == 'bilinear':
+        res_fun = tf.image.resize_images
+    elif f == 'nearest':
+        res_fun = tf.image.resize_nearest_neighbor
+    else:
+        raise NotImplementedError
+    if len(im.get_shape()) > 3:
+        # Spatiotemporal image set.
+        nt = int(im.get_shape()[0])
+        sims = tf.split(im, nt)
+        for idx in range(len(sims)):
+            # im = tf.squeeze(sims[idx])
+            im = sims[idx]
+            sims[idx] = res_fun(
+                im,
+                model_input_image_size)
+        im = tf.squeeze(tf.stack(sims))
+        if len(im.get_shape()) < 4:
+            im = tf.expand_dims(im, axis=-1)
+    else:
+        im = res_fun(
+            tf.expand_dims(im, axis=0),
+            model_input_image_size)
+        im = tf.squeeze(im, axis=0)
+    return im
+
+
+def crop_image_label(image, label, size, crop='random'):
+    """Apply a crop to both image and label."""
+    image_shape = [int(x) for x in image.get_shape()]
+    if len(size) > 2:
+        size[-1] = image_shape[-1] + int(label.get_shape()[-1])
+    if crop == 'random':
+        combined = tf.concat([image, label], axis=-1)
+        combined_crop = tf.random_crop(combined, size)
+        image = combined_crop[:, :, :image_shape[-1]]
+        label = combined_crop[:, :, image_shape[-1]:]
+        return image, label
+    else:
+        # Center crop
+        image = tf.image.resize_image_with_crop_or_pad(
+            image,
+            size[0],
+            size[1])
+        label = tf.image.resize_image_with_crop_or_pad(
+            label,
+            size[0],
+            size[1])
+        return image, label
+
+
 def image_augmentations(
         image,
         data_augmentations,
-        model_input_image_size):
+        model_input_image_size,
+        label=None):
     """Coordinating image augmentations for both image and heatmap."""
     im_size = [int(x) for x in image.get_shape()]
     im_size_check = np.any(
@@ -28,28 +82,64 @@ def image_augmentations(
         if 'random_crop' in data_augmentations and im_size_check:
             image = tf.random_crop(image, model_input_image_size)
             print 'Applying random crop.'
+        elif 'center_crop' in data_augmentations and im_size_check:
+            image = tf.image.resize_image_with_crop_or_pad(
+                image=image,
+                target_height=model_input_image_size[0],
+                target_width=model_input_image_size[1])
+            print 'Applying random crop.'
+        elif 'random_crop_image_label' in data_augmentations and im_size_check:
+            image, label = crop_image_label(
+                image=image,
+                label=label,
+                size=model_input_image_size,
+                crop='random')
+        elif 'center_crop_image_label' in data_augmentations and im_size_check:
+            image, label = crop_image_label(
+                image=image,
+                label=label,
+                size=model_input_image_size,
+                crop='center')
         elif 'resize' in data_augmentations and im_size_check:
             if len(model_input_image_size) > 2:
                 model_input_image_size = model_input_image_size[:2]
-            if len(image.get_shape()) > 3:
-                # Spatiotemporal image set.
-                nt = int(image.get_shape()[0])
-                sims = tf.split(image, nt)
-                for idx in range(len(sims)):
-                    # im = tf.squeeze(sims[idx])
-                    im = sims[idx]
-                    sims[idx] = tf.image.resize_images(
-                        im,
-                        model_input_image_size)
-                image = tf.squeeze(tf.stack(sims))
-                if len(image.get_shape()) < 4:
-                    image = tf.expand_dims(image, axis=-1)
-            else:
-                image = tf.image.resize_images(
-                    tf.expand_dims(image, axis=0),
-                    model_input_image_size)
-                image = tf.squeeze(image, axis=0)
-            print 'Applying resize.'
+            image = resize_image_label(
+                im=image,
+                model_input_image_size=model_input_image_size,
+                f='bilinear')
+            print 'Applying bilinear resize.'
+        elif 'resize_nn' in data_augmentations and im_size_check:
+            if len(model_input_image_size) > 2:
+                model_input_image_size = model_input_image_size[:2]
+            image = resize_image_label(
+                im=image,
+                model_input_image_size=model_input_image_size,
+                f='nearest')
+            print 'Applying nearest resize.'
+        elif 'resize_image_label' in data_augmentations and im_size_check:
+            if len(model_input_image_size) > 2:
+                model_input_image_size = model_input_image_size[:2]
+            image = resize_image_label(
+                im=image,
+                model_input_image_size=model_input_image_size,
+                f='bilinear')
+            label = resize_image_label(
+                im=label,
+                model_input_image_size=model_input_image_size,
+                f='bilinear')
+            print 'Applying bilinear resize.'
+        elif 'resize_nn_image_label' in data_augmentations and im_size_check:
+            if len(model_input_image_size) > 2:
+                model_input_image_size = model_input_image_size[:2]
+            image = resize_image_label(
+                im=image,
+                model_input_image_size=model_input_image_size,
+                f='nearest')
+            label = resize_image_label(
+                im=label,
+                model_input_image_size=model_input_image_size,
+                f='nearest')
+            print 'Applying nearest resize.'
         else:
             pass
             # image = tf.image.resize_image_with_crop_or_pad(
@@ -69,7 +159,19 @@ def image_augmentations(
     else:
         image = tf.image.resize_image_with_crop_or_pad(
             image, model_input_image_size[0], model_input_image_size[1])
-    return image
+    return image, label
+
+
+def decode_data(features, reader_settings):
+    """Decode data from TFrecords."""
+    if features.dtype == tf.string:
+        return tf.decode_raw(
+            features,
+            reader_settings)
+    else:
+        return tf.cast(
+            features,
+            reader_settings)
 
 
 def read_and_decode(
@@ -97,12 +199,12 @@ def read_and_decode(
             features=tf_dict)
 
     # Handle decoding of each element
-    image = tf.decode_raw(
-        features['image'],
-        tf_reader_settings['image']['dtype'])
-    label = tf.cast(
-        features['label'],
-        tf_reader_settings['label']['dtype'])
+    image = decode_data(
+        features=features['image'],
+        reader_settings=tf_reader_settings['image']['dtype'])
+    label = decode_data(
+        features=features['label'],
+        reader_settings=tf_reader_settings['label']['dtype'])
 
     # Reshape each element
     image = tf.reshape(image, tf_reader_settings['image']['reshape'])
@@ -111,28 +213,46 @@ def read_and_decode(
 
     # Preprocess images and heatmaps
     if len(model_input_image_size) == 3:
-
         # 2D image augmentations
-        image = image_augmentations(
+        image, label = image_augmentations(
             image=image,
+            label=label,
             model_input_image_size=model_input_image_size,
             data_augmentations=data_augmentations)
+
     elif len(model_input_image_size) == 4:
         # 3D image augmentations.
-        # TODO: optimize 3D augmentations. This is slow.
+        # TODO: optimize 3D augmentations with c++. This is slow.
         split_images = tf.split(
             image,
             model_input_image_size[0],
             axis=0)
         split_images = [tf.squeeze(im, axis=0) for im in split_images]
-        images = []
-        for im in split_images:
-            images += [
-                image_augmentations(
+        images, labels = [], []
+        if np.any(['label' in x for x in data_augmentations]):
+            split_labels = tf.split(
+                label,
+                model_input_image_size[0],
+                axis=0)
+            split_labels = [tf.squeeze(lab, axis=0) for lab in split_labels]
+            for im, lab in zip(split_images, split_labels):
+                it_im, it_lab = image_augmentations(
+                    image=im,
+                    label=lab,
+                    model_input_image_size=model_input_image_size[1:],
+                    data_augmentations=data_augmentations)
+                images += [it_im]
+                labels += [it_lab]
+            label = tf.stack(
+                labels,
+                axis=0)
+        else:
+            for im in split_images:
+                it_im = image_augmentations(
                     image=im,
                     model_input_image_size=model_input_image_size[1:],
-                    data_augmentations=data_augmentations),
-                ]
+                    data_augmentations=data_augmentations)
+                images += [it_im]
         image = tf.stack(
             images,
             axis=0)
