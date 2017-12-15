@@ -67,6 +67,26 @@ def crop_image_label(image, label, size, crop='random'):
         return image, label
 
 
+def lr_flip_image_label(image, label):
+    """Apply a crop to both image and label."""
+    image_shape = [int(x) for x in image.get_shape()]
+    combined = tf.concat([image, label], axis=-1)
+    combined_crop = tf.image.random_flip_left_right(combined)
+    image = combined_crop[:, :, :image_shape[-1]]
+    label = combined_crop[:, :, image_shape[-1]:]
+    return image, label
+
+
+def ud_flip_image_label(image, label):
+    """Apply a crop to both image and label."""
+    image_shape = [int(x) for x in image.get_shape()]
+    combined = tf.concat([image, label], axis=-1)
+    combined_crop = tf.image.random_flip_up_down(combined)
+    image = combined_crop[:, :, :image_shape[-1]]
+    label = combined_crop[:, :, image_shape[-1]:]
+    return image, label
+
+
 def image_augmentations(
         image,
         data_augmentations,
@@ -150,6 +170,10 @@ def image_augmentations(
         if 'up_down' in data_augmentations:
             image = tf.image.random_flip_up_down(image)
             print 'Applying random flip up-down.'
+        if 'lr_flip_image_label' in data_augmentations:
+            image, label = lr_flip_image_label(image, label)
+        if 'ud_flip_image_label' in data_augmentations:
+            image, label = ud_flip_image_label(image, label)
         if 'random_contrast' in data_augmentations:
             image = tf.image.random_contrast(image, lower=0.2, upper=1.8)
             print 'Applying random contrast.'

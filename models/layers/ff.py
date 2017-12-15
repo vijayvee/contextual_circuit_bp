@@ -703,7 +703,7 @@ def sep_conv_layer(
         filter_size=3,
         stride=[1, 1, 1, 1],
         padding='SAME',
-        multiplier=4,
+        multiplier=1,
         aux=None):
     """2D convolutional layer."""
     if aux is not None and 'ff_aux' in aux.keys():
@@ -799,7 +799,7 @@ def complete_sep_conv3d_layer(
         stride2d=[1, 1, 1, 1],
         stride3d=[1, 1, 1, 1, 1],
         padding='SAME',
-        multiplier=4,
+        multiplier=1,
         aux=None):
     """3D convolutional layer."""
     with tf.variable_scope(name):

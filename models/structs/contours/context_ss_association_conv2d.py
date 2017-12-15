@@ -43,7 +43,7 @@ layer_structure = [
                 },
                 'p_t': {
                     'regularization_type': 'orthogonal',
-                    'regularization_strength': 0.1
+                    'regularization_strength': 1
                 },
             }
         }

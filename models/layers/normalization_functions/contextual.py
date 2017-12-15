@@ -244,17 +244,33 @@ class ContextualCircuit(object):
 
         # Association field is fully learnable
         if self.association_field:
-            p_trainable = True
+            mask_array = np.ones_like(p_array[:, :, 0, 0])[:, :, None, None]
+            mask_array[p_array[:, :, 0, 0] == 0] = 0.
+            setattr(
+                self,
+                'association_mask',
+                tf.get_variable(
+                    name='association_mask',
+                    dtype=self.dtype,
+                    initializer=mask_array.astype(np.float32),
+                    trainable=False))
+            setattr(
+                self,
+                self.weight_dict['P']['r']['weight'],
+                tf.get_variable(
+                    name=self.weight_dict['P']['r']['weight'],
+                    dtype=self.dtype,
+                    initializer=p_array.astype(np.float32),
+                    trainable=True))
         else:
-            p_trainable = False
-        setattr(
-            self,
-            self.weight_dict['P']['r']['weight'],
-            tf.get_variable(
-                name=self.weight_dict['P']['r']['weight'],
-                dtype=self.dtype,
-                initializer=p_array.astype(np.float32),
-                trainable=p_trainable))
+            setattr(
+                self,
+                self.weight_dict['P']['r']['weight'],
+                tf.get_variable(
+                    name=self.weight_dict['P']['r']['weight'],
+                    dtype=self.dtype,
+                    initializer=p_array.astype(np.float32),
+                    trainable=False))
 
         # weakly tuned suppression: pooling in h, w dimensions
         ###############################################
@@ -382,12 +398,15 @@ class ContextualCircuit(object):
         self.gamma = tf.get_variable(name='gamma', initializer=w_array)
         self.delta = tf.get_variable(name='delta', initializer=w_array)
 
-    def conv_2d_op(self, data, weight_key, out_key=None):
+    def conv_2d_op(self, data, weight_key, out_key=None, weights=None):
         """2D convolutions, lesion, return or assign activity as attribute."""
-        if weight_key in self.lesions:
+        if weights is not None and weight_key in self.lesions:
             weights = tf.constant(0.)
         else:
-            weights = self[weight_key]
+            if weight_key in self.lesions:
+                weights = tf.constant(0.)
+            else:
+                weights = self[weight_key]
         activities = tf.nn.conv2d(
             data,
             weights,
@@ -476,10 +495,20 @@ class ContextualCircuit(object):
         I = (I_update * I) + ((1 - I_update) * I_summand)
 
         # Circuit output
-        P = self.conv_2d_op(
-            data=self.apply_tuning(I, 'P'),
-            weight_key=self.weight_dict['P']['r']['weight']
-        )
+        if self.association_field:
+            # Ensure that CRF for association field is masked
+            p_weight = self[
+                self.weight_dict['P']['r']['weight']] * self.association_mask
+            P = self.conv_2d_op(
+                data=I,
+                weight_key=self.weight_dict['P']['r']['weight'],
+                weights=p_weight
+            )
+        else:
+            P = self.conv_2d_op(
+                data=self.apply_tuning(I, 'P'),
+                weight_key=self.weight_dict['P']['r']['weight']
+            )
         Q = self.conv_2d_op(
             data=self.apply_tuning(I, 'Q'),
             weight_key=self.weight_dict['Q']['r']['weight']
