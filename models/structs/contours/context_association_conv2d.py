@@ -18,12 +18,16 @@ layer_structure = [
         'activation_target': ['post'],
     },
     {
+        'layers': ['pool'],
+        'weights': [None],
+        'names': ['pool3'],
+        'filter_size': [None]
+    },
+    {
         'layers': ['conv'],
         'weights': [32],
-        'names': ['conv3'],
+        'names': ['conv4'],
         'filter_size': [3],
-        'activation': ['selu'],
-        'activation_target': ['post'],
         'normalization': ['contextual'],
         'normalization_target': ['pre'],
         'normalization_aux': {
@@ -39,11 +43,11 @@ layer_structure = [
                     'regularization_strength': 0.1
                 },
                 'p_t': {
-                    'regularization_type': 'frobenius',
+                    'regularization_type': 'orthogonal',
                     'regularization_strength': 0.1
                 },
             }
-        },
+        }
     }
 ]
 
@@ -51,8 +55,7 @@ output_structure = [
     {
         'layers': ['conv'],
         'weights': [1],
-        'names': ['fc_4'],
+        'names': ['fc_5'],
         'filter_size': [1],
     }
 ]
-

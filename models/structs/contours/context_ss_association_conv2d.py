@@ -1,5 +1,4 @@
 """2D convolutional model for Allen data."""
-
 layer_structure = [
     {
         'layers': ['conv'],
@@ -28,11 +27,11 @@ layer_structure = [
         'weights': [32],
         'names': ['conv4'],
         'filter_size': [3],
-        'normalization': ['contextual'],
+        'normalization': ['contextual_ss'],
         'normalization_target': ['pre'],
         'normalization_aux': {
             'timesteps': 3,
-            'association_field': False,
+            'association_field': True,
             'regularization_targets': {  # Modulate sparsity
                 'q_t': {
                    'regularization_type': 'l1',
@@ -43,7 +42,7 @@ layer_structure = [
                     'regularization_strength': 0.1
                 },
                 'p_t': {
-                    'regularization_type': 'l1',
+                    'regularization_type': 'orthogonal',
                     'regularization_strength': 0.1
                 },
             }

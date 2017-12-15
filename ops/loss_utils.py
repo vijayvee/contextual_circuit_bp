@@ -128,6 +128,8 @@ def interpret_reg_loss(weight, loss_type):
         return tf.reduce_sum(tf.abs(weight))
     elif loss_type == 'frobenius':
         return frobenius(weight)
+    elif loss_type == 'orthogonal':
+        return orthogonal(weight)
     else:
         raise NotImplementedError
 
@@ -138,7 +140,8 @@ def frobenius(x):
     conv_dim = np.prod(x_shape[:2])
     ch_dim = np.prod(x_shape[2:])
     x = tf.transpose(
-        tf.reshape(tf.reshape(x, x_shape[:2] + [ch_dim]),
+        tf.reshape(
+            tf.reshape(x, x_shape[:2] + [ch_dim]),
             [conv_dim, ch_dim]))
     mean_t = tf.reduce_mean(x, axis=1, keep_dims=True)
     cov_t = tf.matmul((x - mean_t), tf.transpose(x - mean_t))/(
@@ -146,6 +149,18 @@ def frobenius(x):
     cov2_t = tf.diag(1. / tf.sqrt(tf.diag_part(cov_t)))
     cor = tf.matmul(tf.matmul(cov2_t, cov_t), cov2_t)
     return tf.trace((2 - cor) ** 2)
+
+
+def orthogonal(x, eps=1e-12):
+    """Regularization for orthogonal components."""
+    x_shape = [int(d) for d in x.get_shape()]
+    out_rav_x = tf.reshape(tf.transpose(x, [3, 0, 1, 2]), [x_shape[3], -1])
+    z = tf.matmul(out_rav_x, out_rav_x, transpose_b=True)  # Dot products
+    x_norm = tf.norm(out_rav_x, axis=1, keep_dims=True)
+    norm_kronecker = x_norm * tf.transpose(x_norm)  # kronecker prod of norms
+    d = (z / norm_kronecker) ** 2  # Square so that minimum is orthogonal
+    diag_d = tf.eye(x_shape[3]) * d
+    return tf.reduce_mean(d - diag_d)  # Minimize off-diagonals
 
 
 def cce(logits, labels, weights=None):

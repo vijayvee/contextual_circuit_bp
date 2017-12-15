@@ -31,7 +31,8 @@ class experiments():
             'top_n_validation': 0,  # Set to 0 to save all checkpoints.
             'early_stop': False,  # Stop training if the loss stops improving.
             'save_weights': False,  # Save model weights on validation evals.
-            'optimizer_constraints': None  # A {var name: bound} dictionary.
+            'optimizer_constraints': None,  # A {var name: bound} dictionary.
+            'resize_output': None  # Postproc resize of the output (FC models).
         }
 
     def add_globals(self, exp):
@@ -213,12 +214,12 @@ class experiments():
         exp = {
             'experiment_name': [model_folder],
             'lr': [3e-4],
-            'loss_function': ['sigmoid_logits', 'l2'],
+            'loss_function': ['sigmoid_logits'],
             'optimizer': ['adam'],
             # 'q_t': [1e-3, 1e-1],
             # 'p_t': [1e-2, 1e-1, 1],
             # 't_t': [1e-2, 1e-1, 1],
-            # 'timesteps': [5, 10],
+            'timesteps': [3, 6],
             'model_struct': [
                 os.path.join(
                     model_folder, 'context_association_conv2d'),
@@ -230,6 +231,8 @@ class experiments():
                 #     model_folder, 'context_association_dropout_l1_conv2d'),
                 os.path.join(
                     model_folder, 'context_conv2d'),
+                os.path.join(
+                    model_folder, 'context_ss_association_conv2d'),
                 # os.path.join(
                 #     model_folder, 'context_dropout_conv2d'),
                 os.path.join(
@@ -244,6 +247,7 @@ class experiments():
         exp['batch_size'] = 4  # Train/val batch size.
         exp['epochs'] = 100
         exp['save_weights'] = True
+        exp['resize_output'] = [150, 150]  # Max pool
         return exp
 
     def ALLEN_selected_cells_103(self):

@@ -174,8 +174,8 @@ def main(
             data_augmentations=config.data_augmentations,
             num_epochs=config.epochs,
             tf_reader_settings=dataset_module.tf_reader,
-            shuffle=config.shuffle
-        )
+            shuffle=config.shuffle,
+            resize_output=config.resize_output)
         if hasattr(config, 'val_augmentations'):
             val_augmentations = config.val_augmentations
         else:
@@ -188,7 +188,8 @@ def main(
             data_augmentations=val_augmentations,
             num_epochs=config.epochs,
             tf_reader_settings=dataset_module.tf_reader,
-            shuffle=config.shuffle)
+            shuffle=config.shuffle,
+            resize_output=config.resize_output)
     log.info('Created tfrecord dataloader tensors.')
 
     # Load model specification
@@ -221,8 +222,9 @@ def main(
                 elif exp_params['normalize_labels'] == 'mean':
                     train_labels -= train_means_label['mean']
                     log.info('Mean-centering labels.')
+
             # Training model
-            if len(dataset_module.output_size) > 1:
+            if len(dataset_module.output_size) == 2:
                 log.warning(
                     'Found > 1 dimension for your output size.'
                     'Converting to a scalar.')

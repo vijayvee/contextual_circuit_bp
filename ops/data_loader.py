@@ -82,25 +82,25 @@ def image_augmentations(
         if 'random_crop' in data_augmentations and im_size_check:
             image = tf.random_crop(image, model_input_image_size)
             print 'Applying random crop.'
-        elif 'center_crop' in data_augmentations and im_size_check:
+        if 'center_crop' in data_augmentations and im_size_check:
             image = tf.image.resize_image_with_crop_or_pad(
                 image=image,
                 target_height=model_input_image_size[0],
                 target_width=model_input_image_size[1])
             print 'Applying random crop.'
-        elif 'random_crop_image_label' in data_augmentations and im_size_check:
+        if 'random_crop_image_label' in data_augmentations and im_size_check:
             image, label = crop_image_label(
                 image=image,
                 label=label,
                 size=model_input_image_size,
                 crop='random')
-        elif 'center_crop_image_label' in data_augmentations and im_size_check:
+        if 'center_crop_image_label' in data_augmentations and im_size_check:
             image, label = crop_image_label(
                 image=image,
                 label=label,
                 size=model_input_image_size,
                 crop='center')
-        elif 'resize' in data_augmentations and im_size_check:
+        if 'resize' in data_augmentations and im_size_check:
             if len(model_input_image_size) > 2:
                 model_input_image_size = model_input_image_size[:2]
             image = resize_image_label(
@@ -108,7 +108,7 @@ def image_augmentations(
                 model_input_image_size=model_input_image_size,
                 f='bilinear')
             print 'Applying bilinear resize.'
-        elif 'resize_nn' in data_augmentations and im_size_check:
+        if 'resize_nn' in data_augmentations and im_size_check:
             if len(model_input_image_size) > 2:
                 model_input_image_size = model_input_image_size[:2]
             image = resize_image_label(
@@ -116,7 +116,7 @@ def image_augmentations(
                 model_input_image_size=model_input_image_size,
                 f='nearest')
             print 'Applying nearest resize.'
-        elif 'resize_image_label' in data_augmentations and im_size_check:
+        if 'resize_image_label' in data_augmentations and im_size_check:
             if len(model_input_image_size) > 2:
                 model_input_image_size = model_input_image_size[:2]
             image = resize_image_label(
@@ -180,7 +180,8 @@ def read_and_decode(
         tf_dict,
         tf_reader_settings,
         data_augmentations,
-        number_of_files):
+        number_of_files,
+        resize_output=None):
     """Read and decode tensors from tf_records and apply augmentations."""
     reader = tf.TFRecordReader()
 
@@ -219,7 +220,12 @@ def read_and_decode(
             label=label,
             model_input_image_size=model_input_image_size,
             data_augmentations=data_augmentations)
-
+        if resize_output is not None:
+            # Resize labels after augmentations
+            label = resize_image_label(
+                im=label,
+                model_input_image_size=resize_output,
+                f='nearest')
     elif len(model_input_image_size) == 4:
         # 3D image augmentations.
         # TODO: optimize 3D augmentations with c++. This is slow.
@@ -241,6 +247,12 @@ def read_and_decode(
                     label=lab,
                     model_input_image_size=model_input_image_size[1:],
                     data_augmentations=data_augmentations)
+                if resize_output is not None:
+                    # Resize labels after augmentations
+                    it_lab = resize_image_label(
+                        im=it_lab,
+                        model_input_image_size=resize_output,
+                        f='nearest')
                 images += [it_im]
                 labels += [it_lab]
             label = tf.stack(
@@ -256,6 +268,7 @@ def read_and_decode(
         image = tf.stack(
             images,
             axis=0)
+
     return image, label
 
 
@@ -268,7 +281,8 @@ def inputs(
         num_epochs,
         tf_reader_settings,
         shuffle,
-        number_of_files=1):
+        number_of_files=1,
+        resize_output=None):
     """Read tfrecords and prepare them for queueing."""
     min_after_dequeue = 1000
     capacity = min_after_dequeue + 5 * batch_size
@@ -291,7 +305,8 @@ def inputs(
             tf_dict=tf_dict,
             tf_reader_settings=tf_reader_settings,
             data_augmentations=data_augmentations,
-            number_of_files=number_of_files)
+            number_of_files=number_of_files,
+            resize_output=resize_output)
 
         # Shuffle the examples and collect them into batch_size batches.
         # (Internally uses a RandomShuffleQueue.)
