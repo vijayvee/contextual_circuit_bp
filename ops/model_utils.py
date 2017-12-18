@@ -98,14 +98,15 @@ class model_class(object):
             output_structure = self.default_output_layer()
 
         # Correct output neurons if needed
-        output_neurons = output_structure[-1]['weights'][0]
-        size_check = output_neurons != self.output_size
-        fc_check = output_structure[-1]['layers'][0] == 'fc'
-        if size_check and fc_check:
-            output_structure[-1]['weights'][0] = self.output_size
-            log.warning('Adjusted output neurons from %s to %s.' % (
-                output_neurons,
-                self.output_size))
+        if 'weights' in output_structure[-1].keys():
+            output_neurons = output_structure[-1]['weights'][0]
+            size_check = output_neurons != self.output_size
+            fc_check = output_structure[-1]['layers'][0] == 'fc'
+            if size_check and fc_check:
+                output_structure[-1]['weights'][0] = self.output_size
+                log.warning('Adjusted output neurons from %s to %s.' % (
+                    output_neurons,
+                    self.output_size))
 
         # Calculate output effective receptive fields
         if tower_eRFs is not None:

@@ -11,25 +11,6 @@ layer_structure = [
             'SSN': 10,
             'SSF': 27.5
         },
-        'normalization': ['contextual_alt_learned_transition_learned_connectivity_vector_modulation'],
-        'normalization_target': ['pre'],
-        'normalization_aux': {
-            'timesteps': 10,
-            'regularization_targets': {  # Modulate sparsity
-                'q_t': {
-                   'regularization_type': 'l1',
-                   'regularization_strength': 0.01
-                },
-                't_t': {
-                    'regularization_type': 'l1',
-                    'regularization_strength': 0.1
-                },
-                'p_t': {
-                    'regularization_type': 'l1',
-                    'regularization_strength': 0.1
-                },
-            }
-        },
     }
 ]
 

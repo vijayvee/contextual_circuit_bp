@@ -259,7 +259,7 @@ def read_and_decode(
             axis=0)
         split_images = [tf.squeeze(im, axis=0) for im in split_images]
         images, labels = [], []
-        if np.any(['label' in x for x in data_augmentations]):
+        if np.any(['label' in x for x in data_augmentations if x is not None]):
             split_labels = tf.split(
                 label,
                 model_input_image_size[0],
@@ -282,17 +282,20 @@ def read_and_decode(
             label = tf.stack(
                 labels,
                 axis=0)
+            image = tf.stack(
+                images,
+                axis=0)
         else:
-            for im in split_images:
-                it_im = image_augmentations(
-                    image=im,
-                    model_input_image_size=model_input_image_size[1:],
-                    data_augmentations=data_augmentations)
-                images += [it_im]
-        image = tf.stack(
-            images,
-            axis=0)
-
+            if None not in data_augmentations:
+                for im in split_images:
+                    it_im = image_augmentations(
+                        image=im,
+                        model_input_image_size=model_input_image_size[1:],
+                        data_augmentations=data_augmentations)
+                    images += [it_im]
+                image = tf.stack(
+                    images,
+                    axis=0)
     return image, label
 
 

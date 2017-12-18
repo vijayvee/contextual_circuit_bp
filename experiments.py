@@ -190,21 +190,24 @@ class experiments():
             'lr': [5e-3],
             'loss_function': ['l2'],
             'optimizer': ['adam'],
-            'q_t': [1e-3, 1e-1],
-            'p_t': [1e-2, 1e-1, 1],
-            't_t': [1e-2, 1e-1, 1],
-            'timesteps': [5, 10],
+            'q_t': [1e-1],  # [1e-3, 1e-1],
+            'p_t': [1.], # [1e-2, 1e-1, 1],
+            't_t': [1.],  # [1e-2, 1e-1, 1],
+            'timesteps': [5],
             'model_struct': [
                 # os.path.join(model_folder, 'divisive_paper_rfs'),
                 os.path.join(model_folder, 'contextual_paper_rfs'),
+                # os.path.join(model_folder, 'contextual_ss_paper_rfs'),
                 # os.path.join(model_folder, 'divisive'),
-                # os.path.join(model_folder, 'contextual'),
+                # os.path.join(model_folder, 'contextual')
             ],
             'dataset': ['contextual_model_multi_stimuli']
+            # 'dataset': ['contextual_model_stimuli']
         }
         exp = self.add_globals(exp)  # Add globals to the experiment'
         exp['data_augmentations'] = [[None]]
-        exp['epochs'] = 1000
+        exp['epochs'] = 500
+        exp['batch_size'] = 1  # Train/val batch size.
         exp['save_weights'] = True
         return exp
 
@@ -219,18 +222,18 @@ class experiments():
             # 'q_t': [1e-3, 1e-1],
             # 'p_t': [1e-2, 1e-1, 1],
             # 't_t': [1e-2, 1e-1, 1],
-            'timesteps': [3, 6],
+            'timesteps': [5],
             'model_struct': [
                 os.path.join(
                     model_folder, 'context_association_conv2d'),
                 # os.path.join(
                 #     model_folder, 'context_association_dropout_conv2d'),
-                os.path.join(
-                    model_folder, 'context_association_l1_conv2d'),
+                # os.path.join(
+                #     model_folder, 'context_association_l1_conv2d'),
                 # os.path.join(
                 #     model_folder, 'context_association_dropout_l1_conv2d'),
-                os.path.join(
-                    model_folder, 'context_conv2d'),
+                # os.path.join(
+                #     model_folder, 'context_conv2d'),
                 os.path.join(
                     model_folder, 'context_ss_association_conv2d'),
                 # os.path.join(
@@ -241,13 +244,16 @@ class experiments():
             'dataset': ['BSDS500']
         }
         exp = self.add_globals(exp)  # Add globals to the experiment'
-        exp['data_augmentations'] = [['random_crop_image_label']]  # [['resize_nn_image_label']]
-        exp['val_augmentations'] = [['center_crop_image_label']]
+        exp['data_augmentations'] = [
+            ['random_crop_image_label']]
+            # 'lr_flip_image_label',
+            # 'ud_flip_image_label']]
+        # exp['val_augmentations'] = [['center_crop_image_label']]
         # TODO: Add an option for label_augmentations
-        exp['batch_size'] = 4  # Train/val batch size.
-        exp['epochs'] = 100
+        exp['batch_size'] = 32  # Train/val batch size.
+        exp['epochs'] = 1000
         exp['save_weights'] = True
-        exp['resize_output'] = [150, 150]  # Max pool
+        # exp['resize_output'] = [224, 224]
         return exp
 
     def ALLEN_selected_cells_103(self):
@@ -349,7 +355,7 @@ class experiments():
         }
         exp = self.add_globals(exp)  # Add globals to the experiment'
         exp['data_augmentations'] = [['resize']]
-        exp['epochs'] = 50
+        exp['epochs'] = 250
         exp['validation_iters'] = 500
         exp['num_validation_evals'] = 100
         exp['batch_size'] = 16  # Train/val batch size.

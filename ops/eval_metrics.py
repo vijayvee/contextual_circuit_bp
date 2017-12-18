@@ -4,7 +4,6 @@ import tensorflow as tf
 def metric_interpreter(metric, pred, labels):
     """Interpret string as a metric."""
     if metric == 'accuracy':
-        import ipdb;ipdb.set_trace()
         return class_accuracy(
             pred=pred,
             labels=labels)
@@ -23,6 +22,10 @@ def metric_interpreter(metric, pred, labels):
     elif metric == 'sigmoid_pearson':
         return pearson_summary_score(
             pred=tf.nn.sigmoid(pred),
+            labels=labels)
+    elif metric == 'round_pearson':
+        return pearson_summary_score(
+            pred=tf.round(tf.nn.sigmoid(pred)),
             labels=labels)
     elif metric == 'sigmoid_accuracy':
         return sigmoid_accuracy(

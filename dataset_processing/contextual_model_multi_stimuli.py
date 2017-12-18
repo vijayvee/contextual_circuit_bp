@@ -22,10 +22,10 @@ class data_processing(object):
             ]
         self.target_data = 'label_dict'
         self.config = Config()
-        self.output_size = [1, 1]
-        self.im_size = (51, 51, 75)
+        self.output_size = [1, 10]
+        self.im_size = (10, 51, 51, 75)
         self.repeats = 20
-        self.model_input_image_size = [51, 51, 75]
+        self.model_input_image_size = [10, 51, 51, 75]
         self.default_loss_function = 'pearson'
         self.score_metric = 'pearson'
         self.preprocess = [None]
@@ -49,7 +49,7 @@ class data_processing(object):
             },
             'label': {
                 'dtype': tf.float32,
-                'reshape': None
+                'reshape': self.output_size
             }
         }
 
@@ -100,28 +100,25 @@ class data_processing(object):
         # Pad each with 0s to the largest size
         stim_dict, _ = self.flatten_and_pad_dict(
             stim_dict, flatten=False)
-        stim_dict = {
-            k: v.repeat(
-                self.repeats,
-                axis=0) for k, v in stim_dict.iteritems()}
-        label_dict = {
-            k: v.repeat(
-                self.repeats,
-                axis=0) for k, v in label_dict.iteritems()}
-        model_dict = {
-            k: v.repeat(
-                self.repeats,
-                axis=0) for k, v in model_dict.iteritems()}
-        stim_dict = np.concatenate(stim_dict.values()).astype(np.float32)
-        label_dict = np.concatenate(label_dict.values()).astype(np.float32)
-        model_dict = np.concatenate(model_dict.values()).astype(np.float32)
+
+        # Combine dat into array
+        labels = np.concatenate(
+            np.expand_dims(
+                label_dict.values(), axis=1), axis=0).tolist()
+        model_labels = np.concatenate(
+            np.expand_dims(
+                model_dict.values(), axis=1), axis=0).tolist()
+        files = np.concatenate(
+            np.expand_dims(
+                stim_dict.values(), axis=1), axis=0)
 
         # Package for TFrecords
-        files = {k: stim_dict for k in self.folds.keys()}
+        files = {k: files for k in self.folds.keys()}
         if self.target_data == 'label_dict':
-            labels = {k: label_dict for k in self.folds.keys()}
+            labels = {k: labels for k in self.folds.keys()}
         elif self.target_data == 'model_dict':
-            labels = {k: model_dict for k in self.folds.keys()}
+            labels = {k: model_labels for k in self.folds.keys()}
         else:
             raise RuntimeError('Select a target dictionary for TFrecords.')
         return files, labels
+

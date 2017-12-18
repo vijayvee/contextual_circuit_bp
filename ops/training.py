@@ -83,8 +83,7 @@ def training_loop(
             if step % config.validation_iters == 0:
                 it_val_acc = np.asarray([])
                 it_val_loss = np.asarray([])
-                it_val_scores = np.asarray([])
-                it_val_labels = np.asarray([])
+                it_val_scores, it_val_labels = [], []
                 for num_vals in range(config.num_validation_evals):
                     # Validation accuracy as the average of n batches
                     val_vars = sess.run(val_dict.values())
@@ -96,12 +95,8 @@ def training_loop(
                     it_val_loss = np.append(
                         it_val_loss,
                         it_val_dict['val_loss'])
-                    it_val_scores = np.append(
-                        it_val_loss,
-                        it_val_dict['val_scores'])
-                    it_val_labels = np.append(
-                        it_val_loss,
-                        it_val_dict['val_labels'])
+                    it_val_labels += [it_val_dict['val_labels']]
+                    it_val_scores += [it_val_dict['val_scores']]
                 val_acc = it_val_acc.mean()
                 val_lo = it_val_loss.mean()
                 val_accs[step] = val_acc

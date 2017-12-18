@@ -11,7 +11,7 @@ layer_structure = [
             'SSN': 9,
             'SSF': 29
         },
-        'normalization': ['contextual'],
+        'normalization': ['contextual_ss'],
         'normalization_target': ['pre'],
         'normalization_aux': {
             'timesteps': 10,

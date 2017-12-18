@@ -19,15 +19,19 @@ class data_processing(object):
         self.processed_images = 'processed_images'
         self.config = Config()
         self.im_size = [321, 481, 3]
-        self.model_input_image_size = [300, 300, 3]  # [107, 160, 3]
+        self.model_input_image_size = [200, 200, 3]  # [107, 160, 3]
         self.output_size = [321, 481, 1]
         self.label_size = self.output_size
         self.default_loss_function = 'sigmoid_logits'
-        self.score_metric = 'sigmoid_pearson'
+        self.score_metric = 'pearson'
         self.preprocess = [None]  # ['resize_nn']
         self.folds = {
             'train': 'train',
             'val': 'val'
+        }
+        self.fold_options = {
+            'train': 'duplicate',
+            'val': 'mean'
         }
         self.targets = {
             'image': tf_fun.bytes_feature,
@@ -111,25 +115,48 @@ class data_processing(object):
                     self.im_size == list(im_data.shape)
                     ), 'Mismatched dimensions.'
 
-                # Loop through all labels
-                for idx, lab in enumerate(label_data):
+                if self.fold_options[k] == 'duplicate':
+                    # Loop through all labels
+                    for idx, lab in enumerate(label_data):
 
-                    # Process labels
-                    ip_lab = lab.item()[1].astype(np.float32)
-                    if transpose_labels:
-                        ip_lab = np.swapaxes(ip_lab, 0, 1)
-                    it_im_name = '%s_%s' % (idx, it_label)
-                    it_lab_name = '%s.npy' % it_im_name.split('.')[0]
-                    out_lab = os.path.join(proc_dir, it_lab_name)
-                    # misc.imsave(out_lab, ip_lab)
-                    np.save(out_lab, ip_lab)
+                        # Process labels
+                        ip_lab = lab.item()[1].astype(np.float32)
+                        if transpose_labels:
+                            ip_lab = np.swapaxes(ip_lab, 0, 1)
+                        it_im_name = '%s_%s' % (idx, it_label)
+                        it_lab_name = '%s.npy' % it_im_name.split('.')[0]
+                        out_lab = os.path.join(proc_dir, it_lab_name)
+                        np.save(out_lab, ip_lab)
+                        label_vec += [out_lab]
+
+                        # Process images
+                        proc_im = os.path.join(proc_image_dir, it_im_name)
+                        misc.imsave(proc_im, im_data)
+                        file_vec += [proc_im]
+                elif self.fold_options[k] == 'mean':
+                    mean_labs = []
+                    for idx, lab in enumerate(label_data):
+
+                        # Process labels
+                        ip_lab = lab.item()[1].astype(np.float32)
+                        if transpose_labels:
+                            ip_lab = np.swapaxes(ip_lab, 0, 1)
+                        out_lab = os.path.join(proc_dir, it_lab_name)
+                        np.save(out_lab, ip_lab)
+                        label_vec += [out_lab]
+                        mean_labs += [ip_lab]
+                    mean_lab = np.asarray(mean_labs).mean(0)
+                    out_lab = os.path.join(
+                        proc_dir, '%s.npy' % it_label.split('.')[0])
+                    np.save(out_lab, mean_lab)
                     label_vec += [out_lab]
 
                     # Process images
-                    proc_im = os.path.join(proc_image_dir, it_im_name)
-                    # shutil.copy(im, proc_im)
+                    proc_im = os.path.join(proc_image_dir, it_label)
                     misc.imsave(proc_im, im_data)
                     file_vec += [proc_im]
+                else:
+                    raise NotImplementedError
             labels[k] = label_vec
             new_files[k] = file_vec
         return labels, new_files
