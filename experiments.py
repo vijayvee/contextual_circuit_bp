@@ -222,10 +222,12 @@ class experiments():
             # 'q_t': [1e-3, 1e-1],
             # 'p_t': [1e-2, 1e-1, 1],
             # 't_t': [1e-2, 1e-1, 1],
-            'timesteps': [5],
+            # 'timesteps': [5],
             'model_struct': [
                 os.path.join(
                     model_folder, 'context_association_conv2d'),
+                os.path.join(
+                    model_folder, 'context_association_conv2d_t6'),
                 # os.path.join(
                 #     model_folder, 'context_association_dropout_conv2d'),
                 # os.path.join(
@@ -234,8 +236,8 @@ class experiments():
                 #     model_folder, 'context_association_dropout_l1_conv2d'),
                 # os.path.join(
                 #     model_folder, 'context_conv2d'),
-                os.path.join(
-                    model_folder, 'context_ss_association_conv2d'),
+                # os.path.join(
+                #     model_folder, 'context_ss_association_conv2d'),
                 # os.path.join(
                 #     model_folder, 'context_dropout_conv2d'),
                 os.path.join(
@@ -244,16 +246,14 @@ class experiments():
             'dataset': ['BSDS500']
         }
         exp = self.add_globals(exp)  # Add globals to the experiment'
-        exp['data_augmentations'] = [
-            ['random_crop_image_label']]
-            # 'lr_flip_image_label',
-            # 'ud_flip_image_label']]
+        exp['data_augmentations'] = [['random_crop_image_label']]
+        # 'lr_flip_image_label',
+        # 'ud_flip_image_label']]
         # exp['val_augmentations'] = [['center_crop_image_label']]
-        # TODO: Add an option for label_augmentations
-        exp['batch_size'] = 32  # Train/val batch size.
+        exp['batch_size'] = 16  # Train/val batch size.
         exp['epochs'] = 1000
         exp['save_weights'] = True
-        # exp['resize_output'] = [224, 224]
+        exp['resize_output'] = [[160, 240]]
         return exp
 
     def ALLEN_selected_cells_103(self):
@@ -355,10 +355,11 @@ class experiments():
         }
         exp = self.add_globals(exp)  # Add globals to the experiment'
         exp['data_augmentations'] = [['resize']]
-        exp['epochs'] = 250
-        exp['validation_iters'] = 500
-        exp['num_validation_evals'] = 100
-        exp['batch_size'] = 16  # Train/val batch size.
+        exp['epochs'] = 50
+        exp['validation_iters'] = 200
+        exp['num_validation_evals'] = 225
+        exp['batch_size'] = 10  # Train/val batch size.
+        exp['save_weights'] = True
         return exp
 
     def ALLEN_ss_cells_1_movies(self):

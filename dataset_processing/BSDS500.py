@@ -19,10 +19,10 @@ class data_processing(object):
         self.processed_images = 'processed_images'
         self.config = Config()
         self.im_size = [321, 481, 3]
-        self.model_input_image_size = [200, 200, 3]  # [107, 160, 3]
+        self.model_input_image_size = [320, 480, 3]  # [107, 160, 3]
         self.output_size = [321, 481, 1]
         self.label_size = self.output_size
-        self.default_loss_function = 'sigmoid_logits'
+        self.default_loss_function = 'l2'
         self.score_metric = 'pearson'
         self.preprocess = [None]  # ['resize_nn']
         self.folds = {
@@ -30,7 +30,7 @@ class data_processing(object):
             'val': 'val'
         }
         self.fold_options = {
-            'train': 'duplicate',
+            'train': 'mean',
             'val': 'mean'
         }
         self.targets = {
@@ -141,10 +141,8 @@ class data_processing(object):
                         ip_lab = lab.item()[1].astype(np.float32)
                         if transpose_labels:
                             ip_lab = np.swapaxes(ip_lab, 0, 1)
-                        out_lab = os.path.join(proc_dir, it_lab_name)
-                        np.save(out_lab, ip_lab)
-                        label_vec += [out_lab]
                         mean_labs += [ip_lab]
+
                     mean_lab = np.asarray(mean_labs).mean(0)
                     out_lab = os.path.join(
                         proc_dir, '%s.npy' % it_label.split('.')[0])

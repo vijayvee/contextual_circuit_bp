@@ -20,6 +20,10 @@ def resize_image_label(im, model_input_image_size, f='bilinear'):
         res_fun = tf.image.resize_images
     elif f == 'nearest':
         res_fun = tf.image.resize_nearest_neighbor
+    elif f == 'bicubic':
+        res_fun = tf.image.resize_bicubic
+    elif f == 'area':
+        res_fun = tf.image.resize_area
     else:
         raise NotImplementedError
     if len(im.get_shape()) > 3:
@@ -276,7 +280,7 @@ def read_and_decode(
                     it_lab = resize_image_label(
                         im=it_lab,
                         model_input_image_size=resize_output,
-                        f='nearest')
+                        f='area')
                 images += [it_im]
                 labels += [it_lab]
             label = tf.stack(

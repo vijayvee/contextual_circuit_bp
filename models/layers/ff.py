@@ -1170,10 +1170,10 @@ def gru2d_layer(
         nl_activities = gate_nl(gate_activities)
 
         # Reshape and split into appropriate gates
-        gate_sizes = [int(x) for x in gate_activities.get_shape()]
+        gate_sizes = [int(x) for x in nl_activities.get_shape()]
         div_g = gate_sizes[:-1] + [gate_sizes[-1] // 2, 2]
         res_gates = tf.reshape(
-                gate_activities,
+                nl_activities,
                 div_g)
         z, r = tf.split(res_gates, 2, axis=4)
 
@@ -1194,7 +1194,236 @@ def gru2d_layer(
 
         # Integrate circuit
         z = tf.squeeze(z)
-        h_update = (z * h_prev) + ((1 - z) * cell_nl(x_convs + h_convs + h_bias))
+        h_update = (z * h_prev) + ((1 - z) * cell_nl(
+            x_convs + h_convs + h_bias))
+        if isinstance(h, list):
+            # If we are storing the hidden state at each step
+            h[step] = h_update
+        else:
+            # If we are only keeping the final hidden state
+            h = h_update
+        step += 1
+        return (
+                step,
+                timesteps,
+                split_bottom,
+                h,
+                x_gate_filters,
+                h_gate_filters,
+                x_filter,
+                h_filter,
+                gate_biases,
+                h_bias
+                )
+
+    # Scope the 2D GRU
+    with tf.variable_scope(name):
+        if in_channels is None:
+            in_channels = int(bottom.get_shape()[-1])
+        timesteps = int(bottom.get_shape()[1])
+
+        if aux is not None and 'gate_nl' in aux.keys():
+            gate_nl = aux['gate_nl']
+        else:
+            gate_nl = tf.sigmoid
+
+        if aux is not None and 'cell_nl' in aux.keys():
+            cell_nl = aux['cell_nl']
+        else:
+            cell_nl = tf.tanh
+
+        if aux is not None and 'random_init' in aux.keys():
+            random_init = aux['random_init']
+        else:
+            random_init = True
+
+        # GRU: pack z/r/h gates into a single tensor
+        # X_facing tensor, H_facing tensor for both weights and biases
+        x_weights, h_weights = [], []
+        biases = []
+        gates = ['z', 'r']
+        filter_sizes = [gate_filter_size] * 2
+        for idx, (g, fs) in enumerate(zip(gates, filter_sizes)):
+            self, iW, ib = get_conv_var(
+                self=self,
+                filter_size=fs,
+                in_channels=in_channels,  # For the hidden state
+                out_channels=out_channels,
+                name='%s_X_gate_%s' % (name, g))
+            x_weights += [iW]
+            biases += [ib]
+            if idx != len(gates):
+                self, iW, ib = get_conv_var(
+                    self=self,
+                    filter_size=fs,
+                    in_channels=out_channels,  # For the hidden state
+                    out_channels=out_channels,
+                    name='%s_H_gate_%s' % (name, g))
+                h_weights += [iW]
+
+        # Concatenate each into 3d tensors
+        x_gate_filters = tf.concat(x_weights, axis=-1)
+        h_gate_filters = tf.concat(h_weights, axis=-1)
+        gate_biases = tf.concat(biases, axis=0)
+
+        # Split off last h weight
+        self, h_filter, h_bias = get_conv_var(
+            self=self,
+            filter_size=filter_size,
+            in_channels=out_channels,  # For the hidden state
+            out_channels=out_channels,
+            name='%s_H_gate_%s' % (name, 'h'))
+        self, x_filter, _ = get_conv_var(
+            self=self,
+            filter_size=filter_size,
+            in_channels=in_channels,  # For the hidden state
+            out_channels=out_channels,
+            name='%s_X_gate_%s' % (name, 'x'))
+
+        # Split bottom up by timesteps and initialize cell and hidden states
+        split_bottom = tf.split(bottom, timesteps, axis=1)
+        split_bottom = [tf.squeeze(x, axis=1) for x in split_bottom]  # Time
+        h_size = [
+            int(x) for x in split_bottom[0].get_shape()[:-1]] + [out_channels]
+        if aux is not None and 'ff_aux' in aux.keys():
+            if 'store_hidden_states' in aux['ff_aux']:
+                if random_init:
+                    hidden_state = [
+                        tf.random_normal(
+                            shape=h_size,
+                            mean=0.0,
+                            stddev=0.1) for x in range(timesteps)]
+                else:
+                    hidden_state = [
+                        tf.zeros_like(split_bottom[0])
+                        for x in range(timesteps)]
+        else:
+            if random_init:
+                hidden_state = tf.random_normal(
+                    shape=h_size,
+                    mean=0.0,
+                    stddev=0.1)
+            else:
+                hidden_state = tf.zeros_like(h_size)
+
+        # While loop
+        step = tf.constant(0)  # timestep iterator
+        elems = [
+            step,
+            timesteps,
+            split_bottom,
+            hidden_state,
+            x_gate_filters,
+            h_gate_filters,
+            x_filter,
+            h_filter,
+            gate_biases,
+            h_bias
+        ]
+
+        if aux is not None and 'ff_aux' in aux.keys():
+            if 'swap_memory' in aux['ff_aux']:
+                swap_memory = aux['ff_aux']['swap_memory']
+        else:
+            swap_memory = True
+        returned = tf.while_loop(
+            gru_condition,
+            gru_body,
+            loop_vars=elems,
+            back_prop=True,
+            swap_memory=swap_memory)
+
+        # Prepare output
+        _, _, _, h_updated, _, _, _, _, _, _ = returned
+        return self, h_updated
+
+
+def sgru2d_layer(
+        self,
+        bottom,
+        out_channels,
+        name,
+        in_channels=None,
+        filter_size=3,
+        gate_filter_size=1,
+        aux=None):
+    """2D Spatiotemporal separable GRU convolutional layer."""
+    raise NotImplementedError
+
+    def sgru_condition(
+            step,
+            timesteps,
+            split_bottom,
+            h,
+            x_gate_filters,
+            h_gate_filters,
+            x_filter,
+            h_filter,
+            gate_biases,
+            h_bias):
+        """Condition for ending SGRU."""
+        return step < timesteps
+
+    def sgru_body(
+            step,
+            timesteps,
+            split_bottom,
+            h,
+            x_gate_filters,
+            h_gate_filters,
+            x_filter,
+            h_filter,
+            gate_biases,
+            h_bias):
+        """Calculate updates for 2D SGRU."""
+        # Concatenate X_t and the hidden state
+        X = tf.gather(split_bottom, step)
+        if isinstance(h, list):
+            h_prev = tf.gather(h, step)
+        else:
+            h_prev = h
+
+        # Perform gate convolutions
+        x_gate_convs = tf.nn.conv2d(
+            X,
+            x_gate_filters,
+            [1, 1, 1, 1],
+            padding='SAME')
+        h_gate_convs = tf.nn.conv2d(
+            h_prev,
+            h_gate_filters,
+            [1, 1, 1, 1],
+            padding='SAME')
+
+        # Split gates
+        zx, rx = tf.split(x_gate_convs, 2, axis=4)
+        zh, rh = tf.split(h_gate_convs, 2, axis=4)
+        import ipdb;ipdb.set_trace()
+        zb, rb_x, rb_h = tf.split(gate_biases, 3)  # Not sure about this
+        z = tf.squeeze(gate_nl(zx + zh + zb))
+
+        # Separately calculate input/hidden gates
+        rf_a = gate_nl(rx + rb_x)  # TODO separate biases
+        rh_a = gate_nl(rh + rb_h)  # TODO separate biases
+
+        # Perform FF/REC convolutions
+        x_convs = tf.nn.conv2d(
+            X,
+            x_filter,
+            [1, 1, 1, 1],
+            padding='SAME')
+        h_convs = tf.nn.conv2d(
+            h_prev,
+            h_filter,
+            [1, 1, 1, 1],
+            padding='SAME')
+
+        # Gate the FF/REC activities
+        gate_x = x_convs * rf_a  # Alternatively, gate X and h_prev
+        gate_h = h_convs * rh_a
+
+        # Integrate circuit
+        h_update = (z * gate_h) + ((1 - z) * cell_nl(gate_x))
         if isinstance(h, list):
             # If we are storing the hidden state at each step
             h[step] = h_update

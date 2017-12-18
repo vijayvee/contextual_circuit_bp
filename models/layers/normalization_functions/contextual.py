@@ -16,7 +16,7 @@ def auxilliary_variables():
 
     These are adjusted by a passed aux dict variable."""
     return {
-        'lesions': ['Q', 'T', 'P', 'U'],
+        'lesions': [None],  #  ['Q', 'T', 'P', 'U'],
         'dtype': tf.float32,
         'return_weights': True,
         'hidden_init': 'random',

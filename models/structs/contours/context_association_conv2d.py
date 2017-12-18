@@ -1,14 +1,14 @@
 """2D convolutional model for Allen data."""
 
 layer_structure = [
-    # {
-    #     'layers': ['conv'],
-    #     'weights': [32],
-    #     'names': ['conv1'],
-    #     'filter_size': [5],
-    #     'activation': ['selu'],
-    #     'activation_target': ['post'],
-    # },
+    {
+        'layers': ['conv'],
+        'weights': [32],
+        'names': ['conv1'],
+        'filter_size': [12],
+        'activation': ['selu'],
+        'activation_target': ['post'],
+    },
     # {
     #     'layers': ['conv'],
     #     'weights': [32],
@@ -17,17 +17,17 @@ layer_structure = [
     #     'activation': ['selu'],
     #     'activation_target': ['post'],
     # },
-    # {
-    #     'layers': ['pool'],
-    #     'weights': [None],
-    #     'names': ['pool3'],
-    #     'filter_size': [None]
-    # },
+    {
+        'layers': ['pool'],
+        'weights': [None],
+        'names': ['pool2'],
+        'filter_size': [None]
+    },
     {
         'layers': ['conv'],
         'weights': [32],
-        'names': ['conv4'],
-        'filter_size': [13],
+        'names': ['conv3'],
+        'filter_size': [6],
         'normalization': ['contextual'],
         'normalization_target': ['post'],
         'normalization_aux': {
@@ -40,7 +40,7 @@ layer_structure = [
                 },
                 't_t': {
                     'regularization_type': 'l1',
-                    'regularization_strength': 0.1
+                    'regularization_strength': 0.5
                 },
                 'p_t': {
                     'regularization_type': 'orthogonal',
@@ -52,18 +52,18 @@ layer_structure = [
     {
         'layers': ['conv'],
         'weights': [32],
-        'names': ['conv5'],
+        'names': ['conv4'],
         'filter_size': [1],
         'activation': ['selu'],
         'activation_target': ['post'],
-    }   
+    }
 ]
 
 output_structure = [
     {
         'layers': ['conv'],
         'weights': [1],
-        'names': ['fc6'],
+        'names': ['fc5'],
         'filter_size': [1],
     }
 ]
