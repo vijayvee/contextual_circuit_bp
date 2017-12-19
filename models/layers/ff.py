@@ -1348,7 +1348,6 @@ def sgru2d_layer(
         gate_filter_size=1,
         aux=None):
     """2D Spatiotemporal separable GRU convolutional layer."""
-    raise NotImplementedError
 
     def sgru_condition(
             step,

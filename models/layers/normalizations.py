@@ -48,7 +48,7 @@ class normalizations(object):
             V1_neCRF=0.54,
             V1_feCRF=1.41,
             default_stride=1,
-            rf_calculation='fit_rf',
+            rf_calculation='pixel_wise',
             padding=1):
         """Set RF sizes for the normalizations.
 
@@ -102,13 +102,19 @@ class normalizations(object):
 
             # Each pixel at this layer corresponds to an input image RF
             # of eRF['r_i'].
-            if rf_calculation == 'pixel_wise': 
-                self.SRF = 1
-                self.CRF_excitation = 1
-                self.CRF_inhibition = 1
+            if rf_calculation == 'pixel_wise':
+                # self.SRF = 1
+                # self.CRF_excitation = 1
+                # self.CRF_inhibition = 1
+                self.SRF = 7
+                self.CRF_excitation = 7
+                self.CRF_inhibition = 7
             elif rf_calculation == 'fit_rf':
-                # Adjust SRF filter to this size, then adjust eCRFs w.r.t to that.
-                self.SRF = eRF['r_i']
+                # Adjust SRF filter, then adjust eCRFs w.r.t to that.
+                self.SRF = eRFc.outFromIn(
+                    conv=conv,
+                    layer=eRF,
+                    fix_r_out=eRF['r_i'])
                 self.CRF_excitation = eRF['r_i']
                 self.CRF_inhibition = eRF['r_i']
             if eSRF is not None:

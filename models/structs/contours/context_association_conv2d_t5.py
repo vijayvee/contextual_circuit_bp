@@ -31,8 +31,9 @@ layer_structure = [
         'normalization': ['contextual'],
         'normalization_target': ['post'],
         'normalization_aux': {
-            'timesteps': 6,
+            'timesteps': 5,
             'association_field': True,
+            'dropout': 0.5,
             'regularization_targets': {  # Modulate sparsity
                 'q_t': {
                    'regularization_type': 'l1',
@@ -48,14 +49,6 @@ layer_structure = [
                 },
             }
         }
-    },
-    {
-        'layers': ['conv'],
-        'weights': [32],
-        'names': ['conv4'],
-        'filter_size': [1],
-        'activation': ['selu'],
-        'activation_target': ['post'],
     }
 ]
 
@@ -63,7 +56,9 @@ output_structure = [
     {
         'layers': ['conv'],
         'weights': [1],
-        'names': ['fc5'],
+        'names': ['fc4'],
         'filter_size': [1],
+        'activation': ['sigmoid'],
+        'activation_target': ['post']
     }
 ]

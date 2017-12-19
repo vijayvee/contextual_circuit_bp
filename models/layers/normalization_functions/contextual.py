@@ -487,7 +487,7 @@ class ContextualCircuit(object):
             for idx in range(len(split_data)):
                 sep_convs += [tf.nn.conv2d(
                     split_data[idx],
-                    weights,     
+                    weights,
                     self.strides,
                     padding=self.padding)]
 
@@ -582,9 +582,12 @@ class ContextualCircuit(object):
         # Circuit output
         if self.association_field:
             # Ensure that CRF for association field is masked
+            p_weights = self.association_mask * self[
+                self.weight_dict['P']['r']['weight']]
             P = self.conv_2d_op(
                 data=I,
                 weight_key=self.weight_dict['P']['r']['weight'],
+                weights=p_weights
             )
         else:
             P = self.conv_2d_op(

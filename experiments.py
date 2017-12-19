@@ -217,7 +217,7 @@ class experiments():
         exp = {
             'experiment_name': [model_folder],
             'lr': [3e-4],
-            'loss_function': ['sigmoid_logits'],
+            'loss_function': ['pearson'],
             'optimizer': ['adam'],
             # 'q_t': [1e-3, 1e-1],
             # 'p_t': [1e-2, 1e-1, 1],
@@ -227,7 +227,7 @@ class experiments():
                 os.path.join(
                     model_folder, 'context_association_conv2d'),
                 os.path.join(
-                    model_folder, 'context_association_conv2d_t6'),
+                    model_folder, 'context_association_conv2d_t5'),
                 # os.path.join(
                 #     model_folder, 'context_association_dropout_conv2d'),
                 # os.path.join(
@@ -250,7 +250,7 @@ class experiments():
         # 'lr_flip_image_label',
         # 'ud_flip_image_label']]
         # exp['val_augmentations'] = [['center_crop_image_label']]
-        exp['batch_size'] = 16  # Train/val batch size.
+        exp['batch_size'] = 8  # Train/val batch size.
         exp['epochs'] = 1000
         exp['save_weights'] = True
         exp['resize_output'] = [[160, 240]]
@@ -343,13 +343,14 @@ class experiments():
             'regularization_type': ['l2'],  # [None, 'l1', 'l2'],
             'regularization_strength': [1e-7],
             'model_struct': [
-                os.path.join(model_folder, 'complete_sep_conv3d'),
-                os.path.join(model_folder, 'time_sep_conv3d'),
-                os.path.join(model_folder, 'complete_sep_nl_conv3d'),
-                os.path.join(model_folder, 'time_sep_nl_conv3d'),
-                os.path.join(model_folder, 'conv3d'),
-                os.path.join(model_folder, 'lstm2d'),
-                os.path.join(model_folder, 'rnn2d')
+                # os.path.join(model_folder, 'complete_sep_conv3d'),
+                # os.path.join(model_folder, 'time_sep_conv3d'),
+                # os.path.join(model_folder, 'complete_sep_nl_conv3d'),
+                # os.path.join(model_folder, 'time_sep_nl_conv3d'),
+                # os.path.join(model_folder, 'conv3d'),
+                # os.path.join(model_folder, 'lstm2d'),
+                # os.path.join(model_folder, 'rnn2d'),
+                os.path.join(model_folder, 'sgru2d_layer')
             ],
             'dataset': ['ALLEN_selected_cells_1']
         }

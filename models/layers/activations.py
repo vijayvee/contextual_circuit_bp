@@ -45,4 +45,3 @@ class activations(object):
     def sigmoid(self, x, **kwargs):
         """Elementwise sigmoid."""
         return tf.sigmoid(x)
-

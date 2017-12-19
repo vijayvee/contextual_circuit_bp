@@ -48,14 +48,6 @@ layer_structure = [
                 },
             }
         }
-    },
-    {
-        'layers': ['conv'],
-        'weights': [32],
-        'names': ['conv4'],
-        'filter_size': [1],
-        'activation': ['selu'],
-        'activation_target': ['post'],
     }
 ]
 
@@ -63,7 +55,9 @@ output_structure = [
     {
         'layers': ['conv'],
         'weights': [1],
-        'names': ['fc5'],
+        'names': ['fc4'],
         'filter_size': [1],
+        'activation': ['sigmoid'],
+        'activation_target': ['post']
     }
 ]
