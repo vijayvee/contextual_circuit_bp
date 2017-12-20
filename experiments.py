@@ -24,7 +24,7 @@ class experiments():
                     'left_right'
                 ]
             ],  # TODO: document all data augmentations.
-            'epochs': 200,
+            'epochs': 5,
             'shuffle': True,  # Shuffle data.
             'validation_iters': 5000,  # How often to evaluate validation.
             'num_validation_evals': 100,  # How many validation batches.
@@ -90,7 +90,7 @@ class experiments():
                 # os.path.join(model_folder, 'contextual_selu'),
                 # os.path.join(model_folder, 'contextual_rnn_selu'),
             ],
-            'dataset': ['cifar_10']
+            'dataset': ['mnist']
         }
         return self.add_globals(exp)  # Add globals to the experiment
 

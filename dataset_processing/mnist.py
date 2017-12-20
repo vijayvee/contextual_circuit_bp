@@ -46,6 +46,7 @@ class data_processing(object):
     def get_data(self):
         files = self.get_files()
         labels = self.get_labels(files)
+        import ipdb; ipdb.set_trace()
         return files, labels
 
     def get_files(self):
@@ -59,10 +60,12 @@ class data_processing(object):
                     fold,
                     '*'))
             for d in dirs:
+                import ipdb; ipdb.set_trace()
                 it_files += [glob(
                     os.path.join(
                         d,
                         '*%s' % self.extension))]
+            import ipdb; ipdb.set_trace()
             it_files = py_utils.flatten_list(it_files)
             if self.shuffle:
                 random.shuffle(it_files)
