@@ -251,6 +251,25 @@ class ff(object):
             filter_size=filter_size)
         return context, act
 
+    def sgru2d_layer(
+            self,
+            context,
+            act,
+            in_channels,
+            out_channels,
+            filter_size,
+            name,
+            it_dict):
+        """Convolutional separable GRU."""
+        context, act = sgru2d_layer(
+            self=context,
+            bottom=act,
+            in_channels=in_channels,
+            out_channels=out_channels,
+            name=name,
+            filter_size=filter_size)
+        return context, act
+
     def gru2d(
             self,
             context,
