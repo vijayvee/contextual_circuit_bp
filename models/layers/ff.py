@@ -251,7 +251,7 @@ class ff(object):
             filter_size=filter_size)
         return context, act
 
-    def sgru2d_layer(
+    def sgru2d(
             self,
             context,
             act,

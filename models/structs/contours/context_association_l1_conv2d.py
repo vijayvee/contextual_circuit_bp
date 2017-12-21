@@ -40,11 +40,11 @@ layer_structure = [
                 },
                 't_t': {
                     'regularization_type': 'l1',
-                    'regularization_strength': 0.1
+                    'regularization_strength': 0.5
                 },
                 'p_t': {
                     'regularization_type': 'l1',
-                    'regularization_strength': 0.1
+                    'regularization_strength': 1
                 },
             }
         }

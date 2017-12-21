@@ -1,3 +1,4 @@
+"""Contextual model with full eCRF filters."""
 import numpy as np
 import tensorflow as tf
 from utils import py_utils
@@ -16,12 +17,15 @@ def auxilliary_variables():
 
     These are adjusted by a passed aux dict variable."""
     return {
-        'lesions': [None],  #  ['Q', 'T', 'P', 'U'],
+        'lesions': [None],  # ['Q', 'T', 'P', 'U'],
         'dtype': tf.float32,
         'return_weights': True,
         'hidden_init': 'random',
         'tuning_init': 'cov',  # TODO: Initialize tuning as input covariance
         'association_field': False,
+        'full_far_eCRF': False,
+        'nonnegative_association': False,
+        'exclude_CRF': False,  # Punch out the CRF on eCRFs
         'tuning_nl': 'relu',
         'train': True,
         'dropout': None,
@@ -94,11 +98,13 @@ class ContextualCircuit(object):
         self.o_shape = self.q_shape
         self.bias_shape = [1, 1, 1, self.k]
 
+        self.tuning_params = ['Q', 'P', 'T']  # Learned connectivity
         if self.association_field:
-            self.tuning_params = ['Q', 'T']
-            self.p_shape = [self.SSN_ext, self.SSN_ext, self.k, self.k]
-        else:
-            self.tuning_params = ['Q', 'P', 'T']  # Learned connectivity
+            self.p_shape = [self.SSF_ext, self.SSF_ext, self.k, self.k]  # T
+            self.tuning_params.pop(self.tuning_params.index('P'))
+        if self.full_far_eCRF:
+            self.tuning_params.pop(self.tuning_params.index('T'))
+
         self.tuning_shape = [1, 1, self.k, self.k]
 
         # Nonlinearities and initializations
@@ -246,32 +252,28 @@ class ContextualCircuit(object):
         # weakly tuned summation: pooling in h, w dimensions
         #############################################
         p_array = np.ones(self.p_shape)
-        p_array[
-            self.SSN // 2 - py_utils.ifloor(
-                self.SRF / 2.0):self.SSN // 2 + py_utils.iceil(
-                self.SRF / 2.0),
-            self.SSN // 2 - py_utils.ifloor(
-                self.SRF / 2.0):self.SSN // 2 + py_utils.iceil(
-                self.SRF / 2.0),
-            :,  # exclude CRF!
-            :] = 0.0
+        if self.exclude_CRF:
+            # Punch out the CRF
+            p_array[
+                self.SSN // 2 - py_utils.ifloor(
+                    self.SRF / 2.0):self.SSF // 2 + py_utils.iceil(
+                    self.SSN / 2.0),
+                self.SSN // 2 - py_utils.ifloor(
+                    self.SRF / 2.0):self.SSF // 2 + py_utils.iceil(
+                    self.SSN / 2.0),
+                :,  # exclude CRF!
+                :] = 0.0
+
+
+
         p_array = p_array / p_array.sum()
+
         if 'P' in self.lesions:
             print 'Lesioning near eCRF.'
             p_array = np.zeros_like(p_array).astype(np.float32)
 
         # Association field is fully learnable
         if self.association_field and 'P' not in self.lesions:
-            mask_array = np.ones_like(p_array[:, :, 0, 0])[:, :, None, None]
-            mask_array[p_array[:, :, 0, 0] == 0] = 0.
-            setattr(
-                self,
-                'association_mask',
-                tf.get_variable(
-                    name='association_mask',
-                    dtype=self.dtype,
-                    initializer=mask_array.astype(np.float32),
-                    trainable=False))
             setattr(
                 self,
                 self.weight_dict['P']['r']['weight'],
@@ -280,8 +282,7 @@ class ContextualCircuit(object):
                     dtype=self.dtype,
                     initializer=initialization.xavier_initializer(
                         shape=self.p_shape,
-                        uniform=self.normal_initializer,
-                        mask=mask_array),
+                        uniform=self.normal_initializer),
                     trainable=True))
         else:
             setattr(
@@ -296,27 +297,43 @@ class ContextualCircuit(object):
         # weakly tuned suppression: pooling in h, w dimensions
         ###############################################
         t_array = np.ones(self.t_shape)
-        t_array[
-            self.SSF // 2 - py_utils.ifloor(
-                self.SSN / 2.0):self.SSF // 2 + py_utils.iceil(
-                self.SSN / 2.0),
-            self.SSF // 2 - py_utils.ifloor(
-                self.SSN / 2.0):self.SSF // 2 + py_utils.iceil(
-                self.SSN / 2.0),
-            :,  # exclude near surround!
-            :] = 0.0
+        if self.exclude_CRF:
+            # Punch out the CRF
+            t_array[
+                self.SSF // 2 - py_utils.ifloor(
+                    self.SSN / 2.0):self.SSF // 2 + py_utils.iceil(
+                    self.SSN / 2.0),
+                self.SSF // 2 - py_utils.ifloor(
+                    self.SSN / 2.0):self.SSF // 2 + py_utils.iceil(
+                    self.SSN / 2.0),
+                :,  # exclude near surround!
+                :] = 0.0
+
         t_array = t_array / t_array.sum()
         if 'T' in self.lesions:
             print 'Lesioning Far eCRF.'
             t_array = np.zeros_like(t_array).astype(np.float32)
-        setattr(
-            self,
-            self.weight_dict['T']['r']['weight'],
-            tf.get_variable(
-                name=self.weight_dict['T']['r']['weight'],
-                dtype=self.dtype,
-                initializer=t_array.astype(np.float32),
-                trainable=False))
+
+        if self.full_far_eCRF:
+            setattr(
+                self,
+                self.weight_dict['T']['r']['weight'],
+                tf.get_variable(
+                    name=self.weight_dict['T']['r']['weight'],
+                    dtype=self.dtype,
+                    initializer=initialization.xavier_initializer(
+                        shape=self.p_shape,
+                        uniform=self.normal_initializer),
+                    trainable=True))
+        else:
+            setattr(
+                self,
+                self.weight_dict['T']['r']['weight'],
+                tf.get_variable(
+                    name=self.weight_dict['T']['r']['weight'],
+                    dtype=self.dtype,
+                    initializer=t_array.astype(np.float32),
+                    trainable=False))
 
         # Connectivity tensors -- Q/P/T
         if 'Q' in self.lesions:
@@ -367,29 +384,31 @@ class ContextualCircuit(object):
                             shape=self.tuning_shape,
                             uniform=self.normal_initializer,
                             mask=None)))
-        if 'T' in self.lesions:
-            print 'Lesioning far eCRF connectivity.'
-            setattr(
-                self,
-                self.weight_dict['T']['r']['tuning'],
-                tf.get_variable(
-                    name=self.weight_dict['T']['r']['tuning'],
-                    dtype=self.dtype,
-                    trainable=False,
-                    initializer=np.zeros(
-                        self.tuning_shape).astype(np.float32)))
-        else:
-            setattr(
-                self,
-                self.weight_dict['T']['r']['tuning'],
-                tf.get_variable(
-                    name=self.weight_dict['T']['r']['tuning'],
-                    dtype=self.dtype,
-                    trainable=True,
-                    initializer=initialization.xavier_initializer(
-                        shape=self.tuning_shape,
-                        uniform=self.normal_initializer,
-                        mask=None)))
+        if not self.full_far_eCRF:
+            # Need a tuning tensor for near surround
+            if 'T' in self.lesions:
+                print 'Lesioning far eCRF connectivity.'
+                setattr(
+                    self,
+                    self.weight_dict['T']['r']['tuning'],
+                    tf.get_variable(
+                        name=self.weight_dict['T']['r']['tuning'],
+                        dtype=self.dtype,
+                        trainable=False,
+                        initializer=np.zeros(
+                            self.tuning_shape).astype(np.float32)))
+            else:
+                setattr(
+                    self,
+                    self.weight_dict['T']['r']['tuning'],
+                    tf.get_variable(
+                        name=self.weight_dict['T']['r']['tuning'],
+                        dtype=self.dtype,
+                        trainable=True,
+                        initializer=initialization.xavier_initializer(
+                            shape=self.tuning_shape,
+                            uniform=self.normal_initializer,
+                            mask=None)))
 
         # Input
         setattr(
@@ -487,7 +506,7 @@ class ContextualCircuit(object):
             for idx in range(len(split_data)):
                 sep_convs += [tf.nn.conv2d(
                     split_data[idx],
-                    weights,     
+                    weights,
                     self.strides,
                     padding=self.padding)]
 
@@ -574,16 +593,21 @@ class ContextualCircuit(object):
 
         # Circuit input
         I_summand = self.recurrent_nl(
-            ((self.xi * self.X) - (self.mu * U) - (self.nu * T)) / (
-                (1e-12 + (self.alpha * U) + (self.beta * T))))
+            (self.xi * self.X)
+            - ((self.alpha * I + self.mu) * U)
+            - ((self.beta * I + self.nu) * T))
         I = (I_update * I) + ((1 - I_update) * I_summand)
 
         # Circuit output
         if self.association_field:
             # Ensure that CRF for association field is masked
+            p_weights = self[self.weight_dict['P']['r']['weight']]
+            if self.nonnegative_association:
+                p_weights = tf.nn.relu(p_weights)  # Force excitatory conns
             P = self.conv_2d_op(
                 data=I,
                 weight_key=self.weight_dict['P']['r']['weight'],
+                weights=p_weights
             )
         else:
             P = self.conv_2d_op(
@@ -690,6 +714,8 @@ class ContextualCircuit(object):
             # Attach weights if using association field
             if self.association_field:
                 weights['p_t'] = self.p_r  # Make available for regularization
+            if self.full_far_eCRF:
+                weights['t_t'] = self.t_r  # Make available for regularization
             return O, weights, activities
         else:
             return O

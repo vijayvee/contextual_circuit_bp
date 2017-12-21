@@ -1,3 +1,4 @@
+"""Contextual model with partial filters."""
 import numpy as np
 import tensorflow as tf
 from utils import py_utils
@@ -16,12 +17,13 @@ def auxilliary_variables():
 
     These are adjusted by a passed aux dict variable."""
     return {
-        'lesions': [None],  #  ['Q', 'T', 'P', 'U'],
+        'lesions': [None],  # ['Q', 'T', 'P', 'U'],
         'dtype': tf.float32,
         'return_weights': True,
         'hidden_init': 'random',
         'tuning_init': 'cov',  # TODO: Initialize tuning as input covariance
         'association_field': False,
+        'nonnegative_association': False,
         'tuning_nl': 'relu',
         'train': True,
         'dropout': None,
@@ -584,6 +586,8 @@ class ContextualCircuit(object):
             # Ensure that CRF for association field is masked
             p_weights = self.association_mask * self[
                 self.weight_dict['P']['r']['weight']]
+            if self.nonnegative_association:
+                p_weights = tf.nn.relu(p_weights)  # Force excitatory conns
             P = self.conv_2d_op(
                 data=I,
                 weight_key=self.weight_dict['P']['r']['weight'],
