@@ -59,8 +59,10 @@ def training_loop(
         aggregator='max'):
     """Run the model training loop."""
     step, time_elapsed = 0, 0
-    train_losses, train_accs, timesteps = {}, {}, {}
-    val_losses, val_accs, val_scores, val_labels = {}, {}, {}, {}
+    train_losses, train_accs, train_aux, timesteps = {}, {}, {}, {}
+    val_losses, val_accs, val_scores, val_aux, val_labels = {}, {}, {}, {}, {}
+    train_aux_check = np.any(['aux_score' in k for k in train_dict.keys()])
+    val_aux_check = np.any(['aux_score' in k for k in val_dict.keys()])
     if config.save_weights:
         weight_dict = {
             k[0]: v for k, v in val_model.var_dict.iteritems() if k[1] == 0}
@@ -77,13 +79,20 @@ def training_loop(
             train_losses[step] = it_train_dict['train_loss']
             train_accs[step] = it_train_dict['train_accuracy']
             timesteps[step] = duration
+            if train_aux_check:
+                # Loop through to find aux scores
+                it_train_aux = {
+                    itk: itv
+                    for itk, itv in it_train_dict.iteritems()
+                    if 'aux_score' in itk}
+                train_aux[step] = it_train_aux
             assert not np.isnan(
                 it_train_dict['train_loss']
                 ).any(), 'Model diverged with loss = NaN'
             if step % config.validation_iters == 0:
                 it_val_acc = np.asarray([])
                 it_val_loss = np.asarray([])
-                it_val_scores, it_val_labels = [], []
+                it_val_scores, it_val_labels, it_val_aux = [], [], []
                 for num_vals in range(config.num_validation_evals):
                     # Validation accuracy as the average of n batches
                     val_vars = sess.run(val_dict.values())
@@ -97,12 +106,19 @@ def training_loop(
                         it_val_dict['val_loss'])
                     it_val_labels += [it_val_dict['val_labels']]
                     it_val_scores += [it_val_dict['val_scores']]
+                    if val_aux_check:
+                        iva = {
+                            itk: itv
+                            for itk, itv in it_val_dict.iteritems()
+                            if 'aux_score' in itk}
+                        it_val_aux += [iva]
                 val_acc = it_val_acc.mean()
                 val_lo = it_val_loss.mean()
                 val_accs[step] = val_acc
                 val_losses[step] = val_lo
                 val_scores[step] = it_val_scores
                 val_labels[step] = it_val_labels
+                val_aux[step] = it_val_aux
 
                 # Summaries
                 summary_str = sess.run(summary_op)
@@ -226,11 +242,13 @@ def training_loop(
     # Package output variables into a dictionary
     output_dict = {
         'train_losses': train_losses,
-        'train_accs': val_losses,
-        'timesteps': train_accs,
-        'val_losses': val_accs,
-        'val_accs': timesteps,
+        'train_accs': train_accs,
+        'train_aux': train_aux,
+        'timesteps': timesteps,
+        'val_losses': val_losses,
+        'val_accs': val_accs,
         'val_scores': val_scores,
         'val_labels': val_labels,
+        'val_aux': val_aux,
     }
     return output_dict

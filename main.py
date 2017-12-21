@@ -273,10 +273,22 @@ def main(
                 model=model)
             log.info('Built training loss function.')
 
+            # Add a score for the training set
             train_accuracy = eval_metrics.metric_interpreter(
-                metric=dataset_module.score_metric,
+                metric=dataset_module.score_metric,  # TODO: Attach to exp cnfg
                 pred=train_scores,
-                labels=train_labels)  # training accuracy
+                labels=train_labels)
+
+            # Add aux scores if requested
+            train_aux = {}
+            if hasattr(dataset_module, 'aux_scores'):
+                for m in dataset_module.aux_scores:
+                    train_aux[m] = eval_metrics.metric_interpreter(
+                        metric=m,
+                        pred=train_scores,
+                        labels=train_labels)
+
+            # Prepare tensorboard summaries
             tf_fun.image_summaries(train_images, tag='Training images')
             if len(train_labels.get_shape()) > 2:
                 tf_fun.image_summaries(
@@ -302,16 +314,28 @@ def main(
                 log=log,
                 tower_name='cnn')
             log.info('Built validation model.')
-
             val_loss, _ = loss_utils.loss_interpreter(
                 logits=val_scores,
                 labels=val_labels,
                 loss_type=config.loss_function,
                 dataset_module=dataset_module)
+
+            # Add a score for the validation set
             val_accuracy = eval_metrics.metric_interpreter(
                 metric=dataset_module.score_metric,
                 pred=val_scores,
-                labels=val_labels)  # training accuracy
+                labels=val_labels)
+
+            # Add aux scores if requested
+            val_aux = {}
+            if hasattr(dataset_module, 'aux_scores'):
+                for m in dataset_module.aux_scores:
+                    val_aux[m] = eval_metrics.metric_interpreter(
+                        metric=m,
+                        pred=val_scores,
+                        labels=val_labels)
+
+            # Prepare tensorboard summaries
             tf_fun.image_summaries(val_images, tag='Validation')
             if len(val_labels.get_shape()) > 2:
                 tf_fun.image_summaries(
@@ -359,6 +383,11 @@ def main(
         'val_labels': val_labels,
         'val_scores': val_scores,
     }
+    if hasattr(dataset_module, 'aux_score'):
+        # Attach auxillary scores to tensor dicts
+        for m in dataset_module.aux_scores:
+            train_dict['train_aux_%s' % m] = train_aux[m]
+            val_dict['val_aux_%s' % m] = val_aux[m]
 
     # Start training loop
     np.save(

@@ -19,6 +19,14 @@ def metric_interpreter(metric, pred, labels):
         return pearson_summary_score(
             pred=pred,
             labels=labels)
+    elif metric == 'pearson_columnwise':
+        return pearson_summary_score(
+            pred=pred,
+            labels=labels)
+    elif metric == 'l2_columnwise':
+        return l2_columnwise(
+            pred=pred,
+            labels=labels)
     elif metric == 'sigmoid_pearson':
         return pearson_summary_score(
             pred=tf.nn.sigmoid(pred),
@@ -157,6 +165,21 @@ def pearson_summary_score(pred, labels, eps_1=1e-4, eps_2=1e-12):
             labels,
             eps_1=eps_1,
             eps_2=eps_2))
+
+
+def pearson_columnwise(pred, labels, eps_1=1e-4, eps_2=1e-12):
+    """Wrapper to gather per-column pearson correlations."""
+    return pearson_score(
+            pred,
+            labels,
+            eps_1=eps_1,
+            eps_2=eps_2)
+
+
+def l2_columnwise(pred, labels, eps_1=1e-4, eps_2=1e-12):
+    """Wrapper to gather per-column l2 distance."""
+    d = (pred - labels) ** 2
+    return tf.sqrt(tf.reduce_mean(d, axis=0))
 
 
 def pearson_score(pred, labels, eps_1=1e-4, eps_2=1e-12):
