@@ -1,11 +1,9 @@
 import os
-import shutil
 import numpy as np
 import tensorflow as tf
 import pandas as pd
 from config import Config
 from ops import tf_fun
-from utils import py_utils
 from glob import glob
 
 
@@ -13,6 +11,9 @@ class data_processing(object):
     def __init__(self):
         self.name = 'spikefinder'
         self.config = Config()
+        self.file_extension = '.csv'
+        self.timepoints = 5  # Data is 100hz
+        self.trim_nans = True
         self.output_size = [1, 1]
         self.im_size = [1, 1]
         self.model_input_image_size = [1, 1]
@@ -41,68 +42,55 @@ class data_processing(object):
             }
         }
 
+    def create_events(self, data):
+        """Re-encode each dimension of events into a self.timepoints array.
+
+        The goal is to predict the last element in event_array.
+        """
+        event_array = []
+        for idx in range(data.shape[-1]):
+            it_neuron = data[:, idx]
+            it_event_array = []
+            for rs in range(it_neuron.shape[0] - self.timepoints):
+                it_event = it_neuron[rs:rs + self.timepoints]
+                if self.trim_nans and not np.any(np.isnan(it_event)):
+                    # Exclude events with NaNs
+                    it_event_array += [[it_event]]
+                elif not self.trim_nans:
+                    it_event_array += [[it_event]]
+                else:
+                    raise NotImplementedError
+            event_array += [np.asarray(it_event_array)]
+        return np.concatenate(event_array, axis=0).squeeze()
+
     def get_data(self):
-        files = self.get_files()
-        labels = self.get_labels(files)
-        return files, labels
+        cv_spikes, cv_traces = {}, {}
+        for k, v in self.folds.iteritems():
+            it_files = np.asarray(
+                glob(
+                    os.path.join(
+                        self.config.data_root,
+                        k,
+                        '*%s' % self.file_extension)))
+            # Trim to the file index
+            it_idx = np.asarray(
+                [int(
+                    x.split(
+                        os.path.sep)[-1].split('.')[0]) for x in it_files])
 
-    def get_files(self):
-        files = {}
-        all_ims = np.load(os.path.join(
-            self.config.data_root,
-            self.name,
-            self.data_file))[self.file_key]
-        all_ims = np.asarray([x for x in all_ims if x not in self.ignore_ims])
+            # Encode into events with self.timepoints
+            calcium_data, spike_data = [], []
+            for idx in np.unique(it_idx):
+                idx_files = it_files[it_idx == idx]
+                calcium_file = [x for x in idx_files if 'calcium' in x][0]
+                calcium = pd.read_csv(calcium_file).as_matrix()
+                calcium_data += [self.create_events(calcium)]
+                if k != 'test':
+                    spike_file = [x for x in idx_files if 'spikes' in x][0]
+                    spikes = pd.read_csv(spike_file).as_matrix()
+                    spike_data += [self.create_events(spikes)]
 
-        # Create folders for training/validation splits
-        self.rand_order = np.random.permutation(len(all_ims))
-        self.test_split = np.round(len(all_ims) * self.crossval_split).astype(int)
-        shuffled_ims = all_ims[self.rand_order]
-        test_ims = shuffled_ims[:self.test_split]
-        train_ims = shuffled_ims[self.test_split:]
-        target_test_ims = [os.path.join(
-            self.config.data_root,
-            self.name,
-            self.folds['test'],
-            f) for f in test_ims]
-        target_train_ims = [os.path.join(
-            self.config.data_root,
-            self.name,
-            self.folds['train'],
-            f) for f in train_ims]
-        test_ims = [os.path.join(
-            self.config.data_root,
-            self.name,
-            f) for f in test_ims]
-        train_ims = [os.path.join(
-            self.config.data_root,
-            self.name,
-            f) for f in train_ims]
-
-        py_utils.make_dir(os.path.join(
-            self.config.data_root,
-            self.name,
-            self.folds['test']))
-        py_utils.make_dir(os.path.join(
-            self.config.data_root,
-            self.name,
-            self.folds['train']))
-        [shutil.copyfile(s, t) for s, t in zip(test_ims, target_test_ims)]
-        [shutil.copyfile(s, t) for s, t in zip(train_ims, target_train_ims)]
-        files = {
-            self.folds['test']: test_ims,
-            self.folds['train']: train_ims
-        }
-        return files
-
-    def get_labels(self, files):
-        label_dict = np.load(os.path.join(
-            self.config.data_root,
-            self.name,
-            self.data_file))
-        all_labels = label_dict[self.label_key][self.rand_order]
-        labels = {
-            self.folds['test']: all_labels[:self.test_split],
-            self.folds['train']: all_labels[self.test_split:]
-        }
-        return labels
+            # Store in the dictionary
+            cv_traces[k] = np.concatenate(calcium_data, axis=0).squeeze()
+            cv_spikes[k] = np.concatenate(spike_data, axis=0).squeeze()
+        return cv_traces, cv_spikes
