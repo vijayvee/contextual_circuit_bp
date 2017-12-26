@@ -19,18 +19,19 @@ class data_processing(object):
         self.processed_images = 'processed_images'
         self.config = Config()
         self.im_size = [321, 481, 3]
-        self.model_input_image_size = [320, 480, 3]  # [107, 160, 3]
+        self.model_input_image_size = [300, 480, 3]  # [107, 160, 3]
         self.output_size = [321, 481, 1]
         self.label_size = self.output_size
         self.default_loss_function = 'l2'
         self.score_metric = 'pearson'
+        self.aux_scores = ['f1']
         self.preprocess = [None]  # ['resize_nn']
         self.folds = {
             'train': 'train',
             'val': 'val'
         }
         self.fold_options = {
-            'train': 'mean',
+            'train': 'duplicate',
             'val': 'mean'
         }
         self.targets = {

@@ -28,11 +28,13 @@ layer_structure = [
         'weights': [32],
         'names': ['conv3'],
         'filter_size': [6],
-        'normalization': ['contextual'],
+        'normalization': ['contextual_ff'],
         'normalization_target': ['post'],
         'normalization_aux': {
             'timesteps': 3,
             'association_field': True,
+            'full_far_eCRF': True,
+            'exclude_CRF': True,
             'regularization_targets': {  # Modulate sparsity
                 'q_t': {
                    'regularization_type': 'l1',

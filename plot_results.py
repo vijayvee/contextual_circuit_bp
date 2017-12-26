@@ -8,6 +8,7 @@ from argparse import ArgumentParser
 import pandas as pd
 from utils import py_utils
 import matplotlib
+matplotlib.use('agg')
 from matplotlib import pyplot as plt
 from matplotlib.ticker import MaxNLocator
 import plotly.plotly as py
@@ -162,7 +163,7 @@ def main(
     ax.set_color_cycle([cm(1.*i/NUM_COLORS) for i in range(NUM_COLORS)])
     for k in df['model parameters'].unique():
         tmp = df[df['model parameters'] == k]
-        tmp = tmp.sort('training iteration')
+        tmp = tmp.sort_values('training iteration', ascending=False)
         ax = tmp.plot(
             x='training iteration',
             y='training loss',
@@ -179,7 +180,7 @@ def main(
     ax.set_color_cycle([cm(1.*i/NUM_COLORS) for i in range(NUM_COLORS)])
     for k in df['model parameters'].unique():
         tmp = df[df['model parameters'] == k]
-        tmp = tmp.sort('training iteration')
+        tmp = tmp.sort_values('training iteration', ascending=False)
         ax = tmp.plot(
             x='training iteration',
             y='validation loss',

@@ -34,6 +34,7 @@ layer_structure = [
             'timesteps': 3,
             'association_field': True,
             'full_far_eCRF': True,
+            'exclude_CRF': False,
             'regularization_targets': {  # Modulate sparsity
                 'q_t': {
                    'regularization_type': 'l1',

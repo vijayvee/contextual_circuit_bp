@@ -1,37 +1,40 @@
 """2D convolutional model for Allen data."""
+
 layer_structure = [
     {
         'layers': ['conv'],
         'weights': [32],
         'names': ['conv1'],
-        'filter_size': [5],
-        'activation': ['selu'],
-        'activation_target': ['post'],
-    },
-    {
-        'layers': ['conv'],
-        'weights': [32],
-        'names': ['conv2'],
-        'filter_size': [5],
+        'filter_size': [12],
         'activation': ['selu'],
         'activation_target': ['post'],
     },
     # {
-    #     'layers': ['pool'],
-    #     'weights': [None],
-    #     'names': ['pool3'],
-    #     'filter_size': [None]
+    #     'layers': ['conv'],
+    #     'weights': [32],
+    #     'names': ['conv2'],
+    #     'filter_size': [5],
+    #     'activation': ['selu'],
+    #     'activation_target': ['post'],
     # },
+    {
+        'layers': ['pool'],
+        'weights': [None],
+        'names': ['pool2'],
+        'filter_size': [None]
+    },
     {
         'layers': ['conv'],
         'weights': [32],
-        'names': ['conv4'],
-        'filter_size': [5],
-        'normalization': ['contextual_ss'],
-        'normalization_target': ['pre'],
+        'names': ['conv3'],
+        'filter_size': [6],
+        'normalization': ['contextual_ff'],
+        'normalization_target': ['post'],
         'normalization_aux': {
             'timesteps': 3,
             'association_field': True,
+            'full_far_eCRF': True,
+            'exclude_CRF': True,
             'regularization_targets': {  # Modulate sparsity
                 'q_t': {
                    'regularization_type': 'l1',
@@ -39,7 +42,7 @@ layer_structure = [
                 },
                 't_t': {
                     'regularization_type': 'l1',
-                    'regularization_strength': 0.1
+                    'regularization_strength': 0.5
                 },
                 'p_t': {
                     'regularization_type': 'orthogonal',
@@ -54,7 +57,9 @@ output_structure = [
     {
         'layers': ['conv'],
         'weights': [1],
-        'names': ['fc_5'],
+        'names': ['fc4'],
         'filter_size': [1],
+        'activation': ['sigmoid'],
+        'activation_target': ['post']
     }
 ]

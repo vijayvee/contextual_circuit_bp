@@ -225,6 +225,8 @@ class experiments():
             'timesteps': [3],
             'model_struct': [
                 os.path.join(
+                    model_folder, 'context_conv2d'),
+                os.path.join(
                     model_folder, 'context_association_conv2d'),
                 os.path.join(
                     model_folder, 'context_association_l1_conv2d'),
@@ -233,9 +235,13 @@ class experiments():
                 os.path.join(
                     model_folder, 'context_association_full_hole_conv2d'),
                 os.path.join(
+                    model_folder, 'context_association_crf_hole_conv2d'),
+                os.path.join(
                     model_folder, 'context_association_l1_full_full_conv2d'),
                 os.path.join(
                     model_folder, 'context_association_l1_full_hole_conv2d'),
+                os.path.join(
+                    model_folder, 'context_association_l1_crf_hole_conv2d'),
                 os.path.join(
                     model_folder, 'conv2d'),
             ],
@@ -244,8 +250,8 @@ class experiments():
         exp = self.add_globals(exp)  # Add globals to the experiment'
         exp['data_augmentations'] = [[
             'random_crop_image_label',
-            'lr_flip_image_label',
-            'ud_flip_image_label'
+            # 'lr_flip_image_label',
+            # 'ud_flip_image_label'
             ]]
         # exp['val_augmentations'] = [['center_crop_image_label']]
         exp['batch_size'] = 10  # Train/val batch size.
@@ -253,7 +259,7 @@ class experiments():
         exp['save_weights'] = True
         exp['validation_iters'] = 500
         exp['num_validation_evals'] = 10
-        exp['resize_output'] = [[160, 240]]
+        exp['resize_output'] = [[150, 240]]
         return exp
 
     def ALLEN_selected_cells_103(self):

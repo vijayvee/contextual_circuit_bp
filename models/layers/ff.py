@@ -2202,32 +2202,18 @@ def get_var(
     else:
         value = initial_value
 
-    if self.training:
-        # get_variable, change the boolian to numpy
-        if type(value) is list:
-            var = tf.get_variable(
-                name=var_name,
-                shape=value[0],
-                initializer=value[1],
-                trainable=True)
-        else:
-            var = tf.get_variable(
-                name=var_name,
-                initializer=value,
-                trainable=True)
+    # get_variable, change the boolian to numpy
+    if type(value) is list:
+        var = tf.get_variable(
+            name=var_name,
+            shape=value[0],
+            initializer=value[1],
+            trainable=self.training)
     else:
-        # TODO: resolve this. It's the same as above. Maybe just trainable conditional.
-        if type(value) is list:
-            var = tf.get_variable(
-                name=var_name,
-                shape=value[0],
-                initializer=value[1],
-                trainable=False)
-        else:
-            var = tf.constant(
-                value,
-                dtype=tf.float32,
-                name=var_name)
+        var = tf.get_variable(
+            name=var_name,
+            initializer=value,
+            trainable=self.training)
     self.var_dict[(name, idx)] = var
     return self, var
 
