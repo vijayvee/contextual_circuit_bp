@@ -79,7 +79,8 @@ def data_to_tfrecords(
                     if '.npy' in it_l:
                         it_l = np.load(it_l)
                     else:
-                        it_l = load_image(it_l, label_size, reshape=False).astype(np.float32)
+                        it_l = load_image(
+                            it_l, label_size, reshape=False).astype(np.float32)
                         it_l = preprocess_image(it_l, preprocess, label_size)
                 else:
                     image = it_f
