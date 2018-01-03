@@ -14,9 +14,9 @@ class data_processing(object):
         self.file_extension = '.csv'
         self.timepoints = 5  # Data is 100hz
         self.trim_nans = True
-        self.output_size = [1, 1]
-        self.im_size = [1, 1]
-        self.model_input_image_size = [1, 1]
+        self.output_size = [1, self.timepoints]
+        self.im_size = [1, self.timepoints]
+        self.model_input_image_size = [1, self.timepoints]
         self.default_loss_function = 'l2'
         self.score_metric = 'l2'
         self.preprocess = [None]
@@ -59,8 +59,10 @@ class data_processing(object):
                 elif not self.trim_nans:
                     it_event_array += [[it_event]]
                 else:
-                    raise NotImplementedError
-            event_array += [np.asarray(it_event_array)]
+                    # A NaN is detected
+                    it_event_array = None
+            if it_event_array is not None:
+                event_array += [np.asarray(it_event_array)]
         return np.concatenate(event_array, axis=0).squeeze()
 
     def get_data(self):
@@ -91,6 +93,9 @@ class data_processing(object):
                     spike_data += [self.create_events(spikes)]
 
             # Store in the dictionary
-            cv_traces[k] = np.concatenate(calcium_data, axis=0).squeeze()
-            cv_spikes[k] = np.concatenate(spike_data, axis=0).squeeze()
+            cat_traces = np.concatenate(calcium_data, axis=0).squeeze()
+            cv_traces[k] = [list(x) for x in cat_traces]
+            if len(spike_data):
+                cat_spikes = np.concatenate(spike_data, axis=0).squeeze()
+                cv_spikes[k] = [list(x) for x in cat_spikes]
         return cv_traces, cv_spikes
