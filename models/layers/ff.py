@@ -1406,17 +1406,16 @@ def sgru2d_layer(
             X,
             x_gate_filters,
             [1, 1, 1, 1],
-            padding='SAME')
+            padding='SAME')  # Add bias?
         h_gate_convs = tf.nn.conv2d(
             h_prev,
             h_gate_filters,
             [1, 1, 1, 1],
-            padding='SAME')
+            padding='SAME')  # Add bias?
 
         # Split gates
         zx, rx = tf.split(x_gate_convs, 2, axis=4)
         zh, rh = tf.split(h_gate_convs, 2, axis=4)
-        import ipdb;ipdb.set_trace()
         zb, rb_x, rb_h = tf.split(gate_biases, 3)  # Not sure about this
         z = tf.squeeze(gate_nl(zx + zh + zb))
 
@@ -1441,7 +1440,7 @@ def sgru2d_layer(
         gate_h = h_convs * rh_a
 
         # Integrate circuit
-        h_update = (z * gate_h) + ((1 - z) * cell_nl(gate_x))
+        h_update = (z * h_prev) + ((1 - z) * cell_nl(gate_x + gate_h + h_bias))
         if isinstance(h, list):
             # If we are storing the hidden state at each step
             h[step] = h_update
@@ -1462,21 +1461,22 @@ def sgru2d_layer(
                 h_bias
                 )
 
-    # Scope the 2D GRU
+    # Scope the 2D SGRU
     with tf.variable_scope(name):
         if in_channels is None:
+            # Channels for the input x
             in_channels = int(bottom.get_shape()[-1])
         timesteps = int(bottom.get_shape()[1])
 
         if aux is not None and 'gate_nl' in aux.keys():
             gate_nl = aux['gate_nl']
         else:
-            gate_nl = tf.sigmoid
+            gate_nl = tf.sigmoid  # @Michele, try hard sigmpoid
 
         if aux is not None and 'cell_nl' in aux.keys():
             cell_nl = aux['cell_nl']
         else:
-            cell_nl = tf.tanh
+            cell_nl = tf.tanh  # @Michele, try relu
 
         if aux is not None and 'random_init' in aux.keys():
             random_init = aux['random_init']
@@ -1488,7 +1488,7 @@ def sgru2d_layer(
         x_weights, h_weights = [], []
         biases = []
         gates = ['z', 'r']
-        filter_sizes = [gate_filter_size] * 2
+        import ipdb;ipdb.set_trace()
         for idx, (g, fs) in enumerate(zip(gates, filter_sizes)):
             self, iW, ib = get_conv_var(
                 self=self,
@@ -1512,7 +1512,7 @@ def sgru2d_layer(
         h_gate_filters = tf.concat(h_weights, axis=-1)
         gate_biases = tf.concat(biases, axis=0)
 
-        # Split off last h weight
+        # Create weights for H and X (U/W)
         self, h_filter, h_bias = get_conv_var(
             self=self,
             filter_size=filter_size,
@@ -1573,8 +1573,8 @@ def sgru2d_layer(
         else:
             swap_memory = True
         returned = tf.while_loop(
-            gru_condition,
-            gru_body,
+            sgru_condition,
+            sgru_body,
             loop_vars=elems,
             back_prop=True,
             swap_memory=swap_memory)
