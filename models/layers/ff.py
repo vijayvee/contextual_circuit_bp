@@ -1035,7 +1035,7 @@ def lstm2d_layer(
         if aux is not None and 'cell_nl' in aux.keys():
             cell_nl = aux['cell_nl']
         else:
-            cell_nl = tf.tanh
+            cell_nl = tf.nn.relu
 
         if aux is not None and 'random_init' in aux.keys():
             random_init = aux['random_init']
@@ -1249,7 +1249,7 @@ def gru2d_layer(
         if aux is not None and 'cell_nl' in aux.keys():
             cell_nl = aux['cell_nl']
         else:
-            cell_nl = tf.tanh
+            cell_nl = tf.nn.relu
 
         if aux is not None and 'random_init' in aux.keys():
             random_init = aux['random_init']
@@ -1476,7 +1476,7 @@ def sgru2d_layer(
         if aux is not None and 'cell_nl' in aux.keys():
             cell_nl = aux['cell_nl']
         else:
-            cell_nl = tf.tanh  # @Michele, try relu
+            cell_nl = tf.nn.relu  # @Michele, try relu
 
         if aux is not None and 'random_init' in aux.keys():
             random_init = aux['random_init']
@@ -1694,7 +1694,7 @@ def mru2d_layer(
         if aux is not None and 'cell_nl' in aux.keys():
             cell_nl = aux['cell_nl']
         else:
-            cell_nl = tf.tanh
+            cell_nl = tf.nn.relu
 
         if aux is not None and 'random_init' in aux.keys():
             random_init = aux['random_init']
