@@ -356,7 +356,7 @@ class experiments():
                 os.path.join(model_folder, 'conv3d'),
                 os.path.join(model_folder, 'lstm2d'),
                 os.path.join(model_folder, 'rnn2d'),
-                os.path.join(model_folder, 'sgru2d_layer')
+                os.path.join(model_folder, 'sgru2d')
             ],
             'dataset': ['ALLEN_selected_cells_1']
         }
