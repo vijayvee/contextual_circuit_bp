@@ -53,6 +53,8 @@ def main(
     training_loss = [float(x['training_loss']) for x in perf]
     validation_loss = [float(x['validation_loss']) for x in perf]
     timesteps = [0. if x['timesteps'] is None else float(x['timesteps']) for x in perf]
+    ckpts = [x['ckpt_file'] for x in perf]
+    summaries = [x['summary_dir'] for x in perf]
     u_t = [0. if x['u_t'] is None else float(x['u_t']) for x in perf]
     q_t = [0. if x['q_t'] is None else float(x['q_t']) for x in perf]
     p_t = [0. if x['p_t'] is None else float(x['p_t']) for x in perf]
@@ -89,12 +91,14 @@ def main(
             q_t,
             p_t,
             t_t)]
+    model_infos = ['%s | %s' % (ckpt, summ) for ckpt, summ in zip(ckpts, summaries)]
 
     # DF and plot
     df = pd.DataFrame(
         np.vstack(
             (
                 model_params,
+                model_infos,
                 steps,
                 training_loss,
                 validation_loss
@@ -102,6 +106,7 @@ def main(
         ).transpose(),
         columns=[
             'model parameters',
+            'model_infos',
             'training iteration',
             'training loss',
             'validation loss'

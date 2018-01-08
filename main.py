@@ -40,7 +40,8 @@ def process_DB_exps(experiment_name, log, config):
     """Interpret and prepare hyperparams at runtime."""
     exp_params, exp_id = db.get_parameters(
         experiment_name=experiment_name,
-        log=log)
+        log=log,
+        evaluation=config.load_and_evaluate_ckpt)
     if exp_id is None:
         err = 'No empty experiments found.' + \
             'Did you select the correct experiment name?'
@@ -93,6 +94,7 @@ def get_data_pointers(dataset, base_dir, cv, log):
 def main(
         experiment_name,
         list_experiments=False,
+        load_and_evaluate_ckpt=None,
         gpu_device='/gpu:0'):
     """Create a tensorflow worker to run experiments in your DB."""
     if list_experiments:
@@ -122,6 +124,10 @@ def main(
     log = logger.get(os.path.join(config.log_dir, condition_label))
     experiment_dict = experiments.experiments()[experiment_name]()
     config = add_to_config(d=experiment_dict, config=config)  # Globals
+    if load_and_evaluate_ckpt is not None:
+        # Remove the train operation and add a ckpt pointer
+        config.load_and_evaluate_ckpt = load_and_evaluate_ckpt
+        from ops import evaluation as training
     config, exp_params = process_DB_exps(
         experiment_name=experiment_name,
         log=log,
@@ -165,6 +171,9 @@ def main(
         config.data_augmentations = py_utils.flatten_list(
             config.data_augmentations,
             log)
+    if load_and_evaluate_ckpt is not None:
+        config.epochs = 1
+        config.shuffle = False
     with tf.device('/cpu:0'):
         train_images, train_labels = data_loader.inputs(
             dataset=train_data,
@@ -383,6 +392,11 @@ def main(
         'val_labels': val_labels,
         'val_scores': val_scores,
     }
+
+    if load_and_evaluate_ckpt is not None:
+        # Remove the train operation and add a ckpt pointer
+        del train_dict['train_op']
+
     if hasattr(dataset_module, 'aux_score'):
         # Attach auxillary scores to tensor dicts
         for m in dataset_module.aux_scores:
@@ -415,10 +429,11 @@ def main(
     log.info('Finished training.')
 
     model_name = config.model_struct.replace('/', '_')
-    py_utils.save_npys(
-        data=output_dict,
-        model_name=model_name,
-        output_string=dir_list['experiment_evaluations'])
+    if output_dict is not None:
+        py_utils.save_npys(
+            data=output_dict,
+            model_name=model_name,
+            output_string=dir_list['experiment_evaluations'])
 
 
 if __name__ == '__main__':

@@ -363,6 +363,42 @@ class db(object):
             self.return_status('SELECT')
         return self.cur.fetchone()
 
+    def get_parameters_for_evaluation(
+            self,
+            experiment_name=None,
+            random=True,
+            ckpt_name=None):
+        """Pull parameters without updating the in process table."""
+        if experiment_name is not None:
+            exp_string = """experiment_name='%s' and""" % experiment_name
+        else:
+            exp_string = """"""
+        if random:
+            rand_string = """ORDER BY random()"""
+        else:
+            rand_string = """"""
+        self.cur.execute(
+            """
+            SELECT * FROM performance
+            WHERE ckpt_file=%(ckpt_file)s
+            """,
+            {
+                'ckpt_file': ckpt_name
+            }
+        )
+        self.cur.execute(
+            """
+            SELECT * FROM experiments
+            WHERE _id=%(_id)s
+            """,
+            {
+                '_id': self.cur.fetchone()['experiment_id']
+            }
+        )
+        if self.status_message:
+            self.return_status('SELECT')
+        return self.cur.fetchone()
+
     def list_experiments(self):
         """List all experiments."""
         self.cur.execute(
@@ -522,11 +558,38 @@ def get_experiment_name():
     return param_dict['experiment_name']
 
 
-def get_parameters(experiment_name, log, random=False):
+def get_parameters(experiment_name, log, random=False, evaluation=None):
     """Get parameters for a given experiment."""
     config = credentials.postgresql_connection()
     with db(config) as db_conn:
-        param_dict = db_conn.get_parameters_and_reserve(
+        if evaluation is None:
+            param_dict = db_conn.get_parameters_and_reserve(
+                experiment_name=experiment_name,
+                random=random)
+        else:
+            ckpt_name = evaluation.split('-')[0]
+            param_dict = db_conn.get_parameters_for_evaluation(
+                experiment_name=experiment_name,
+                ckpt_name=ckpt_name,
+                random=random)
+        log.info('Using parameters: %s' % json.dumps(param_dict, indent=4))
+        if param_dict is not None:
+            experiment_id = param_dict['_id']
+            # db_conn.update_in_process(
+            #     experiment_id=experiment_id,
+            #     experiment_name=experiment_name)
+        else:
+            experiment_id = None
+    if param_dict is None:
+        raise RuntimeError('This experiment is complete.')
+    return param_dict, experiment_id
+
+
+def get_parameters_evaluation(experiment_name, log, random=False):
+    """Get parameters for a given experiment."""
+    config = credentials.postgresql_connection()
+    with db(config) as db_conn:
+        param_dict = db_conn.get_parameters_for_evaluation(
             experiment_name=experiment_name,
             random=random)
         log.info('Using parameters: %s' % json.dumps(param_dict, indent=4))

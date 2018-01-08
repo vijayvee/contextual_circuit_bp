@@ -5,7 +5,7 @@ layer_structure = [
         'layers': ['conv'],
         'weights': [32],
         'names': ['conv1'],
-        'filter_size': [12],
+        'filter_size': [6],
         'activation': ['selu'],
         'activation_target': ['post'],
     },

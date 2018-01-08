@@ -27,8 +27,12 @@ def auxilliary_variables():
         'tuning_nl': 'relu',
         'train': True,
         'dropout': None,
-        'separable': False  # Need C++ implementation.
+        'separable': False,  # Need C++ implementation.
+        'recurrent_nl': tf.nn.selu,  # tf.nn.leakyrelu, tf.nn.relu, tf.nn.selu
+        'gate_nl': tf.nn.sigmoid,
+        'normal_initializer': False
     }
+# TODO: Regularization on the activations
 
 
 def interpret_nl(nl):
@@ -109,9 +113,6 @@ class ContextualCircuit(object):
         self.q_nl = tf.identity
         self.p_nl = tf.identity
         self.tuning_nl = interpret_nl(self.tuning_nl)
-        self.recurrent_nl = tf.nn.relu
-        self.gate_nl = tf.nn.sigmoid
-        self.normal_initializer = False
 
     def update_params(self, kwargs):
         """Update the class attributes with kwargs."""
@@ -561,9 +562,6 @@ class ContextualCircuit(object):
         )
         I_update = self.gate_nl(
             I_update_input + I_update_recurrent + self[
-                self.weight_dict['I']['r']['bias']])
-        I_update = self.gate_nl(
-            I_update_input + I_update_input + self[
                 self.weight_dict['I']['r']['bias']])
 
         # Calculate and apply dropout if requested

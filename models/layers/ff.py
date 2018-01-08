@@ -1488,7 +1488,7 @@ def sgru2d_layer(
         x_weights, h_weights = [], []
         biases = []
         gates = ['z', 'r']
-        import ipdb;ipdb.set_trace()
+        filter_sizes = [gate_filter_size]
         for idx, (g, fs) in enumerate(zip(gates, filter_sizes)):
             self, iW, ib = get_conv_var(
                 self=self,

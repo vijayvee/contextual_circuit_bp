@@ -224,24 +224,24 @@ class experiments():
             # 't_t': [1e-2, 1e-1, 1],
             'timesteps': [3],
             'model_struct': [
-                os.path.join(
-                    model_folder, 'context_conv2d'),
+                # os.path.join(
+                #     model_folder, 'context_conv2d'),
                 os.path.join(
                     model_folder, 'context_association_conv2d'),
-                os.path.join(
-                    model_folder, 'context_association_l1_conv2d'),
-                os.path.join(
-                    model_folder, 'context_association_full_full_conv2d'),
-                os.path.join(
-                    model_folder, 'context_association_full_hole_conv2d'),
-                os.path.join(
-                    model_folder, 'context_association_crf_hole_conv2d'),
+                # os.path.join(
+                #     model_folder, 'context_association_l1_conv2d'),
+                # os.path.join(
+                #     model_folder, 'context_association_full_full_conv2d'),
+                # os.path.join(
+                #     model_folder, 'context_association_full_hole_conv2d'),
+                # os.path.join(
+                #     model_folder, 'context_association_crf_hole_conv2d'),
                 os.path.join(
                     model_folder, 'context_association_l1_full_full_conv2d'),
-                os.path.join(
-                    model_folder, 'context_association_l1_full_hole_conv2d'),
-                os.path.join(
-                    model_folder, 'context_association_l1_crf_hole_conv2d'),
+                # os.path.join(
+                #     model_folder, 'context_association_l1_full_hole_conv2d'),
+                # os.path.join(
+                #     model_folder, 'context_association_l1_crf_hole_conv2d'),
                 os.path.join(
                     model_folder, 'conv2d'),
             ],
