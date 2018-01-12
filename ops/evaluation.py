@@ -1,11 +1,7 @@
-import os
 import time
 import tensorflow as tf
 import numpy as np
-import prepare_experiments
 from utils import py_utils
-from datetime import datetime
-from ops import hp_opt_utils
 
 
 def check_early_stop(
@@ -38,7 +34,7 @@ def check_early_stop(
     return early_stop
 
 
-def training_loop(
+def evaluation_loop(
         config,
         db,
         coord,
@@ -58,7 +54,7 @@ def training_loop(
         performance_metric='validation_loss',
         aggregator='max'):
     """Run the model training loop."""
-    step, time_elapsed = 0, 0
+    step = 0
     train_losses, train_accs, train_aux, timesteps = {}, {}, {}, {}
     val_losses, val_accs, val_scores, val_aux, val_labels = {}, {}, {}, {}, {}
     train_images, val_images = {}, {}
@@ -67,7 +63,7 @@ def training_loop(
     val_aux_check = np.any(['aux_score' in k for k in val_dict.keys()])
 
     # Restore model
-    saver.restore(sess, config.load_and_evaluate_ckpt) 
+    saver.restore(sess, config.load_and_evaluate_ckpt)
 
     # Start evaluation
     if config.save_weights:
@@ -145,7 +141,9 @@ def training_loop(
             step += 1
 
     except tf.errors.OutOfRangeError:
-        print 'Done with evaluation for %d epochs, %d steps.' % (config.epochs, step)
+        print 'Done with evaluation for %d epochs, %d steps.' % (
+            config.epochs,
+            step)
         print 'Saved to: %s' % checkpoint_dir
     finally:
         coord.request_stop()
@@ -181,4 +179,3 @@ def training_loop(
     #     'val_aux': val_aux,
     # }
     # return output_dict
-

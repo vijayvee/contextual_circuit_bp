@@ -127,7 +127,7 @@ def main(
     config.load_and_evaluate_ckpt = load_and_evaluate_ckpt
     if load_and_evaluate_ckpt is not None:
         # Remove the train operation and add a ckpt pointer
-        from ops import evaluation as training
+        from ops import evaluation
     config, exp_params = process_DB_exps(
         experiment_name=experiment_name,
         log=log,
@@ -409,23 +409,43 @@ def main(
             dir_list['condition_evaluations'], 'training_config_file'),
         config)
     log.info('Starting training')
-    output_dict = training.training_loop(
-        config=config,
-        db=db,
-        coord=coord,
-        sess=sess,
-        summary_op=summary_op,
-        summary_writer=summary_writer,
-        saver=saver,
-        threads=threads,
-        summary_dir=dir_list['summaries'],
-        checkpoint_dir=dir_list['checkpoints'],
-        weight_dir=dir_list['weights'],
-        train_dict=train_dict,
-        val_dict=val_dict,
-        train_model=model,
-        val_model=val_model,
-        exp_params=exp_params)
+    if load_and_evaluate_ckpt is not None:
+        output_dict = evaluation.evaluation_loop(
+            config=config,
+            db=db,
+            coord=coord,
+            sess=sess,
+            summary_op=summary_op,
+            summary_writer=summary_writer,
+            saver=saver,
+            threads=threads,
+            summary_dir=dir_list['summaries'],
+            checkpoint_dir=dir_list['checkpoints'],
+            weight_dir=dir_list['weights'],
+            train_dict=train_dict,
+            val_dict=val_dict,
+            train_model=model,
+            val_model=val_model,
+            exp_params=exp_params)
+    else:
+        output_dict = training.training_loop(
+            config=config,
+            db=db,
+            coord=coord,
+            sess=sess,
+            summary_op=summary_op,
+            summary_writer=summary_writer,
+            saver=saver,
+            threads=threads,
+            summary_dir=dir_list['summaries'],
+            checkpoint_dir=dir_list['checkpoints'],
+            weight_dir=dir_list['weights'],
+            train_dict=train_dict,
+            val_dict=val_dict,
+            train_model=model,
+            val_model=val_model,
+            exp_params=exp_params)
+
     log.info('Finished training.')
 
     model_name = config.model_struct.replace('/', '_')
