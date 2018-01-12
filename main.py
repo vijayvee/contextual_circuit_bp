@@ -124,9 +124,9 @@ def main(
     log = logger.get(os.path.join(config.log_dir, condition_label))
     experiment_dict = experiments.experiments()[experiment_name]()
     config = add_to_config(d=experiment_dict, config=config)  # Globals
+    config.load_and_evaluate_ckpt = load_and_evaluate_ckpt
     if load_and_evaluate_ckpt is not None:
         # Remove the train operation and add a ckpt pointer
-        config.load_and_evaluate_ckpt = load_and_evaluate_ckpt
         from ops import evaluation as training
     config, exp_params = process_DB_exps(
         experiment_name=experiment_name,
