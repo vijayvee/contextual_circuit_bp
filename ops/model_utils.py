@@ -283,9 +283,11 @@ def ff_op(self, it_dict, act, layer_summary, ff_mod):
                 layer_summary=layer_summary,
                 op_name=ff_attr)
         else:
+            print '*' * 60
             print 'Operation %s is not yet implemented.' % ff_attr
+            print '*' * 60
             raise NotImplementedError
-            # print 'Skipping %s operation in ff_op.' % ff_attr
+
     return self, act, layer_summary
 
 

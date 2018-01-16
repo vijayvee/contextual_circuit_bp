@@ -70,118 +70,6 @@ class experiments():
         }
         return self.add_globals(exp)  # Add globals to the experiment
 
-    def two_layer_conv_mlp(self):
-        """Each key in experiment_dict must be manually added to the schema."""
-        model_folder = 'two_layer_conv_mlp'
-        exp = {
-            'experiment_name': [model_folder],
-            'lr': [1e-5],
-            'loss_function': ['cce'],
-            'optimizer': ['adam'],
-            'regularization_type': [None],  # [None, 'l1', 'l2'],
-            'regularization_strength': [0.005],
-            'model_struct': [
-                os.path.join(model_folder, 'divisive'),
-                os.path.join(model_folder, 'batch'),
-                os.path.join(model_folder, 'layer'),
-                os.path.join(model_folder, 'lrn'),
-                os.path.join(model_folder, 'contextual'),
-            ],
-            'dataset': ['cifar_10']
-        }
-        return self.add_globals(exp)  # Add globals to the experiment
-
-    def test_conv(self):
-        """Each key in experiment_dict must be manually added to the schema."""
-        model_folder = 'test_conv'
-        exp = {
-            'experiment_name': [model_folder],
-            'lr': list(np.logspace(-5, -1, 5, base=10)),
-            'loss_function': ['cce'],
-            'optimizer': ['adam'],
-            'regularization_type': [None],
-            'regularization_strength': [None],
-            'model_struct': [
-                os.path.join(model_folder, 'test'),
-            ],
-            'dataset': ['mnist', 'cifar_10']
-        }
-        return self.add_globals(exp)  # Add globals to the experiment
-
-    def test_fc(self):
-        """Each key in experiment_dict must be manually added to the schema."""
-        model_folder = 'test_fc'
-        exp = {
-            'experiment_name': [model_folder],
-            'lr': list(np.logspace(-5, -1, 5, base=10)),
-            'loss_function': ['cce'],
-            'optimizer': ['sgd'],
-            'regularization_type': [None],
-            'regularization_strength': [None],
-            'model_struct': [
-                os.path.join(model_folder, 'test'),
-            ],
-            'dataset': ['mnist', 'cifar_10']
-        }
-        return self.add_globals(exp)  # Add globals to the experiment
-
-    def test_res(self):
-        """Each key in experiment_dict must be manually added to the schema."""
-        model_folder = 'test_res'
-        exp = {
-            'experiment_name': [model_folder],
-            'lr': list(np.logspace(-5, -1, 5, base=10)),
-            'loss_function': ['cce'],
-            'optimizer': ['adam'],
-            'regularization_type': [None],
-            'regularization_strength': [None],
-            'model_struct': [
-                os.path.join(model_folder, 'test'),
-            ],
-            'dataset': ['mnist', 'cifar_10']
-        }
-        return self.add_globals(exp)  # Add globals to the experiment
-
-    def coco_cnn(self):
-        """Each key in experiment_dict must be manually added to the schema."""
-        model_folder = 'coco_cnn'
-        exp = {
-            'experiment_name': [model_folder],
-            'lr': [3e-4],
-            'loss_function': ['sigmoid'],
-            'optimizer': ['adam'],
-            'model_struct': [
-                os.path.join(model_folder, 'cnn'),
-                os.path.join(model_folder, 'contextual_cnn')
-            ],
-            'dataset': ['coco_2014']
-        }
-        exp = self.add_globals(exp)  # Add globals to the experiment'
-        exp['epochs'] = 200
-        exp['batch_size'] = 16  # Train/val batch size.
-        exp['save_weights'] = True
-        return exp
-
-    def challengedb_cnns(self):
-        """Each key in experiment_dict must be manually added to the schema."""
-        model_folder = 'challengedb_cnns'
-        exp = {
-            'experiment_name': [model_folder],
-            'lr': [1e-3],
-            'loss_function': ['l2'],
-            'optimizer': ['adam'],
-            'model_struct': [
-                os.path.join(model_folder, 'cnn'),
-                os.path.join(model_folder, 'contextual_cnn')
-            ],
-            'dataset': ['ChallengeDB_release']
-        }
-        exp = self.add_globals(exp)  # Add globals to the experiment'
-        exp['epochs'] = 200
-        exp['batch_size'] = 8  # Train/val batch size.
-        exp['save_weights'] = True
-        return exp
-
     def contextual_model_paper(self):
         """Each key in experiment_dict must be manually added to the schema."""
         model_folder = 'contextual_model_paper'
@@ -262,33 +150,6 @@ class experiments():
         exp['resize_output'] = [[150, 240]]
         return exp
 
-    def ALLEN_selected_cells_103(self):
-        """Each key in experiment_dict must be manually added to the schema."""
-        model_folder = 'ALLEN_selected_cells_103'
-        exp = {
-            'experiment_name': [model_folder],
-            'lr': [1e-3],
-            'loss_function': ['l2'],
-            'optimizer': ['adam'],
-            'regularization_type': ['l2'],  # [None, 'l1', 'l2'],
-            'regularization_strength': [1e-7],
-            'model_struct': [
-                os.path.join(model_folder, 'conv2d'),
-                os.path.join(model_folder, 'adj_norm_conv2d'),
-                os.path.join(model_folder, 'scalar_norm_conv2d'),
-                os.path.join(model_folder, 'vector_norm_conv2d'),
-                os.path.join(model_folder, 'DoG'),
-            ],
-            'dataset': ['ALLEN_selected_cells_103']
-        }
-        exp = self.add_globals(exp)  # Add globals to the experiment'
-        exp['data_augmentations'] = [['resize']]
-        exp['epochs'] = 100
-        exp['validation_iters'] = 500
-        exp['num_validation_evals'] = 100
-        exp['batch_size'] = 16  # Train/val batch size.
-        return exp
-
     def ALLEN_random_cells_103(self):
         """Each key in experiment_dict must be manually added to the schema."""
         model_folder = 'ALLEN_random_cells_103'
@@ -311,31 +172,6 @@ class experiments():
         exp['num_validation_evals'] = 100
         exp['batch_size'] = 16  # Train/val batch size.
         exp['optimizer_constraints'] = {'dog1': (0, 10)}
-        return exp
-
-    def ALLEN_selected_cells_1(self):
-        """Each key in experiment_dict must be manually added to the schema."""
-        model_folder = 'ALLEN_selected_cells_1'
-        exp = {
-            'experiment_name': [model_folder],
-            'lr': [3e-4],
-            'loss_function': ['pearson'],
-            'optimizer': ['adam'],
-            # 'regularization_type': ['l2'],  # [None, 'l1', 'l2'],
-            # 'regularization_strength': [1e-7],
-            'model_struct': [
-                os.path.join(model_folder, 'conv2d'),
-                os.path.join(model_folder, 'sep_conv2d'),
-                os.path.join(model_folder, 'DoG'),
-            ],
-            'dataset': ['ALLEN_selected_cells_1']
-        }
-        exp = self.add_globals(exp)  # Add globals to the experiment'
-        exp['data_augmentations'] = [['resize']]
-        exp['epochs'] = 50
-        exp['validation_iters'] = 500
-        exp['num_validation_evals'] = 100
-        exp['batch_size'] = 16  # Train/val batch size.
         return exp
 
     def ALLEN_st_selected_cells_1(self):
@@ -370,27 +206,44 @@ class experiments():
         exp['save_weights'] = True
         return exp
 
-    def ALLEN_ss_cells_1_movies(self):
+    def crcns_1d(self):
         """Each key in experiment_dict must be manually added to the schema."""
-        model_folder = 'ALLEN_ss_cells_1_movies'
+        model_folder = 'crcns_1d'
         exp = {
             'experiment_name': [model_folder],
-            'lr': [1e-3],
-            'loss_function': ['l2'],
-            'optimizer': ['adam'],
-            'regularization_type': ['l2'],  # [None, 'l1', 'l2'],
-            'regularization_strength': [1e-7],
+            'lr': [3e-4],
+            'loss_function': ['tf_log_poisson'],
+            'optimizer': ['nadam'],
             'model_struct': [
-                os.path.join(model_folder, 'conv2d'),
-                os.path.join(model_folder, 'sep_conv2d'),
-                os.path.join(model_folder, 'DoG'),
+                os.path.join(model_folder, 'lstm1d'),
             ],
-            'dataset': ['ALLEN_ss_cells_1_movies']
+            'dataset': ['crcns_1d']
         }
         exp = self.add_globals(exp)  # Add globals to the experiment'
-        exp['data_augmentations'] = [['resize']]
-        exp['epochs'] = 100
-        exp['validation_iters'] = 500
-        exp['num_validation_evals'] = 100
-        exp['batch_size'] = 32  # Train/val batch size.
+        exp['epochs'] = 50
+        exp['validation_iters'] = 200
+        exp['num_validation_evals'] = 225
+        exp['batch_size'] = 10  # Train/val batch size.
+        exp['save_weights'] = True
+        return exp
+
+    def crcns_2d(self):
+        """Each key in experiment_dict must be manually added to the schema."""
+        model_folder = 'crcns_1d'
+        exp = {
+            'experiment_name': [model_folder],
+            'lr': [3e-4],
+            'loss_function': ['tf_log_poisson'],
+            'optimizer': ['nadam'],
+            'model_struct': [
+                os.path.join(model_folder, 'lstm2d'),
+            ],
+            'dataset': ['crcns_2d']
+        }
+        exp = self.add_globals(exp)  # Add globals to the experiment'
+        exp['epochs'] = 50
+        exp['validation_iters'] = 200
+        exp['num_validation_evals'] = 225
+        exp['batch_size'] = 10  # Train/val batch size.
+        exp['save_weights'] = True
         return exp

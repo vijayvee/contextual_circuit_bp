@@ -12,6 +12,8 @@ def optimizer_interpreter(
     """Router for loss functions."""
     if optimizer == 'adam':
         return tf.train.AdamOptimizer(lr).minimize(loss)
+    elif optimizer == 'nadam':
+        return tf.contrib.opt.NadamOptimizer(lr).minimize(loss)
     elif optimizer == 'sgd':
         return tf.train.GradientDescentOptimizer(lr).minimize(loss)
     elif optimizer == 'momentum':
@@ -57,7 +59,7 @@ def loss_interpreter(
             logits=logits,
             labels=labels,
             weights=weights)
-    elif loss_type == 'l2':
+    elif loss_type == 'l2' or loss_type == 'L2':
         logits = tf.cast(logits, tf.float32)
         labels = tf.cast(labels, tf.float32)
         return l2(
@@ -100,6 +102,12 @@ def loss_interpreter(
         logits = tf.cast(logits, tf.float32)
         labels = tf.cast(labels, tf.float32)
         return log_poisson(
+            logits=logits,
+            labels=labels)
+    elif loss_type == 'tf_log_poisson':
+        logits = tf.cast(logits, tf.float32)
+        labels = tf.cast(labels, tf.float32)
+        return tf_log_poisson(
             logits=logits,
             labels=labels)
     else:
@@ -247,6 +255,16 @@ def log_poisson(logits, labels, eps=1e-12):
     labels = tf.squeeze(labels)
     ll = tf.reduce_sum(logits) - tf.reduce_sum(
         tf.multiply(labels, tf.log(logits + eps)))
+    return ll, ll
+
+
+def tf_log_poisson(logits, labels, eps=1e-12):
+    """Wrapper for tensorflow log poisson loss."""
+    logits = tf.squeeze(logits)
+    labels = tf.squeeze(labels)
+    ll = tf.reduce_mean(tf.nn.log_poisson_loss(
+        targets=labels,
+        log_input=logits))
     return ll, ll
 
 

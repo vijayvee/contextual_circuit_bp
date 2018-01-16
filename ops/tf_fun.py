@@ -1,3 +1,4 @@
+import numpy as np
 import tensorflow as tf
 
 
@@ -15,6 +16,8 @@ def int64_feature(values):
 
 def float_feature(values):
     """Float features for writing TFRecords."""
+    if isinstance(values, np.ndarray):
+        values = [v for v in values]
     if not isinstance(values, (tuple, list)):
         values = [values]
     return tf.train.Feature(float_list=tf.train.FloatList(value=values))

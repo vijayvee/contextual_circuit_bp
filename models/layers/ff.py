@@ -327,6 +327,25 @@ class ff(object):
             filter_size=filter_size)
         return context, act
 
+    def lstm1d(
+            self,
+            context,
+            act,
+            in_channels,
+            out_channels,
+            filter_size,
+            name,
+            it_dict):
+        """1d LSTM."""
+        context, act = lstm1d_layer(
+            self=context,
+            bottom=act,
+            in_channels=in_channels,
+            out_channels=out_channels,
+            name=name,
+            filter_size=filter_size)
+        return context, act
+
     def fc(
             self,
             context,
@@ -417,6 +436,38 @@ class ff(object):
             pool_type = 'max'
 
         context, act = self.pool_class.interpret_2dpool(
+            context=context,
+            bottom=act,
+            name=name,
+            filter_size=filter_size,
+            stride_size=stride_size,
+            pool_type=pool_type
+        )
+        return context, act
+
+    def pool1d(
+            self,
+            context,
+            act,
+            in_channels,
+            out_channels,
+            filter_size,
+            name,
+            it_dict):
+        """Wrapper for 1d pool."""
+        if filter_size is None:
+            filter_size = [2]
+        stride_size = it_dict.get('stride', [2])
+        if not isinstance(filter_size, list):
+            filter_size = [filter_size]
+        if not isinstance(stride_size, list):
+            filter_size = [stride_size]
+        if 'aux' in it_dict and 'pool_type' in it_dict['aux']:
+            pool_type = it_dict['aux']['pool_type']
+        else:
+            pool_type = 'max'
+
+        context, act = self.pool_class.interpret_1dpool(
             context=context,
             bottom=act,
             name=name,
@@ -707,6 +758,7 @@ def bias_layer(
         out_channels,
         name,
         in_channels=None,
+        filter_size=1,
         padding='SAME'):
     """2D convolutional layer."""
     with tf.variable_scope(name):
@@ -718,7 +770,6 @@ def bias_layer(
             in_channels=in_channels,
             out_channels=in_channels,
             name=name)
-        import ipdb;ipdb.set_trace()
         bias = tf.nn.bias_add(bottom, conv_biases)
         return self, bias
 
@@ -935,6 +986,186 @@ def complete_sep_conv3d_layer(
         bias = tf.nn.bias_add(t_conv, conv_biases)
 
         return self, bias
+
+
+def lstm1d_layer(
+        self,
+        bottom,
+        out_channels,
+        name,
+        in_channels=None,
+        filter_size=3,
+        gate_filter_size=1,
+        aux=None):
+    """1D LSTM convolutional layer."""
+
+    def lstm_condition(
+            step,
+            timesteps,
+            split_bottom,
+            h,
+            x_gate_filters,
+            h_gate_filters,
+            gate_biases):
+        """Condition for ending LSTM."""
+        return step < timesteps
+
+    def lstm_body(
+            step,
+            timesteps,
+            split_bottom,
+            h,
+            x_gate_filters,
+            h_gate_filters,
+            gate_biases):
+        """Calculate updates for 1d lstm."""
+
+        # Concatenate X_t and the hidden state
+        X = tf.gather(split_bottom, step)
+        if isinstance(h, list):
+            h_prev = tf.gather(h, step)
+        else:
+            h_prev = h
+
+        # Perform matmul
+        x_gate_convs = tf.matmul(X, x_gate_filters)
+        h_gate_convs = tf.matmul(h_prev, h_gate_filters)
+
+        # Calculate gates
+        gate_activites = x_gate_convs + h_gate_convs + gate_biases
+
+        # Reshape and split into appropriate gates
+        gate_sizes = [int(x) for x in gate_activites.get_shape()]
+        div_g = gate_sizes[:-1] + [gate_sizes[-1] // 4, 4]
+        res_gates = tf.reshape(
+                gate_activites,
+                div_g)
+        split_gates = tf.split(res_gates, 4, axis=2)
+        f, i, o, c = split_gates
+        f = tf.squeeze(gate_nl(f))
+        i = tf.squeeze(gate_nl(i))
+        o = tf.squeeze(gate_nl(o))
+        c = tf.squeeze(cell_nl(c))
+        c_update = (f * h) + (c * i)
+        if isinstance(h, list):
+            # If we are storing the hidden state at each step
+            h[step] = o * c_update
+        else:
+            # If we are only keeping the final hidden state
+            h = o * c_update
+        step += 1
+        return (
+                step,
+                timesteps,
+                split_bottom,
+                h,
+                x_gate_filters,
+                h_gate_filters,
+                gate_biases
+                )
+
+    # Scope the 1d lstm
+    with tf.variable_scope(name):
+        if in_channels is None:
+            in_channels = int(bottom.get_shape()[-1])
+        timesteps = int(bottom.get_shape()[1])
+
+        if aux is not None and 'gate_nl' in aux.keys():
+            gate_nl = aux['gate_nl']
+        else:
+            gate_nl = tf.sigmoid
+
+        if aux is not None and 'cell_nl' in aux.keys():
+            cell_nl = aux['cell_nl']
+        else:
+            cell_nl = tf.nn.relu
+
+        if aux is not None and 'random_init' in aux.keys():
+            random_init = aux['random_init']
+        else:
+            random_init = True
+
+        # LSTM: pack i/o/f/c gates into a single tensor
+        # X_facing tensor, H_facing tensor for both weights and biases
+        x_weights, h_weights = [], []
+        biases = []
+        gates = ['f', 'i', 'o', 'c']
+        filter_sizes = len(gates) * [filter_size]
+        for idx, (g, fs) in enumerate(zip(gates, filter_sizes)):
+            self, iW, ib = get_fc_var(
+                self=self,
+                in_size=in_channels,
+                out_size=out_channels,
+                name='%s_X_gate_%s' % (name, g))
+            x_weights += [iW]
+            biases += [ib]
+            self, iW, ib = get_fc_var(
+                self=self,
+                in_size=out_channels,
+                out_size=out_channels,
+                name='%s_H_gate_%s' % (name, g))
+            h_weights += [iW]
+
+        # Concatenate each into 2d tensors
+        x_gate_filters = tf.concat(x_weights, axis=-1)
+        h_gate_filters = tf.concat(h_weights, axis=-1)
+        gate_biases = tf.concat(biases, axis=0)
+
+        # Split bottom up by timesteps and initialize cell and hidden states
+        split_bottom = tf.split(bottom, timesteps, axis=1)
+        split_bottom = [tf.squeeze(x, axis=1) for x in split_bottom]  # Time
+        h_size = [
+            int(x) for x in split_bottom[0].get_shape()[:-1]] + [out_channels]
+        if aux is not None and 'ff_aux' in aux.keys():
+            if 'store_hidden_states' in aux['ff_aux']:
+                if random_init:
+                    hidden_state = [
+                        tf.random_normal(
+                            shape=h_size,
+                            mean=0.0,
+                            stddev=0.1) for x in range(timesteps)]
+                else:
+                    hidden_state = [
+                        tf.zeros_like(split_bottom[0])
+                        for x in range(timesteps)]
+        else:
+            if random_init:
+                hidden_state = tf.random_normal(
+                    shape=h_size,
+                    mean=0.0,
+                    stddev=0.1)
+            else:
+                hidden_state = tf.zeros_like(h_size)
+
+        # While loop
+        step = tf.constant(0)  # timestep iterator
+        elems = [
+            step,
+            timesteps,
+            split_bottom,
+            hidden_state,
+            x_gate_filters,
+            h_gate_filters,
+            gate_biases
+        ]
+
+        if aux is not None and 'ff_aux' in aux.keys():
+            if 'swap_memory' in aux['ff_aux']:
+                swap_memory = aux['ff_aux']['swap_memory']
+        else:
+            swap_memory = True
+        returned = tf.while_loop(
+            lstm_condition,
+            lstm_body,
+            loop_vars=elems,
+            back_prop=True,
+            swap_memory=swap_memory)
+
+        # Prepare output
+        _, _, _, h_updated, _, _, _ = returned
+
+        # Save input/hidden facing weights
+        return self, h_updated
 
 
 def lstm2d_layer(

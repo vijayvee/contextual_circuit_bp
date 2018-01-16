@@ -45,3 +45,7 @@ class activations(object):
     def sigmoid(self, x, **kwargs):
         """Elementwise sigmoid."""
         return tf.sigmoid(x)
+
+    def round(self, x, **kwargs):
+        """Elementwise round."""
+        return tf.round(x)

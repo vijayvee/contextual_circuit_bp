@@ -26,6 +26,47 @@ class pool(object):
             for k, v in kwargs.iteritems():
                 setattr(self, k, v)
 
+    def interpret_1dpool(
+            self,
+            context,
+            bottom,
+            name,
+            filter_size,
+            stride_size,
+            pool_type,
+            padding=None,
+            kwargs=None):
+        """Apply the appropriate 2D pooling type."""
+        if filter_size is None:
+            filter_size = self.k
+        if stride_size is None:
+            stride_size = self.s
+        if padding is None:
+            padding = self.p
+        if kwargs is not None:
+            self.update_params(kwargs)
+        if len(bottom.get_shape()) < 3:
+            bottom = tf.expand_dims(bottom, axis=-1)
+        if pool_type == 'max':
+            context, act = max_pool_1d(
+                self=context,
+                bottom=bottom,
+                name=name,
+                k=filter_size,
+                s=stride_size,
+                p=padding)
+        elif pool_type == 'avg':
+            context, act = avg_pool_1d(
+                self=context,
+                bottom=bottom,
+                name=name,
+                k=filter_size,
+                s=stride_size,
+                p=padding)
+        else:
+            raise RuntimeError('Cannot understand specifed pool type.')
+        return context, act
+
     def interpret_2dpool(
             self,
             context,
@@ -54,7 +95,7 @@ class pool(object):
                 s=stride_size,
                 p=padding)
         elif pool_type == 'avg':
-            context, act = self.avg_pool(
+            context, act = avg_pool(
                 self=context,
                 bottom=bottom,
                 name=name,
@@ -135,6 +176,42 @@ def max_pool(
         strides=s,
         padding=p,
         name=name)
+
+
+def avg_pool_1d(
+        self,
+        bottom,
+        name,
+        k=[2],
+        s=[2],
+        pooling_type='AVG',
+        p='SAME'):
+    """Local 1d avg pooling."""
+    return self, tf.squeeze(tf.nn.pool(
+        input=bottom,
+        window_shape=k,
+        pooling_type=pooling_type,
+        padding=p,
+        strides=s,
+        name=name))
+
+
+def max_pool_1d(
+        self,
+        bottom,
+        name,
+        k=[2],
+        s=[2],
+        pooling_type='MAX',
+        p='SAME'):
+    """Local 1d max pooling."""
+    return self, tf.squeeze(tf.nn.pool(
+        input=bottom,
+        window_shape=k,
+        pooling_type=pooling_type,
+        padding=p,
+        strides=s,
+        name=name))
 
 
 def avg_pool_3d(

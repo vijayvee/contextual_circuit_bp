@@ -3,21 +3,22 @@ import numpy as np
 import tensorflow as tf
 from config import Config
 from ops import tf_fun
+from tqdm import tqdm
 
 
 class data_processing(object):
     def __init__(self):
-        self.name = 'spikefinder'
+        self.name = 'crcns_1d'
         self.config = Config()
         self.file_extension = '.csv'
         self.timepoints = 10  # Data is 100hz
-        self.output_size = [1, self.timepoints]
+        self.output_size = [1, 1]
         self.im_size = [self.timepoints, 1]
         self.model_input_image_size = [self.timepoints, 1]
         self.default_loss_function = 'pearson'
         self.score_metric = 'pearson'
         self.preprocess = [None]
-        self.train_prop = 0.75
+        self.train_prop = 0.80
 
         # CRCNS data pointers
         self.crcns_dataset = os.path.join(
@@ -35,13 +36,15 @@ class data_processing(object):
             'label': tf_fun.float_feature
         }
         self.tf_dict = {
-            'image': tf_fun.fixed_len_feature(dtype='float'),
+            'image': tf_fun.fixed_len_feature(
+                length=self.im_size,
+                dtype='string'),
             'label': tf_fun.fixed_len_feature(dtype='float')
         }
         self.tf_reader = {
             'image': {
                 'dtype': tf.float32,
-                'reshape': None
+                'reshape': self.im_size
             },
             'label': {
                 'dtype': tf.float32,
@@ -87,12 +90,11 @@ class data_processing(object):
             },
         ]
 
-        images, ss = {}, {}
+        ss = {}
         spikes, time_e = {}, {}
         corr_f, raw_f, time_f = {}, {}, {}
         selected_spikes = {}
         for d in cell_data:
-            images[d['id']] = []
             spikes[d['id']] = []
             time_e[d['id']] = []
             corr_f[d['id']] = []
@@ -100,20 +102,11 @@ class data_processing(object):
             time_f[d['id']] = []
             ss[d['id']] = []
 
-            # Load images
-            for ims in d['images']:
-                images[d['id']] += [np.load(
-                    os.path.join(
-                        img_dir,
-                        'raw_data',
-                        'cell_npy',
-                        d['name'],
-                        ims)
-                    )]
-            images[d['id']] = np.concatenate(images[d['id']], axis=0)
-
             # Load e
-            for e in d['e']:
+            for e in tqdm(
+                    d['e'],
+                    total=len(d['e']),
+                    desc='E of cell %s' % d['id']):
                 it_data = np.load(os.path.join(
                     img_dir,
                     'processed_data',
@@ -128,7 +121,10 @@ class data_processing(object):
             time_e[d['id']] = np.concatenate(time_e[d['id']]).squeeze()
 
             # Load f
-            for f in d['f']:
+            for f in tqdm(
+                    d['f'],
+                    total=len(d['f']),
+                    desc='F of cell %s' % d['id']):
                 it_data = np.load(
                     os.path.join(
                         img_dir,
@@ -149,7 +145,8 @@ class data_processing(object):
                 float(format(x, '.4f')) for x in time_f[d['id']]]).squeeze()
             selected_spikes[d['id']] = []
             form_e = [float(format(f, '.4f')) for f in time_e[d['id']]]
-            for idx in range(1, len(time_f[d['id']])):
+            for idx in tqdm(
+                    range(1, len(time_f[d['id']])), desc='Binning spikes'):
                 it_start = float(format(time_f[d['id']][idx - 1], '.4f'))
                 it_end = float(format(time_f[d['id']][idx], '.4f'))
                 e_start = form_e.index(it_start)
@@ -161,7 +158,10 @@ class data_processing(object):
                 ([0], np.asarray(selected_spikes[d['id']]).squeeze()))
 
             # Load s
-            for s in d['s']:
+            for s in tqdm(
+                    d['s'],
+                    total=len(d['s']),
+                    desc='S of cell %s' % d['id']):
                 ss[d['id']] += [np.load(
                     os.path.join(
                         img_dir,
@@ -187,7 +187,11 @@ class data_processing(object):
         cat_labels = cat_labels[:total_events]
         cat_images = cat_images.reshape(num_events, -1)
         cat_labels = cat_labels.reshape(num_events, -1)
-        cv_split = np.round(total_events * self.train_prop).astype(int)
+        cat_images = np.expand_dims(cat_images, axis=-1)
+
+        # Sum labels per event (total spikes)
+        cat_labels = np.expand_dims(cat_labels.sum(-1), axis=-1)
+        cv_split = np.round(num_events * self.train_prop).astype(int)
         files = {
             'train': cat_images[:cv_split],
             'test': cat_images[cv_split:]
@@ -203,3 +207,4 @@ class data_processing(object):
     def get_data(self):
         files, labels = self.pull_data()
         return files, labels
+
