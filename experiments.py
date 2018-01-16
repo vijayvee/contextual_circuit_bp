@@ -229,11 +229,11 @@ class experiments():
 
     def crcns_2d(self):
         """Each key in experiment_dict must be manually added to the schema."""
-        model_folder = 'crcns_1d'
+        model_folder = 'crcns_2d'
         exp = {
             'experiment_name': [model_folder],
             'lr': [3e-4],
-            'loss_function': ['tf_log_poisson'],
+            'loss_function': ['l2'],  # 'tf_log_poisson'],
             'optimizer': ['nadam'],
             'model_struct': [
                 os.path.join(model_folder, 'lstm2d'),
@@ -241,6 +241,7 @@ class experiments():
             'dataset': ['crcns_2d']
         }
         exp = self.add_globals(exp)  # Add globals to the experiment'
+        exp['loss_weights'] = {0: 2756, 1: 130}
         exp['epochs'] = 50
         exp['validation_iters'] = 200
         exp['num_validation_evals'] = 225

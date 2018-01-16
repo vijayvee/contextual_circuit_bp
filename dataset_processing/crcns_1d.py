@@ -38,7 +38,7 @@ class data_processing(object):
         self.tf_dict = {
             'image': tf_fun.fixed_len_feature(
                 length=self.im_size,
-                dtype='string'),
+                dtype='float'),
             'label': tf_fun.fixed_len_feature(dtype='float')
         }
         self.tf_reader = {
@@ -200,6 +200,7 @@ class data_processing(object):
             'train': cat_labels[:cv_split],
             'test': cat_labels[cv_split:]
         }
+        import ipdb; ipdb.set_trace()
         print 'Spikes in training: %s' % np.sum(cat_labels[:cv_split])
         print 'Spikes in testing: %s' % np.sum(cat_labels[cv_split:])
         return files, labels

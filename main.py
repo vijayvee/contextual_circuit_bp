@@ -212,7 +212,9 @@ def main(
                 experiment_name).replace(os.path.sep, '.')
             )
     except IOError:
-        print 'Could not find the model structure: %s' % experiment_name
+        print 'Could not find the model structure: %s in folder %s' % (
+            struct_name,
+            experiment_name)
 
     # Inject model_dict with hyperparameters if requested
     model_dict.layer_structure = hp_opt_utils.inject_model_with_hps(
@@ -261,11 +263,25 @@ def main(
                 verbose=0)
             print_model_architecture(model_summary)
 
+            # Check the shapes of labels and scores
+            if len(train_scores.get_shape()) != len(train_labels.get_shape()):
+                train_shape = train_scores.get_shape().as_list()
+                label_shape = train_labels.get_shape().as_list() 
+                if len(
+                    train_shape) == 2 and len(
+                        label_shape) == 1 and train_shape[-1] == 1:
+                    train_labels = tf.expand_dims(train_labels, axis=-1)
+                if len(
+                    train_shape) == 2 and len(
+                        label_shape) == 1 and train_shape[-1] == 1:
+                    train_scores = tf.expand_dims(train_scores, axis=-1)
+
             # Prepare the loss function
             train_loss, _ = loss_utils.loss_interpreter(
                 logits=train_scores,
                 labels=train_labels,
                 loss_type=config.loss_function,
+                weights=config.loss_weights,
                 dataset_module=dataset_module)
 
             # Add weight decay if requested
@@ -298,7 +314,8 @@ def main(
                         labels=train_labels)
 
             # Prepare tensorboard summaries
-            tf_fun.image_summaries(train_images, tag='Training images')
+            if len(train_images.get_shape()) == 4:
+                tf_fun.image_summaries(train_images, tag='Training images')
             if len(train_labels.get_shape()) > 2:
                 tf_fun.image_summaries(
                     train_labels,
@@ -323,10 +340,24 @@ def main(
                 log=log,
                 tower_name='cnn')
             log.info('Built validation model.')
+
+            # Check the shapes of labels and scores
+            if len(val_scores.get_shape()) != len(val_labels.get_shape()):
+                val_shape = val_scores.get_shape().as_list()
+                label_shape = labels.get_shape().as_list()      
+                if len(
+                    val_shape) == 2 and len(
+                        val_label_shape) == 1 and val_shape[-1] == 1:
+                    val_labels = tf.expand_dims(val_labels, axis=-1)
+                if len(
+                    val_shape) == 2 and len(
+                        val_label_shape) == 1 and val_shape[-1] == 1:
+                    val_scores = tf.expand_dims(val_scores, axis=-1)
             val_loss, _ = loss_utils.loss_interpreter(
                 logits=val_scores,
                 labels=val_labels,
                 loss_type=config.loss_function,
+                weights=config.loss_weights,
                 dataset_module=dataset_module)
 
             # Add a score for the validation set
@@ -345,7 +376,8 @@ def main(
                         labels=val_labels)
 
             # Prepare tensorboard summaries
-            tf_fun.image_summaries(val_images, tag='Validation')
+            if len(val_images.get_shape()) == 4:
+                tf_fun.image_summaries(val_images, tag='Validation')
             if len(val_labels.get_shape()) > 2:
                 tf_fun.image_summaries(
                     val_labels,

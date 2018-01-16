@@ -1,3 +1,4 @@
+import math
 import numpy as np
 import tensorflow as tf
 from ops.eval_metrics import pearson_score
@@ -36,6 +37,18 @@ def momentum(loss, lr, momentum=0.9):
     tf.train.MomentumOptimizer(lr, momentum=momentum).minimize(loss)
 
 
+def derive_weights(weights, mu=0.15):
+    """Derive class weights from a dictionary with a mu smoothing."""
+    total = np.sum(weights.values())
+    keys = weights.keys()
+    class_weight = {}
+    for k in keys:
+        # score = math.log(mu * total / float(weights[k]))
+        # class_weight[k] = score if score > 1.0 else 1.0
+        class_weight[k] = total / float(weights[k])
+    return class_weight.values()
+
+
 def loss_interpreter(
         logits,
         labels,
@@ -43,8 +56,11 @@ def loss_interpreter(
         weights=None,
         dataset_module=None):
     """Router for loss functions."""
+    import ipdb;ipdb.set_trace()
     if loss_type is None:
         loss_type = dataset_module.default_loss_function
+    if isinstance(weights, dict):
+        weights = derive_weights(weights)
     if loss_type == 'cce':
         logits = tf.cast(logits, tf.float32)
         labels = tf.cast(labels, tf.int64)
@@ -64,13 +80,15 @@ def loss_interpreter(
         labels = tf.cast(labels, tf.float32)
         return l2(
             logits=logits,
-            labels=labels)
+            labels=labels,
+            weights=weights)
     elif loss_type == 'log_loss':
         logits = tf.cast(logits, tf.float32)
         labels = tf.cast(labels, tf.float32)
         return log_loss(
             logits=logits,
-            labels=labels)
+            labels=labels,
+            weights=weights)
     elif loss_type == 'huber':
         logits = tf.cast(logits, tf.float32)
         labels = tf.cast(labels, tf.float32)
@@ -97,19 +115,22 @@ def loss_interpreter(
         labels = tf.cast(labels, tf.float32)
         return pearson_loss(
             logits=logits,
-            labels=labels)
+            labels=labels,
+            weights=weights)
     elif loss_type == 'log_poisson':
         logits = tf.cast(logits, tf.float32)
         labels = tf.cast(labels, tf.float32)
         return log_poisson(
             logits=logits,
-            labels=labels)
+            labels=labels,
+            weights=weights)
     elif loss_type == 'tf_log_poisson':
         logits = tf.cast(logits, tf.float32)
         labels = tf.cast(labels, tf.float32)
         return tf_log_poisson(
             logits=logits,
-            labels=labels)
+            labels=labels,
+            weights=weightss)
     else:
         raise RuntimeError('Cannot understand your loss function.')
 
@@ -213,17 +234,21 @@ def cce_ns(logits, labels, weights=None):
             ), tf.nn.softmax(logits)
 
 
-def l2(logits, labels):
+def l2(logits, labels, weights):
     """Wrapper for l2 loss."""
-    l2_loss = tf.nn.l2_loss(
-        logits - labels)
+    delta = logits - labels
+    if weights is not None:
+        delta *= weights
+    l2_loss = tf.nn.l2_loss(delta)
     return l2_loss, l2_loss
 
 
-def l1(logits, labels):
+def l1(logits, labels, weights):
     """Wrapper for l2 loss."""
-    l1_loss = tf.reduce_sum(
-        tf.abs(logits - labels))
+    delta = logits - labels
+    if weights is not None:
+        delta *= weights
+    l1_loss = tf.reduce_sum(tf.abs(delta))
     return l1_loss, l1_loss
 
 
@@ -239,36 +264,42 @@ def huber(logits, labels, weights):
         weights=weights), tf.nn.l2_loss(logits - labels)
 
 
-def log_loss(logits, labels):
+def log_loss(logits, labels, weights):
     """Wrapper for log loss."""
     logits = tf.squeeze(logits)
     labels = tf.squeeze(labels)
+    if weights is None:
+        weights = 1.
     ll = tf.losses.log_loss(
         predictions=logits,
-        labels=labels)
+        labels=labels,
+        weights=weights)
     return ll, ll
 
 
-def log_poisson(logits, labels, eps=1e-12):
+def log_poisson(logits, labels, weights, eps=1e-12):
     """Wrapper for log poisson loss from the Antilok dataset."""
     logits = tf.squeeze(logits)
     labels = tf.squeeze(labels)
     ll = tf.reduce_sum(logits) - tf.reduce_sum(
         tf.multiply(labels, tf.log(logits + eps)))
+    if weights is not None:
+        ll *= weights
     return ll, ll
 
 
-def tf_log_poisson(logits, labels, eps=1e-12):
+def tf_log_poisson(logits, labels, weights, eps=1e-12):
     """Wrapper for tensorflow log poisson loss."""
     logits = tf.squeeze(logits)
     labels = tf.squeeze(labels)
     ll = tf.reduce_mean(tf.nn.log_poisson_loss(
         targets=labels,
-        log_input=logits))
+        log_input=logits,
+        weights=weights))
     return ll, ll
 
 
-def pearson_loss(logits, labels):
+def pearson_loss(logits, labels, weights):
     """Pearson dissimilarity loss."""
     rhos = 1 - pearson_score(pred=logits, labels=labels)
     mean_rhos = tf.reduce_mean(rhos)
@@ -306,5 +337,4 @@ def sigmoid_ce(logits, labels, weights, force_dtype=tf.float32):
     sig_loss *= weights
     sig_loss = tf.reduce_mean(sig_loss)
     return sig_loss, sig_loss
-
 

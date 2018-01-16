@@ -128,7 +128,7 @@ class model_class(object):
             tower_name='output',
             eRFs=output_eRFs,
             layer_summary=layer_summary)
-        self.output = tf.identity(output, name='lrp_output')
+        self.output = tf.identity(output, name='output')
         self.data_dict = None
         return output, layer_summary
 

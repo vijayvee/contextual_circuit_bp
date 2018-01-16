@@ -12,7 +12,7 @@ class data_processing(object):
         self.config = Config()
         self.file_extension = '.csv'
         self.timepoints = 10  # Data is 100hz
-        self.output_size = [1, self.timepoints]
+        self.output_size = [1, 1]
         self.im_size = [self.timepoints, 256, 256, 1]
         self.model_input_image_size = [64, 64, 1]
         self.default_loss_function = 'pearson'
@@ -41,7 +41,7 @@ class data_processing(object):
         }
         self.tf_reader = {
             'image': {
-                'dtype': tf.float32,
+                'dtype': tf.float16,
                 'reshape': self.im_size
             },
             'label': {
@@ -209,6 +209,10 @@ class data_processing(object):
             im_shape[2],
             im_shape[3])
         cat_labels = cat_labels.reshape(num_events, -1)
+
+        # Split into train/test
+        train_images = cat_images[:cv_split]
+        test_images = cat_images[cv_split:]
 
         # Sum labels per event (total spikes)
         cat_labels = np.expand_dims(cat_labels.sum(-1), axis=-1)

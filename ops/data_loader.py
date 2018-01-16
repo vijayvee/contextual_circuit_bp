@@ -91,6 +91,71 @@ def ud_flip_image_label(image, label):
     return image, label
 
 
+def random_crop(image, model_input_image_size):
+    """Wrapper for random cropping."""
+    im_size = image.get_shape().as_list()
+    if len(im_size) == 3:
+        return tf.random_crop(image, model_input_image_size)
+    elif len(im_size) == 4:
+        time_split_image = tf.split(image, im_size[0], axis=0)
+        crops = []
+        for idx in range(len(time_split_image)):
+            it_crop = tf.random_crop(
+                tf.squeeze(time_split_image[idx], axis=0),
+                model_input_image_size)
+            crops += [tf.expand_dims(it_crop, axis=0)]
+        return tf.concat(crops, axis=0)
+    else:
+        raise NotImplementedError
+
+
+def ceter_crop(image, model_input_image_size):
+    """Wrapper for center crop."""
+    im_size = image.get_shape().as_list()
+    target_height = model_input_image_size[0]
+    target_width = model_input_image_size[1]
+    if len(im_size) == 3:
+        return tf.image.resize_image_with_crop_or_pad(
+            image,
+            target_height=target_height,
+            target_width=target_width)
+    elif len(im_size) == 4:
+        time_split_image = tf.split(image, im_size[0], axis=0)
+        crops = []
+        for idx in range(len(time_split_image)):
+            it_crop = tf.image.resize_image_with_crop_or_pad(
+                tf.squeeze(time_split_image[idx], axis=0),
+                target_height=target_height,
+                target_width=target_width)
+            crops += [tf.expand_dims(it_crop, axis=0)]
+        return tf.concat(crops, axis=0)
+    else:
+        raise NotImplementedError
+
+
+def image_flip(image, direction):
+    """Wrapper for image flips."""
+    im_size = image.get_shape().as_list()
+    if direction == 'left_right':
+        flip_function = tf.image.random_flip_left_right
+    elif direction == 'up_down':
+        flip_function = tf.image.random_flip_up_down
+    else:
+        raise NotImplementedError
+
+    if len(im_size) == 3:
+        return flip_function(image)
+    elif len(im_size) == 4:
+        time_split_image = tf.split(image, im_size[0], axis=0)
+        flips = []
+        for idx in range(len(time_split_image)):
+            it_flip = flip_function(tf.squeeze(time_split_image[idx], axis=0))
+            flips += [tf.expand_dims(it_flip, axis=0)]
+        return tf.concat(flips, axis=0)
+    else:
+        raise NotImplementedError
+
+
 def image_augmentations(
         image,
         data_augmentations,
@@ -104,21 +169,24 @@ def image_augmentations(
             im_size[:2]))
     if data_augmentations is not None:
         if 'random_crop' in data_augmentations and im_size_check:
-            image = tf.random_crop(image, model_input_image_size)
+            image = random_crop(image, model_input_image_size)
             print 'Applying random crop.'
         if 'center_crop' in data_augmentations and im_size_check:
+            image = center_crop(image, model_input_image_size)
             image = tf.image.resize_image_with_crop_or_pad(
                 image=image,
                 target_height=model_input_image_size[0],
                 target_width=model_input_image_size[1])
             print 'Applying random crop.'
         if 'random_crop_image_label' in data_augmentations and im_size_check:
+            assert len(image.get_shape()) == 3, '4D not implemented yet.'
             image, label = crop_image_label(
                 image=image,
                 label=label,
                 size=model_input_image_size,
                 crop='random')
         if 'center_crop_image_label' in data_augmentations and im_size_check:
+            assert len(image.get_shape()) == 3, '4D not implemented yet.'
             image, label = crop_image_label(
                 image=image,
                 label=label,
@@ -133,6 +201,7 @@ def image_augmentations(
                 f='bilinear')
             print 'Applying bilinear resize.'
         if 'resize_nn' in data_augmentations and im_size_check:
+            assert len(image.get_shape()) == 3, '4D not implemented yet.'
             if len(model_input_image_size) > 2:
                 model_input_image_size = model_input_image_size[:2]
             image = resize_image_label(
@@ -141,6 +210,7 @@ def image_augmentations(
                 f='nearest')
             print 'Applying nearest resize.'
         if 'resize_image_label' in data_augmentations and im_size_check:
+            assert len(image.get_shape()) == 3, '4D not implemented yet.'
             if len(model_input_image_size) > 2:
                 model_input_image_size = model_input_image_size[:2]
             image = resize_image_label(
@@ -153,6 +223,7 @@ def image_augmentations(
                 f='bilinear')
             print 'Applying bilinear resize.'
         elif 'resize_nn_image_label' in data_augmentations and im_size_check:
+            assert len(image.get_shape()) == 3, '4D not implemented yet.'
             if len(model_input_image_size) > 2:
                 model_input_image_size = model_input_image_size[:2]
             image = resize_image_label(
@@ -166,25 +237,28 @@ def image_augmentations(
             print 'Applying nearest resize.'
         else:
             pass
-            # image = tf.image.resize_image_with_crop_or_pad(
-            #     image, model_input_image_size[0], model_input_image_size[1])
         if 'left_right' in data_augmentations:
-            image = tf.image.random_flip_left_right(image)
+            image = image_flip(image, direction='left_right')
             print 'Applying random flip left-right.'
         if 'up_down' in data_augmentations:
-            image = tf.image.random_flip_up_down(image)
+            image = image_flip(image, direction='up_down')
             print 'Applying random flip up-down.'
         if 'lr_flip_image_label' in data_augmentations:
+            assert len(image.get_shape()) == 3, '4D not implemented yet.'
             image, label = lr_flip_image_label(image, label)
         if 'ud_flip_image_label' in data_augmentations:
+            assert len(image.get_shape()) == 3, '4D not implemented yet.'
             image, label = ud_flip_image_label(image, label)
         if 'random_contrast' in data_augmentations:
+            assert len(image.get_shape()) == 3, '4D not implemented yet.'
             image = tf.image.random_contrast(image, lower=0.2, upper=1.8)
             print 'Applying random contrast.'
         if 'random_brightness' in data_augmentations:
+            assert len(image.get_shape()) == 3, '4D not implemented yet.'
             image = tf.image.random_brightness(image, max_delta=63.)
             print 'Applying random brightness.'
     else:
+        assert len(image.get_shape()) == 3, '4D not implemented yet.'
         image = tf.image.resize_image_with_crop_or_pad(
             image, model_input_image_size[0], model_input_image_size[1])
     return image, label
@@ -300,6 +374,8 @@ def read_and_decode(
                 image = tf.stack(
                     images,
                     axis=0)
+    if image.dtype != tf.float32:
+        image = tf.cast(image, tf.float32)
     return image, label
 
 

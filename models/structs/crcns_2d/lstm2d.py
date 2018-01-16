@@ -12,7 +12,9 @@ layer_structure = [
         'layers': ['pool'],
         'weights': [None],
         'names': ['pool2'],
-        'filter_size': [None]
+        'filter_size': [None],
+        'flatten': [True],
+        'flatten_target': ['post']
     },
 ]
 
