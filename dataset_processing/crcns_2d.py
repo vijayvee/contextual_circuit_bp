@@ -17,6 +17,7 @@ class data_processing(object):
         self.model_input_image_size = [64, 64, 1]
         self.default_loss_function = 'pearson'
         self.score_metric = 'pearson'
+        self.fix_imbalance = True
         self.preprocess = ['resize']
         self.train_prop = 0.80
 
@@ -106,6 +107,7 @@ class data_processing(object):
                     d['images'],
                     total=len(d['images']),
                     desc='Images of cell %s' % d['id']):
+                import ipdb;ipdb.set_trace()
                 images[d['id']] += [np.load(
                     os.path.join(
                         img_dir,
@@ -211,19 +213,25 @@ class data_processing(object):
         cat_labels = cat_labels.reshape(num_events, -1)
 
         # Split into train/test
-        train_images = cat_images[:cv_split]
-        test_images = cat_images[cv_split:]
-
-        # Sum labels per event (total spikes)
         cat_labels = np.expand_dims(cat_labels.sum(-1), axis=-1)
         cv_split = np.round(num_events * self.train_prop).astype(int)
+        train_images = cat_images[:cv_split]
+        test_images = cat_images[cv_split:]
+        train_labels = cat_labels[:cv_split]
+        test_labels = cat_labels[cv_split:]
+
+        # Fix imbalance with repetitions if requested
+        if self.fix_imbalance:
+            import ipdb;ipdb.set_trace()
+
+        # Sum labels per event (total spikes)
         files = {
-            'train': cat_images[:cv_split],
-            'test': cat_images[cv_split:]
+            'train': train_images,
+            'test': test_images
         }
         labels = {
-            'train': cat_labels[:cv_split],
-            'test': cat_labels[cv_split:]
+            'train': train_labels,
+            'test': test_labels
         }
         print 'Spikes in training: %s' % np.sum(cat_labels[:cv_split])
         print 'Spikes in testing: %s' % np.sum(cat_labels[cv_split:])
@@ -232,4 +240,3 @@ class data_processing(object):
     def get_data(self):
         files, labels = self.pull_data()
         return files, labels
-

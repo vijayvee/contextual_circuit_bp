@@ -130,7 +130,7 @@ def loss_interpreter(
         return tf_log_poisson(
             logits=logits,
             labels=labels,
-            weights=weightss)
+            weights=weights)
     else:
         raise RuntimeError('Cannot understand your loss function.')
 
@@ -283,8 +283,6 @@ def log_poisson(logits, labels, weights, eps=1e-12):
     labels = tf.squeeze(labels)
     ll = tf.reduce_sum(logits) - tf.reduce_sum(
         tf.multiply(labels, tf.log(logits + eps)))
-    if weights is not None:
-        ll *= weights
     return ll, ll
 
 
@@ -294,8 +292,7 @@ def tf_log_poisson(logits, labels, weights, eps=1e-12):
     labels = tf.squeeze(labels)
     ll = tf.reduce_mean(tf.nn.log_poisson_loss(
         targets=labels,
-        log_input=logits,
-        weights=weights))
+        log_input=logits))
     return ll, ll
 
 
