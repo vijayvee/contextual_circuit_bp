@@ -255,7 +255,7 @@ def image_augmentations(
             print 'Applying random brightness.'
         if 'calculate_rate_time_crop' in data_augmentations:
             im_shape = image.get_shape().as_list()
-            minval = im_shape[0] // 2
+            minval = im_shape[0] // 3
             time_crop = tf.random_uniform(
                 [],
                 minval=minval,
