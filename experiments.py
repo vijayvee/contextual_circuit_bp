@@ -26,6 +26,7 @@ class experiments():
             ],  # TODO: document all data augmentations.
             'epochs': 200,
             'shuffle': True,  # Shuffle data.
+            'loss_weights': None,  # Weight your loss w/ a dictionary.
             'validation_iters': 5000,  # How often to evaluate validation.
             'num_validation_evals': 100,  # How many validation batches.
             'top_n_validation': 0,  # Set to 0 to save all checkpoints.
@@ -212,7 +213,7 @@ class experiments():
         exp = {
             'experiment_name': [model_folder],
             'lr': [3e-4],
-            'loss_function': ['tf_log_poisson'],
+            'loss_function': ['l2'],
             'optimizer': ['nadam'],
             'model_struct': [
                 os.path.join(model_folder, 'lstm1d'),
@@ -225,6 +226,12 @@ class experiments():
         exp['num_validation_evals'] = 225
         exp['batch_size'] = 10  # Train/val batch size.
         exp['save_weights'] = True
+        exp['data_augmentations'] = [
+            [
+                'calculate_rate',
+                'random_time_crop'
+            ]
+        ]
         return exp
 
     def crcns_2d(self):
@@ -241,10 +248,17 @@ class experiments():
             'dataset': ['crcns_2d']
         }
         exp = self.add_globals(exp)  # Add globals to the experiment'
-        exp['loss_weights'] = {0: 2756, 1: 130}
         exp['epochs'] = 50
         exp['validation_iters'] = 200
         exp['num_validation_evals'] = 225
         exp['batch_size'] = 10  # Train/val batch size.
         exp['save_weights'] = True
+        exp['data_augmentations'] = [
+            [
+                'calculate_rate_time_crop',
+                'left_right',
+                'random_time_crop',
+                'up_down'
+            ]
+        ]
         return exp

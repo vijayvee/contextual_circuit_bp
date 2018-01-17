@@ -21,7 +21,7 @@ layer_structure = [
 output_structure = [
     {
         'layers': ['fc'],
-        'weights': [1],
-        'names': ['fc3'],
+        'weights': [3],
+        'names': ['fc3']
     }
 ]

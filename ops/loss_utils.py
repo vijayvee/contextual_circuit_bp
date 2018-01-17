@@ -56,7 +56,6 @@ def loss_interpreter(
         weights=None,
         dataset_module=None):
     """Router for loss functions."""
-    import ipdb;ipdb.set_trace()
     if loss_type is None:
         loss_type = dataset_module.default_loss_function
     if isinstance(weights, dict):

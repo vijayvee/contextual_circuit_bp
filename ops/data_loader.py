@@ -109,7 +109,7 @@ def random_crop(image, model_input_image_size):
         raise NotImplementedError
 
 
-def ceter_crop(image, model_input_image_size):
+def center_crop(image, model_input_image_size):
     """Wrapper for center crop."""
     im_size = image.get_shape().as_list()
     target_height = model_input_image_size[0]
@@ -173,11 +173,7 @@ def image_augmentations(
             print 'Applying random crop.'
         if 'center_crop' in data_augmentations and im_size_check:
             image = center_crop(image, model_input_image_size)
-            image = tf.image.resize_image_with_crop_or_pad(
-                image=image,
-                target_height=model_input_image_size[0],
-                target_width=model_input_image_size[1])
-            print 'Applying random crop.'
+            print 'Applying center crop.'
         if 'random_crop_image_label' in data_augmentations and im_size_check:
             assert len(image.get_shape()) == 3, '4D not implemented yet.'
             image, label = crop_image_label(
@@ -257,6 +253,40 @@ def image_augmentations(
             assert len(image.get_shape()) == 3, '4D not implemented yet.'
             image = tf.image.random_brightness(image, max_delta=63.)
             print 'Applying random brightness.'
+        if 'calculate_rate_time_crop' in data_augmentations:
+            im_shape = image.get_shape().as_list()
+            minval = im_shape[0] // 2
+            time_crop = tf.random_uniform(
+                [],
+                minval=minval,
+                maxval=im_shape[0],
+                dtype=tf.int32)
+
+            # For now always pull from the beginning
+            indices = tf.range(0, time_crop, dtype=tf.int32)
+            selected_image = tf.gather(image, indices)
+            padded_image = tf.zeros(
+                [im_shape[0] - time_crop] + im_shape[1:],
+                dtype=selected_image.dtype)
+
+            # Randomly concatenate pad to front or back
+            image = tf.cond(
+                pred=tf.greater(
+                    tf.random_uniform(
+                        [],
+                        minval=0,
+                        maxval=1,
+                        dtype=tf.float32),
+                    0.5),
+                true_fn=lambda: tf.concat([selected_image, padded_image], axis=0),
+                false_fn=lambda: tf.concat([padded_image, selected_image], axis=0)
+            )
+            image.set_shape(im_shape)
+
+            # Convert label to rate
+            label = label / im_shape[0]
+        if 'calculate_rate' in data_augmentations:
+            label = label / image.get_shape().as_list()[0]
     else:
         assert len(image.get_shape()) == 3, '4D not implemented yet.'
         image = tf.image.resize_image_with_crop_or_pad(

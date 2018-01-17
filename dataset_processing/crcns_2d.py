@@ -31,7 +31,8 @@ class data_processing(object):
         # CC-BP dataset vars
         self.folds = {
             'train': 'train',
-            'test': 'test'}
+            'test': 'test'
+        }
         self.targets = {
             'image': tf_fun.bytes_feature,
             'label': tf_fun.float_feature
@@ -107,7 +108,6 @@ class data_processing(object):
                     d['images'],
                     total=len(d['images']),
                     desc='Images of cell %s' % d['id']):
-                import ipdb;ipdb.set_trace()
                 images[d['id']] += [np.load(
                     os.path.join(
                         img_dir,
@@ -171,7 +171,7 @@ class data_processing(object):
                     [spikes[d['id']][x] for x in range(e_start, e_end)])
                 selected_spikes[d['id']] += [binned_spikes]
             selected_spikes[d['id']] = np.concatenate(
-                ([0], np.asarray(selected_spikes[d['id']]).squeeze()))
+                (np.asarray(selected_spikes[d['id']]).squeeze(), [0]))
 
             # Load s
             for s in tqdm(
@@ -222,7 +222,18 @@ class data_processing(object):
 
         # Fix imbalance with repetitions if requested
         if self.fix_imbalance:
-            import ipdb;ipdb.set_trace()
+            spike_idx = train_labels > 0
+            num_spikes = spike_idx.sum()
+            num_events = len(train_labels)
+            num_neg = num_events - num_spikes
+            rep = int(num_neg / num_spikes)
+            spike_images = train_images[spike_idx.squeeze()]
+            rep_spike_images = spike_images.repeat(rep, axis=0)
+            rep_spike_labels = train_labels[spike_idx].repeat(rep, axis=0)
+            train_images = np.concatenate(
+                (train_images, rep_spike_images), axis=0)
+            train_labels = np.concatenate(
+                (train_labels, rep_spike_labels[:, None]), axis=0)
 
         # Sum labels per event (total spikes)
         files = {

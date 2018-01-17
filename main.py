@@ -344,7 +344,7 @@ def main(
             # Check the shapes of labels and scores
             if len(val_scores.get_shape()) != len(val_labels.get_shape()):
                 val_shape = val_scores.get_shape().as_list()
-                label_shape = labels.get_shape().as_list()      
+                val_label_shape = val_labels.get_shape().as_list()      
                 if len(
                     val_shape) == 2 and len(
                         val_label_shape) == 1 and val_shape[-1] == 1:
