@@ -87,7 +87,7 @@ def get_data_pointers(dataset, base_dir, cv, log):
             if 'label' in data_means_vol.keys():
                 data_means_label = data_means_vol['label']
     else:
-        data_means = np.load(data_means)
+        data_means_image = np.load(data_means)
     return data_pointer, data_means_image, data_means_label
 
 

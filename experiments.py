@@ -251,7 +251,7 @@ class experiments():
         exp['epochs'] = 50
         exp['validation_iters'] = 200
         exp['num_validation_evals'] = 225
-        exp['batch_size'] = 10  # Train/val batch size.
+        exp['batch_size'] = 16  # Train/val batch size.
         exp['save_weights'] = True
         exp['data_augmentations'] = [
             [
