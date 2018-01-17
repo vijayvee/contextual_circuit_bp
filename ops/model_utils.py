@@ -70,7 +70,11 @@ class model_class(object):
                     log.info(
                         'Mismatch between saved mean and input data.' +
                         'Using channel means instead.')
-                data -= (np.expand_dims(self.mean, axis=0)).astype(np.float32)
+                if len(self.mean.shape) == 4:
+                    # For ST models, combine across time
+                    data -= self.mean.mean(0)
+                else:
+                    data -= (np.expand_dims(self.mean, axis=0)).astype(np.float32)
         else:
             log.debug('Empty mean tensor. No mean adjustment.')
             # log.debug('Failed to mean-center data.')
