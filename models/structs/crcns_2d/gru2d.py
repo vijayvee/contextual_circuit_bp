@@ -2,10 +2,10 @@
 
 layer_structure = [
     {
-        'layers': ['lstm2d'],
+        'layers': ['gru2d'],
         'weights': [12],
         'filter_size': [7],
-        'names': ['lstm1'],
+        'names': ['gru1'],
         'activation': ['selu'],
         'activation_target': ['post'],
     },

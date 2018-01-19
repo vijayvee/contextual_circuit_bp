@@ -20,6 +20,7 @@ class data_processing(object):
         self.fix_imbalance = True
         self.preprocess = ['resize']
         self.train_prop = 0.80
+        self.shuffle = True
 
         # CRCNS data pointers
         self.crcns_dataset = os.path.join(
@@ -234,6 +235,11 @@ class data_processing(object):
                 (train_images, rep_spike_images), axis=0)
             train_labels = np.concatenate(
                 (train_labels, rep_spike_labels[:, None]), axis=0)
+        if self.shuffle:
+            rand_order = np.random.permutation(len(train_images))
+            train_images = train_images[rand_order]
+            train_labels = train_labels[rand_order]
+        import ipdb;ipdb.set_trace()
 
         # Sum labels per event (total spikes)
         files = {

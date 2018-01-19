@@ -289,6 +289,25 @@ class ff(object):
             filter_size=filter_size)
         return context, act
 
+    def sepgru2d(
+            self,
+            context,
+            act,
+            in_channels,
+            out_channels,
+            filter_size,
+            name,
+            it_dict):
+        """Convolutional GRU."""
+        context, act = sepgru2d_layer(
+            self=context,
+            bottom=act,
+            in_channels=in_channels,
+            out_channels=out_channels,
+            name=name,
+            filter_size=filter_size)
+        return context, act
+
     def mru2d(
             self,
             context,
@@ -1358,6 +1377,316 @@ def lstm2d_layer(
         return self, h_updated
 
 
+def sepgru2d_layer(
+        self,
+        bottom,
+        out_channels,
+        name,
+        in_channels=None,
+        filter_size=3,
+        gate_filter_size=3,
+        aux=None):
+    """2D separable GRU convolutional layer."""
+    def sepgru_condition(
+            step,
+            timesteps,
+            split_bottom,
+            h,
+            x_z_depth_filters,
+            x_z_point_filters,
+            h_z_depth_filters,
+            h_z_point_filters,
+            h_z_point_bias,
+            x_r_depth_filters,
+            x_r_point_filters,
+            h_r_depth_filters,
+            h_r_point_filters,
+            h_r_point_bias,
+            x_depth_filter,
+            x_point_filter,
+            h_depth_filter,
+            h_point_filter,
+            h_bias):
+        """Condition for ending GRU."""
+        return step < timesteps
+
+    def sepgru_body(
+            step,
+            timesteps,
+            split_bottom,
+            h,
+            x_z_depth_filters,
+            x_z_point_filters,
+            h_z_depth_filters,
+            h_z_point_filters,
+            h_z_point_bias,
+            x_r_depth_filters,
+            x_r_point_filters,
+            h_r_depth_filters,
+            h_r_point_filters,
+            h_r_point_bias,
+            x_depth_filter,
+            x_point_filter,
+            h_depth_filter,
+            h_point_filter,
+            h_bias):
+        """Calculate updates for 2D separable GRU."""
+        # Concatenate X_t and the hidden state
+        X = tf.gather(split_bottom, step)
+        if isinstance(h, list):
+            h_prev = tf.gather(h, step)
+        else:
+            h_prev = h
+
+        # Perform gate convolutions
+        x_z = tf.nn.separable_conv2d(
+            input=X,
+            depthwise_filter=x_z_depth_filters,
+            pointwise_filter=x_z_point_filters,
+            strides=[1, 1, 1, 1],
+            padding='SAME')
+        x_r = tf.nn.separable_conv2d(
+            input=X,
+            depthwise_filter=x_r_depth_filters,
+            pointwise_filter=x_r_point_filters,
+            strides=[1, 1, 1, 1],
+            padding='SAME')
+        h_z = tf.nn.separable_conv2d(
+            input=h_prev,
+            depthwise_filter=h_z_depth_filters,
+            pointwise_filter=h_z_point_filters,
+            strides=[1, 1, 1, 1],
+            padding='SAME')
+        h_r = tf.nn.separable_conv2d(
+            input=h_prev,
+            depthwise_filter=h_r_depth_filters,
+            pointwise_filter=h_r_point_filters,
+            strides=[1, 1, 1, 1],
+            padding='SAME')
+
+        # Calculate gates
+        z = gate_nl(x_z + h_z + h_z_point_bias)
+        r = gate_nl(x_r + h_r + h_r_point_bias)
+
+        # Update drives
+        h_update = tf.squeeze(r) * h_prev
+
+        # Perform FF/REC convolutions
+        x_convs = tf.nn.separable_conv2d(
+            input=X,
+            depthwise_filter=x_depth_filter,
+            pointwise_filter=x_point_filter,
+            strides=[1, 1, 1, 1],
+            padding='SAME')
+        h_convs = tf.nn.separable_conv2d(
+            input=h_update,
+            depthwise_filter=h_depth_filter,
+            pointwise_filter=h_point_filter,
+            strides=[1, 1, 1, 1],
+            padding='SAME')
+
+        # Integrate circuit
+        z = tf.squeeze(z)
+        h_update = (z * h_prev) + ((1 - z) * cell_nl(
+            x_convs + h_convs + h_bias))
+        if isinstance(h, list):
+            # If we are storing the hidden state at each step
+            h[step] = h_update
+        else:
+            # If we are only keeping the final hidden state
+            h = h_update
+        step += 1
+        return (
+            step,
+            timesteps,
+            split_bottom,
+            h,
+            x_z_depth_filters,
+            x_z_point_filters,
+            h_z_depth_filters,
+            h_z_point_filters,
+            h_z_point_bias,
+            x_r_depth_filters,
+            x_r_point_filters,
+            h_r_depth_filters,
+            h_r_point_filters,
+            h_r_point_bias,
+            x_depth_filter,
+            x_point_filter,
+            h_depth_filter,
+            h_point_filter,
+            h_bias)
+
+    # Scope the 2D GRU
+    with tf.variable_scope(name):
+        if in_channels is None:
+            in_channels = int(bottom.get_shape()[-1])
+        timesteps = int(bottom.get_shape()[1])
+
+        if aux is not None and 'gate_nl' in aux.keys():
+            gate_nl = aux['gate_nl']
+        else:
+            gate_nl = tf.sigmoid
+
+        if aux is not None and 'cell_nl' in aux.keys():
+            cell_nl = aux['cell_nl']
+        else:
+            cell_nl = tf.nn.relu
+
+        if aux is not None and 'random_init' in aux.keys():
+            random_init = aux['random_init']
+        else:
+            random_init = True
+
+        # GRU: pack z/r/h gates into a single tensor
+        # X_facing tensor, H_facing tensor for both weights and biases
+        channel_multiplier = 1
+
+        # Z
+        self, x_z_depth_filters, _ = get_conv_var(
+            self=self,
+            filter_size=gate_filter_size,
+            in_channels=in_channels,
+            out_channels=channel_multiplier,
+            name='%s_X_gate_depth_%s' % (name, 'z'))
+        self, x_z_point_filters, _ = get_conv_var(
+            self=self,
+            filter_size=1,
+            in_channels=in_channels * channel_multiplier,
+            out_channels=out_channels,
+            name='%s_X_gate_point_%s' % (name, 'z'))
+        self, h_z_depth_filters, _ = get_conv_var(
+            self=self,
+            filter_size=gate_filter_size,
+            in_channels=out_channels,  # For the hidden state
+            out_channels=channel_multiplier,
+            name='%s_H_gate_depth_%s' % (name, 'z'))
+        self, h_z_point_filters, h_z_point_bias = get_conv_var(
+            self=self,
+            filter_size=1,
+            in_channels=out_channels * channel_multiplier,
+            out_channels=out_channels,
+            name='%s_H_gate_point_%s' % (name, 'z'))
+
+        # R
+        self, x_r_depth_filters, _ = get_conv_var(
+            self=self,
+            filter_size=gate_filter_size,
+            in_channels=in_channels,
+            out_channels=channel_multiplier,
+            name='%s_X_gate_depth_%s' % (name, 'r'))
+        self, x_r_point_filters, _ = get_conv_var(
+            self=self,
+            filter_size=1,
+            in_channels=in_channels * channel_multiplier,
+            out_channels=out_channels,
+            name='%s_X_gate_point_%s' % (name, 'r'))
+        self, h_r_depth_filters, _ = get_conv_var(
+            self=self,
+            filter_size=gate_filter_size,
+            in_channels=out_channels,  # For the hidden state
+            out_channels=channel_multiplier,
+            name='%s_H_gate_depth_%s' % (name, 'r'))
+        self, h_r_point_filters, h_r_point_bias = get_conv_var(
+            self=self,
+            filter_size=1,
+            in_channels=out_channels * channel_multiplier,
+            out_channels=out_channels,
+            name='%s_H_gate_point_%s' % (name, 'r'))
+
+        # Split off last h weight
+        self, h_depth_filter, h_bias = get_conv_var(
+            self=self,
+            filter_size=filter_size,
+            in_channels=out_channels,  # For the hidden state
+            out_channels=channel_multiplier,
+            name='%s_H_gate_depth_%s' % (name, 'h'))
+        self, h_point_filter, h_bias = get_conv_var(
+            self=self,
+            filter_size=1,
+            in_channels=out_channels * channel_multiplier,
+            out_channels=out_channels,
+            name='%s_H_gate_point_%s' % (name, 'h'))
+        self, x_depth_filter, _ = get_conv_var(
+            self=self,
+            filter_size=filter_size,
+            in_channels=in_channels,  # For the hidden state
+            out_channels=channel_multiplier,
+            name='%s_X_gate_depth_%s' % (name, 'x'))
+        self, x_point_filter, _ = get_conv_var(
+            self=self,
+            filter_size=1,
+            in_channels=in_channels * channel_multiplier,
+            out_channels=out_channels,
+            name='%s_X_gate_point_%s' % (name, 'x'))
+
+        # Split bottom up by timesteps and initialize cell and hidden states
+        split_bottom = tf.split(bottom, timesteps, axis=1)
+        split_bottom = [tf.squeeze(x, axis=1) for x in split_bottom]  # Time
+        h_size = [
+            int(x) for x in split_bottom[0].get_shape()[:-1]] + [out_channels]
+        if aux is not None and 'ff_aux' in aux.keys():
+            if 'store_hidden_states' in aux['ff_aux']:
+                if random_init:
+                    hidden_state = [
+                        tf.random_normal(
+                            shape=h_size,
+                            mean=0.0,
+                            stddev=0.1) for x in range(timesteps)]
+                else:
+                    hidden_state = [
+                        tf.zeros_like(split_bottom[0])
+                        for x in range(timesteps)]
+        else:
+            if random_init:
+                hidden_state = tf.random_normal(
+                    shape=h_size,
+                    mean=0.0,
+                    stddev=0.1)
+            else:
+                hidden_state = tf.zeros_like(h_size)
+
+        # While loop
+        step = tf.constant(0)  # timestep iterator
+        elems = [
+            step,
+            timesteps,
+            split_bottom,
+            hidden_state,
+            x_z_depth_filters,
+            x_z_point_filters,
+            h_z_depth_filters,
+            h_z_point_filters,
+            h_z_point_bias,
+            x_r_depth_filters,
+            x_r_point_filters,
+            h_r_depth_filters,
+            h_r_point_filters,
+            h_r_point_bias,
+            x_depth_filter,
+            x_point_filter,
+            h_depth_filter,
+            h_point_filter,
+            h_bias
+        ]
+
+        if aux is not None and 'ff_aux' in aux.keys():
+            if 'swap_memory' in aux['ff_aux']:
+                swap_memory = aux['ff_aux']['swap_memory']
+        else:
+            swap_memory = True
+        returned = tf.while_loop(
+            sepgru_condition,
+            sepgru_body,
+            loop_vars=elems,
+            back_prop=True,
+            swap_memory=swap_memory)
+
+        # Prepare output
+        h_updated = returned[3]
+        return self, h_updated
+
+
 def gru2d_layer(
         self,
         bottom,
@@ -1368,8 +1697,6 @@ def gru2d_layer(
         gate_filter_size=1,
         aux=None):
     """2D GRU convolutional layer."""
-    raise NotImplementedError
-
     def gru_condition(
             step,
             timesteps,
@@ -2306,19 +2633,10 @@ def sparse_pool_layer(
         # TODO: implement this.
         raise NotImplementedError
 
+    assert len(bottom.get_shape()) > 2, \
+        'Sparse pooling requires a tensor input.'
     with tf.variable_scope(name):
         bottom_shape = [int(x) for x in bottom.get_shape()]
-        if in_channels is None:
-            in_channels = bottom_shape[-1]
-
-        # K channel weights
-        channel_weights = tf.get_variable(
-            name='%s_channel' % name,
-            dtype=tf.float32,
-            initializer=initialization.xavier_initializer(
-                shape=[in_channels, out_channels],
-                uniform=True,
-                mask=None))
 
         # HxW spatial weights
         spatial_weights = tf.get_variable(
@@ -2327,7 +2645,6 @@ def sparse_pool_layer(
             initializer=initialization.xavier_initializer(
                 shape=[1, bottom_shape[1], bottom_shape[2], 1],
                 mask=None))
-
         # If supplied, initialize the spatial weights with RF info
         if aux is not None and 'xy' in aux.keys():
             gaussian_xy = aux['xy']
@@ -2345,6 +2662,16 @@ def sparse_pool_layer(
             spatial_weights += spatial_rf
         spatial_sparse = tf.reduce_mean(
             bottom * spatial_weights, reduction_indices=[1, 2])
+
+        # K channel weights
+        spatial_shape = spatial_sparse.get_shape().as_list()
+        channel_weights = tf.get_variable(
+            name='%s_channel' % name,
+            dtype=tf.float32,
+            initializer=initialization.xavier_initializer(
+                shape=[spatial_shape[-1], 1],
+                uniform=True,
+                mask=None))
         output = tf.matmul(spatial_sparse, channel_weights)
         return self, output
 

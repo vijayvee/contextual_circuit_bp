@@ -1,6 +1,5 @@
 """Class to specify all DNN experiments."""
 import os
-import numpy as np
 
 
 class experiments():
@@ -243,7 +242,7 @@ class experiments():
             'loss_function': ['l2'],  # 'tf_log_poisson'],
             'optimizer': ['nadam'],
             'model_struct': [
-                os.path.join(model_folder, 'lstm2d'),
+                os.path.join(model_folder, 'sepgru2d'),
             ],
             'dataset': ['crcns_2d']
         }
@@ -255,7 +254,7 @@ class experiments():
         exp['save_weights'] = True
         exp['data_augmentations'] = [
             [
-                'calculate_rate_time_crop',
+                # 'calculate_rate_time_crop',
                 'left_right',
                 'random_time_crop',
                 'up_down'

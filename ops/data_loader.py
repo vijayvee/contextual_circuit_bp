@@ -97,6 +97,7 @@ def random_crop(image, model_input_image_size):
     if len(im_size) == 3:
         return tf.random_crop(image, model_input_image_size)
     elif len(im_size) == 4:
+        import ipdb;ipdb.set_trace()
         time_split_image = tf.split(image, im_size[0], axis=0)
         crops = []
         for idx in range(len(time_split_image)):
