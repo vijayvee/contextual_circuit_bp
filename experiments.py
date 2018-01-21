@@ -212,7 +212,7 @@ class experiments():
         exp = {
             'experiment_name': [model_folder],
             'lr': [3e-4],
-            'loss_function': ['l2'],
+            'loss_function': ['pearson'],
             'optimizer': ['nadam'],
             'model_struct': [
                 os.path.join(model_folder, 'lstm1d'),
@@ -227,7 +227,7 @@ class experiments():
         exp['save_weights'] = True
         exp['data_augmentations'] = [
             [
-                'calculate_rate',
+                # 'calculate_rate',
                 'random_time_crop'
             ]
         ]
@@ -239,7 +239,7 @@ class experiments():
         exp = {
             'experiment_name': [model_folder],
             'lr': [3e-4],
-            'loss_function': ['l2'],  # 'tf_log_poisson'],
+            'loss_function': ['pearson'],  # 'tf_log_poisson'],
             'optimizer': ['nadam'],
             'model_struct': [
                 os.path.join(model_folder, 'sepgru2d'),

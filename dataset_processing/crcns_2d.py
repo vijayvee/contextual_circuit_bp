@@ -15,8 +15,8 @@ class data_processing(object):
         self.output_size = [1, 1]
         self.im_size = [self.timepoints, 256, 256, 1]
         self.model_input_image_size = [64, 64, 1]
-        self.default_loss_function = 'pearson'
-        self.score_metric = 'pearson'
+        self.default_loss_function = 'l2'
+        self.score_metric = 'round_pearson'
         self.fix_imbalance = True
         self.preprocess = ['resize']
         self.train_prop = 0.80
@@ -239,7 +239,6 @@ class data_processing(object):
             rand_order = np.random.permutation(len(train_images))
             train_images = train_images[rand_order]
             train_labels = train_labels[rand_order]
-        import ipdb;ipdb.set_trace()
 
         # Sum labels per event (total spikes)
         files = {

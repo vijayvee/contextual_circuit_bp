@@ -3,23 +3,29 @@
 layer_structure = [
     {
         'layers': ['lstm1d'],
-        'weights': [32],
+        'weights': [36],
         'names': ['lstm1'],
         'activation': ['selu'],
         'activation_target': ['post'],
     },
     {
-        'layers': ['pool1d'],
-        'weights': [None],
-        'names': ['pool2'],
-        'filter_size': [None]
-    },
+        'layers': ['conv1d'],
+        'filter_size': [3],
+        'weights': [48],
+        'names': ['conv2'],
+        'activation': ['selu'],
+        'activation_target': ['post'],
+    }
 ]
 
 output_structure = [
     {
+        'flatten': [True],
+        'flatten_target': ['pre'],
         'layers': ['fc'],
         'weights': [1],
         'names': ['fc3'],
+        'squeeze': [True],
+        'squeeze_target': ['post']
     }
 ]

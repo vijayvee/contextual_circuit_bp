@@ -192,14 +192,24 @@ def flatten_op(self, it_dict, act, layer_summary, eRFs, target):
     """Wrapper for a flatten operation in a graph."""
     tshape = [int(x) for x in act.get_shape()]
     if 'flatten_target' in it_dict.keys() and \
-            it_dict['flatten_target'][0] == target and \
-            len(tshape) >= 4:
+            it_dict['flatten_target'][0] == target:
         rows = tshape[0]
         cols = np.prod(tshape[1:])
         act = tf.reshape(act, [rows, cols])
         layer_summary = update_summary(
             layer_summary=layer_summary,
             op_name='flattened')
+    return self, act, layer_summary
+
+
+def squeeze_op(self, it_dict, act, layer_summary, eRFs, target):
+    """Wrapper for a squeeze operation in a graph."""
+    if 'squeeze_target' in it_dict.keys() and \
+            it_dict['squeeze_target'][0] == target:
+        act = tf.squeeze(act)
+        layer_summary = update_summary(
+            layer_summary=layer_summary,
+            op_name='squeezed')
     return self, act, layer_summary
 
 
@@ -398,6 +408,13 @@ def create_conv_tower(
         for it_dict in layer_structure:
             it_name = it_dict['names'][0]
             # it_neuron_op = it_dict['layers'][0]
+            self, act, layer_summary = squeeze_op(
+                self,
+                it_dict,
+                act,
+                layer_summary,
+                eRFs=eRFs,
+                target='pre')
             self, act, layer_summary = flatten_op(
                 self,
                 it_dict,
@@ -486,6 +503,13 @@ def create_conv_tower(
                 it_dict=it_dict,
                 side='post')
             self, act, layer_summary = flatten_op(
+                self,
+                it_dict,
+                act,
+                layer_summary,
+                eRFs=eRFs,
+                target='post')
+            self, act, layer_summary = squeeze_op(
                 self,
                 it_dict,
                 act,

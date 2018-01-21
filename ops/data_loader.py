@@ -147,6 +147,7 @@ def image_flip(image, direction):
     if len(im_size) == 3:
         return flip_function(image)
     elif len(im_size) == 4:
+        import ipdb;ipdb.set_trace()
         time_split_image = tf.split(image, im_size[0], axis=0)
         flips = []
         for idx in range(len(time_split_image)):

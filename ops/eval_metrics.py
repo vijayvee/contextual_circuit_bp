@@ -33,8 +33,8 @@ def metric_interpreter(metric, pred, labels):
             labels=labels)
     elif metric == 'round_pearson':
         return pearson_summary_score(
-            pred=tf.round(tf.nn.sigmoid(pred)),
-            labels=labels)
+            pred=tf.squeeze(tf.round(pred)),
+            labels=tf.squeeze(labels))
     elif metric == 'sigmoid_accuracy':
         return sigmoid_accuracy(
             pred=pred,
