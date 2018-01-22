@@ -365,6 +365,25 @@ class ff(object):
             filter_size=filter_size)
         return context, act
 
+    def gru1d(
+            self,
+            context,
+            act,
+            in_channels,
+            out_channels,
+            filter_size,
+            name,
+            it_dict):
+        """1d GRU."""
+        context, act = gru1d_layer(
+            self=context,
+            bottom=act,
+            in_channels=in_channels,
+            out_channels=out_channels,
+            name=name,
+            filter_size=filter_size)
+        return context, act
+
     def conv1d(
             self,
             context,
@@ -1265,6 +1284,217 @@ def lstm1d_layer(
 
         # Prepare output
         _, _, _, h_updated, _, _, _ = returned
+
+        # Save input/hidden facing weights
+        return self, h_updated
+
+
+def gru1d_layer(
+        self,
+        bottom,
+        out_channels,
+        name,
+        in_channels=None,
+        filter_size=3,
+        gate_filter_size=1,
+        aux=None):
+    """1D GRU convolutional layer."""
+
+    def gru_condition(
+            step,
+            timesteps,
+            split_bottom,
+            h,
+            x_gate_filters,
+            h_gate_filters,
+            x_filter,
+            h_filter,
+            gate_biases,
+            h_bias):
+        """Condition for ending gru."""
+        return step < timesteps
+
+    def gru_body(
+            step,
+            timesteps,
+            split_bottom,
+            h,
+            x_gate_filters,
+            h_gate_filters,
+            x_filter,
+            h_filter,
+            gate_biases,
+            h_bias):
+        """Calculate updates for 1d gru."""
+
+        # Concatenate X_t and the hidden state
+        X = tf.gather(split_bottom, step)
+        if isinstance(h, list):
+            h_prev = tf.gather(h, step)
+        else:
+            h_prev = h
+
+        # Perform matmul
+        x_gate_convs = tf.matmul(X, x_gate_filters)
+        h_gate_convs = tf.matmul(h_prev, h_gate_filters)
+
+        # Calculate gates
+        gate_activites = x_gate_convs + h_gate_convs + gate_biases
+        nl_activities = gate_nl(gate_activites)
+
+        # Reshape and split into appropriate gates
+        gate_sizes = [int(x) for x in nl_activities.get_shape()]
+        div_g = gate_sizes[:-1] + [gate_sizes[-1] // 2, 2]
+        res_gates = tf.reshape(
+                nl_activities,
+                div_g)
+        z, r = tf.split(res_gates, 2, axis=2)
+
+        # Update drives
+        h_update = tf.squeeze(r) * h_prev
+
+        # Perform matmul
+        x_convs = tf.matmul(X, x_filter)
+        h_convs = tf.matmul(h_update, h_filter)
+
+        # Integrate circuit
+        z = tf.squeeze(z)
+        h_update = (z * h_prev) + ((1 - z) * cell_nl(
+            x_convs + h_convs + h_bias))
+        if isinstance(h, list):
+            # If we are storing the hidden state at each step
+            h[step] = h_update
+        else:
+            # If we are only keeping the final hidden state
+            h = h_update
+        step += 1
+        return (
+            step,
+            timesteps,
+            split_bottom,
+            h,
+            x_gate_filters,
+            h_gate_filters,
+            x_filter,
+            h_filter,
+            gate_biases,
+            h_bias
+        )
+
+    # Scope the 1d gru
+    with tf.variable_scope(name):
+        if in_channels is None:
+            in_channels = int(bottom.get_shape()[-1])
+        timesteps = int(bottom.get_shape()[1])
+
+        if aux is not None and 'gate_nl' in aux.keys():
+            gate_nl = aux['gate_nl']
+        else:
+            gate_nl = tf.sigmoid
+
+        if aux is not None and 'cell_nl' in aux.keys():
+            cell_nl = aux['cell_nl']
+        else:
+            cell_nl = tf.nn.relu
+
+        if aux is not None and 'random_init' in aux.keys():
+            random_init = aux['random_init']
+        else:
+            random_init = True
+
+        # LSTM: pack i/o/f/c gates into a single tensor
+        # X_facing tensor, H_facing tensor for both weights and biases
+        x_weights, h_weights = [], []
+        biases = []
+        gates = ['z', 'r']
+        filter_sizes = len(gates) * [filter_size]
+        for idx, (g, fs) in enumerate(zip(gates, filter_sizes)):
+            self, iW, ib = get_fc_var(
+                self=self,
+                in_size=in_channels,
+                out_size=out_channels,
+                name='%s_X_gate_%s' % (name, g))
+            x_weights += [iW]
+            biases += [ib]
+            self, iW, _ = get_fc_var(
+                self=self,
+                in_size=out_channels,
+                out_size=out_channels,
+                name='%s_H_gate_%s' % (name, g))
+            h_weights += [iW]
+
+        # Concatenate each into 2d tensors
+        x_gate_filters = tf.concat(x_weights, axis=-1)
+        h_gate_filters = tf.concat(h_weights, axis=-1)
+        gate_biases = tf.concat(biases, axis=0)
+
+        # Split off last h weight
+        self, x_filter, _ = get_fc_var(
+            self=self,
+            in_size=in_channels,
+            out_size=out_channels,
+            name='%s_X_gate_%s' % (name, 'x'))
+        self, h_filter, h_bias = get_fc_var(
+            self=self,
+            in_size=out_channels,
+            out_size=out_channels,
+            name='%s_H_gate_%s' % (name, 'h'))
+
+        # Split bottom up by timesteps and initialize cell and hidden states
+        split_bottom = tf.split(bottom, timesteps, axis=1)
+        split_bottom = [tf.squeeze(x, axis=1) for x in split_bottom]  # Time
+        h_size = [
+            int(x) for x in split_bottom[0].get_shape()[:-1]] + [out_channels]
+        if aux is not None and 'ff_aux' in aux.keys():
+            if 'store_hidden_states' in aux['ff_aux']:
+                if random_init:
+                    hidden_state = [
+                        tf.random_normal(
+                            shape=h_size,
+                            mean=0.0,
+                            stddev=0.1) for x in range(timesteps)]
+                else:
+                    hidden_state = [
+                        tf.zeros_like(split_bottom[0])
+                        for x in range(timesteps)]
+        else:
+            if random_init:
+                hidden_state = tf.random_normal(
+                    shape=h_size,
+                    mean=0.0,
+                    stddev=0.1)
+            else:
+                hidden_state = tf.zeros_like(h_size)
+
+        # While loop
+        step = tf.constant(0)  # timestep iterator
+        elems = [
+            step,
+            timesteps,
+            split_bottom,
+            hidden_state,
+            x_gate_filters,
+            h_gate_filters,
+            x_filter,
+            h_filter,
+            gate_biases,
+            h_bias
+        ]
+
+        if aux is not None and 'ff_aux' in aux.keys():
+            if 'swap_memory' in aux['ff_aux']:
+                swap_memory = aux['ff_aux']['swap_memory']
+        else:
+            swap_memory = True
+        returned = tf.while_loop(
+            gru_condition,
+            gru_body,
+            loop_vars=elems,
+            back_prop=True,
+            swap_memory=swap_memory)
+
+        # Prepare output
+        h_updated = returned[3]
 
         # Save input/hidden facing weights
         return self, h_updated
@@ -2755,7 +2985,8 @@ def sparse_pool_layer(
                 shape=[spatial_shape[-1], 1],
                 uniform=True,
                 mask=None))
-        output = tf.matmul(spatial_sparse, channel_weights)
+        output = tf.squeeze(
+            tf.matmul(spatial_sparse, channel_weights), axis=-1)
         return self, output
 
 

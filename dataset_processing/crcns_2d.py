@@ -14,12 +14,13 @@ class data_processing(object):
         self.timepoints = 10  # Data is 100hz
         self.output_size = [1, 1]
         self.im_size = [self.timepoints, 256, 256, 1]
-        self.model_input_image_size = [64, 64, 1]
+        self.model_input_image_size = [128, 128, 1]
         self.default_loss_function = 'l2'
         self.score_metric = 'round_pearson'
         self.fix_imbalance = True
         self.preprocess = ['resize']
         self.train_prop = 0.80
+        self.binarize_spikes = True
         self.shuffle = True
 
         # CRCNS data pointers
@@ -199,6 +200,9 @@ class data_processing(object):
         num_labels = len(cat_labels)
         assert num_images == num_labels, 'Different numbers of ims/labs'
 
+        if self.binarize_spikes:
+            cat_labels[cat_labels > 1] = 0
+
         # Cut into distinct events -- start with reshape for this
         num_events = int(num_images / self.timepoints)
         total_events = num_events * self.timepoints
@@ -251,6 +255,7 @@ class data_processing(object):
         }
         print 'Spikes in training: %s' % np.sum(cat_labels[:cv_split])
         print 'Spikes in testing: %s' % np.sum(cat_labels[cv_split:])
+        import ipdb;ipdb.set_trace()
         return files, labels
 
     def get_data(self):

@@ -2,16 +2,16 @@
 
 layer_structure = [
     {
-        'layers': ['lstm1d'],
-        'weights': [36],
-        'names': ['lstm1'],
+        'layers': ['gru1d'],
+        'weights': [48],
+        'names': ['gru1'],
         'activation': ['selu'],
         'activation_target': ['post'],
     },
     {
         'layers': ['conv1d'],
         'filter_size': [3],
-        'weights': [48],
+        'weights': [24],
         'names': ['conv2'],
         'activation': ['selu'],
         'activation_target': ['post'],

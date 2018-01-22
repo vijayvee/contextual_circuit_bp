@@ -3,7 +3,7 @@
 layer_structure = [
     {
         'layers': ['lstm1d'],
-        'weights': [36],
+        'weights': [80],
         'names': ['lstm1'],
         'activation': ['selu'],
         'activation_target': ['post'],

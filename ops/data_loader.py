@@ -147,13 +147,12 @@ def image_flip(image, direction):
     if len(im_size) == 3:
         return flip_function(image)
     elif len(im_size) == 4:
-        import ipdb;ipdb.set_trace()
-        time_split_image = tf.split(image, im_size[0], axis=0)
-        flips = []
-        for idx in range(len(time_split_image)):
-            it_flip = flip_function(tf.squeeze(time_split_image[idx], axis=0))
-            flips += [tf.expand_dims(it_flip, axis=0)]
-        return tf.concat(flips, axis=0)
+        if im_size[-1] > 1:
+            raise NotImplementedError
+        trans_image = tf.transpose(tf.squeeze(image), [1, 2, 0])
+        flip_image = tf.expand_dims(
+            tf.transpose(flip_function(trans_image), [2, 0, 1]), axis=-1)
+        return flip_image
     else:
         raise NotImplementedError
 
@@ -198,6 +197,8 @@ def image_augmentations(
                 model_input_image_size=model_input_image_size,
                 f='bilinear')
             print 'Applying bilinear resize.'
+        if 'rotate' in data_augmentations and im_size_check:
+            raise NotImplementedError
         if 'resize_nn' in data_augmentations and im_size_check:
             assert len(image.get_shape()) == 3, '4D not implemented yet.'
             if len(model_input_image_size) > 2:

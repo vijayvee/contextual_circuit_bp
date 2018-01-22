@@ -271,7 +271,7 @@ def main(
                     train_shape) == 2 and len(
                         label_shape) == 1 and train_shape[-1] == 1:
                     train_labels = tf.expand_dims(train_labels, axis=-1)
-                if len(
+                elif len(
                     train_shape) == 2 and len(
                         label_shape) == 1 and train_shape[-1] == 1:
                     train_scores = tf.expand_dims(train_scores, axis=-1)
@@ -331,7 +331,7 @@ def main(
             scope.reuse_variables()
             val_model = model_utils.model_class(
                 mean=train_means_image,  # Normalize with train data
-                training=False,
+                training=True,  # False,
                 output_size=dataset_module.output_size)
             val_scores, _ = val_model.build(  # Ignore summary
                 data=val_images,

@@ -3,7 +3,7 @@
 layer_structure = [
     {
         'layers': ['lstm1d'],
-        'weights': [36],
+        'weights': [64],
         'names': ['lstm1'],
         'activation': ['selu'],
         'activation_target': ['post'],
@@ -11,7 +11,7 @@ layer_structure = [
     {
         'layers': ['conv1d'],
         'filter_size': [3],
-        'weights': [48],
+        'weights': [24],
         'names': ['conv2'],
         'activation': ['selu'],
         'activation_target': ['post'],

@@ -20,6 +20,7 @@ class data_processing(object):
         self.fix_imbalance = True
         self.preprocess = [None]
         self.train_prop = 0.80
+        self.binarize_spikes = True
         self.shuffle = True
 
         # CRCNS data pointers
@@ -181,6 +182,9 @@ class data_processing(object):
         num_images = len(cat_images)
         num_labels = len(cat_labels)
         assert num_images == num_labels, 'Different numbers of ims/labs'
+
+        if self.binarize_spikes:
+            cat_labels[cat_labels > 1] = 0
 
         # Turn data into events  -- to start just reshape
         num_events = int(num_images / self.timepoints)

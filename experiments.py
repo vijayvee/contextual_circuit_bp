@@ -211,24 +211,44 @@ class experiments():
         model_folder = 'crcns_1d'
         exp = {
             'experiment_name': [model_folder],
-            'lr': [3e-4],
-            'loss_function': ['pearson'],
+            'lr': [5e-3, 1e-3, 5e-4, 1e-4],
+            'loss_function': ['pearson', 'l2'],
             'optimizer': ['nadam'],
             'model_struct': [
-                os.path.join(model_folder, 'lstm1d'),
+                os.path.join(model_folder, 'gru1d_1'),
+                os.path.join(model_folder, 'gru1d_2'),
+                os.path.join(model_folder, 'gru1d_3'),
+                os.path.join(model_folder, 'gru1d_4'),
+                os.path.join(model_folder, 'gru1d_5'),
+                os.path.join(model_folder, 'gru1d_6'),
+                os.path.join(model_folder, 'gru1d_7'),
+                os.path.join(model_folder, 'gru1d_8'),
+                os.path.join(model_folder, 'gru1d_9'),
+                os.path.join(model_folder, 'gru1d_10'),
+                os.path.join(model_folder, 'gru1d_11'),
+                os.path.join(model_folder, 'gru1d_12'),
+                os.path.join(model_folder, 'gru1d_13'),
+                os.path.join(model_folder, 'gru1d_14'),
+                os.path.join(model_folder, 'gru1d_15'),
+                os.path.join(model_folder, 'gru1d_16'),
+                os.path.join(model_folder, 'gru1d_17'),
+                os.path.join(model_folder, 'gru1d_18'),
+                os.path.join(model_folder, 'gru1d_19'),
+                os.path.join(model_folder, 'gru1d_20'),
             ],
             'dataset': ['crcns_1d']
         }
         exp = self.add_globals(exp)  # Add globals to the experiment'
-        exp['epochs'] = 50
+        exp['epochs'] = 100
         exp['validation_iters'] = 200
         exp['num_validation_evals'] = 225
-        exp['batch_size'] = 10  # Train/val batch size.
+        exp['batch_size'] = 20  # Train/val batch size.
         exp['save_weights'] = True
         exp['data_augmentations'] = [
             [
+                None
                 # 'calculate_rate',
-                'random_time_crop'
+                # 'random_time_crop'
             ]
         ]
         return exp
@@ -239,10 +259,11 @@ class experiments():
         exp = {
             'experiment_name': [model_folder],
             'lr': [3e-4],
-            'loss_function': ['pearson'],  # 'tf_log_poisson'],
+            'loss_function': ['l2', 'pearson'],
             'optimizer': ['nadam'],
             'model_struct': [
-                os.path.join(model_folder, 'sepgru2d'),
+                # os.path.join(model_folder, 'sepgru2d'),
+                os.path.join(model_folder, 'fc_sepgru2d'),
             ],
             'dataset': ['crcns_2d']
         }
@@ -256,8 +277,10 @@ class experiments():
             [
                 # 'calculate_rate_time_crop',
                 'left_right',
-                'random_time_crop',
-                'up_down'
+                # 'random_time_crop',
+                'random_crop',
+                'up_down',
+                # 'rotate'
             ]
         ]
         return exp
