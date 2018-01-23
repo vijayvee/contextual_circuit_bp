@@ -97,15 +97,15 @@ def random_crop(image, model_input_image_size):
     if len(im_size) == 3:
         return tf.random_crop(image, model_input_image_size)
     elif len(im_size) == 4:
-        import ipdb;ipdb.set_trace()
-        time_split_image = tf.split(image, im_size[0], axis=0)
-        crops = []
-        for idx in range(len(time_split_image)):
-            it_crop = tf.random_crop(
-                tf.squeeze(time_split_image[idx], axis=0),
-                model_input_image_size)
-            crops += [tf.expand_dims(it_crop, axis=0)]
-        return tf.concat(crops, axis=0)
+        if im_size[-1] > 1:
+            raise NotImplementedError
+        crop_size = model_input_image_size[:2] + [im_size[0]]
+        trans_image = tf.transpose(tf.squeeze(image), [1, 2, 0])
+        crop_image = tf.expand_dims(
+            tf.transpose(
+                tf.random_crop(trans_image, crop_size),
+                [2, 0, 1]), axis=-1)
+        return crop_image
     else:
         raise NotImplementedError
 

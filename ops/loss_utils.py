@@ -62,14 +62,14 @@ def loss_interpreter(
         weights = derive_weights(weights)
     if loss_type == 'cce':
         logits = tf.cast(logits, tf.float32)
-        labels = tf.cast(labels, tf.int64)
+        labels = tf.squeeze(tf.cast(labels, tf.int64))
         return cce(
             logits=logits,
             labels=labels,
             weights=weights)
     elif loss_type == 'cce_ns':
         logits = tf.cast(logits, tf.float32)
-        labels = tf.cast(labels, tf.int64)
+        labels = tf.squeeze(tf.cast(labels, tf.int64))
         return cce_ns(
             logits=logits,
             labels=labels,

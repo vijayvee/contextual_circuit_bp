@@ -14,7 +14,7 @@ class data_processing(object):
         self.timepoints = 10  # Data is 100hz
         self.output_size = [1, 1]
         self.im_size = [self.timepoints, 256, 256, 1]
-        self.model_input_image_size = [224, 224, 1]
+        self.model_input_image_size = [128, 128, 1]
         self.default_loss_function = 'sigmoid_logits'
         self.score_metric = 'argmax_softmax_accuracy'
         self.fix_imbalance = True
@@ -39,19 +39,19 @@ class data_processing(object):
         }
         self.targets = {
             'image': tf_fun.bytes_feature,
-            'label': tf_fun.int64_feature
+            'label': tf_fun.float_feature
         }
         self.tf_dict = {
             'image': tf_fun.fixed_len_feature(dtype='string'),
-            'label': tf_fun.fixed_len_feature(dtype='int64')
+            'label': tf_fun.fixed_len_feature(dtype='float')
         }
         self.tf_reader = {
             'image': {
-                'dtype': tf.float32,
+                'dtype': tf.float16,
                 'reshape': self.im_size
             },
             'label': {
-                'dtype': tf.int64,
+                'dtype': tf.float32,
                 'reshape': None
             }
         }
@@ -62,66 +62,45 @@ class data_processing(object):
             self.exp_name)
         cell_data = [
             {
+                'id': 2,
+                'name': '20120627_cell2',
+                'images': [
+                    'cell2_001_001.npy',
+                    'cell2_001_002.npy',
+                    'cell2_001_003.npy',
+                    'cell2_001_004.npy',
+                    'cell2_001_005.npy',
+                    'cell2_001_006.npy',
+                    ],
+                'e': [
+                    'data_20120627_cell2_001_e.npy',
+                ],
+                'f': [
+                    'data_20120627_cell2_001_f.npy',
+                ],
+                's': [
+                    'data_20120627_cell2_001_s.npy',
+                ],
+            },
+            {
                 'id': 3,
-                'name': '20120417_cell3',
+                'name': '20120627_cell2',
                 'images': [
-                    'cell3_001_001.npy',
-                    'cell3_001_002.npy',
-                    'cell3_001_003.npy',
-                    'cell3_001_004.npy',
-                    'cell3_001_005.npy',
-                    'cell3_001_006.npy',
+                    'cell2_002_001.npy',
+                    'cell2_002_002.npy',
+                    'cell2_002_003.npy',
+                    'cell2_002_004.npy',
+                    'cell2_002_005.npy',
+                    'cell2_002_006.npy',
                     ],
                 'e': [
-                    'data_20120417_cell3_001_e.npy',
+                    'data_20120627_cell2_002_e.npy',
                 ],
                 'f': [
-                    'data_20120417_cell3_001_f.npy',
+                    'data_20120627_cell2_002_f.npy',
                 ],
                 's': [
-                    'data_20120417_cell3_001_s.npy',
-                ],
-            },
-            {
-                'id': 4,
-                'name': '20120417_cell3',
-                'images': [
-                    'cell3_002_001.npy',
-                    'cell3_002_002.npy',
-                    'cell3_002_003.npy',
-                    'cell3_002_004.npy',
-                    'cell3_002_005.npy',
-                    'cell3_002_006.npy',
-                    ],
-                'e': [
-                    'data_20120417_cell3_002_e.npy',
-                ],
-                'f': [
-                    'data_20120417_cell3_002_f.npy',
-                ],
-                's': [
-                    'data_20120417_cell3_002_s.npy',
-                ],
-            },
-            {
-                'id': 5,
-                'name': '20120417_cell3',
-                'images': [
-                    'cell3_003_001.npy',
-                    'cell3_003_002.npy',
-                    'cell3_003_003.npy',
-                    'cell3_003_004.npy',
-                    'cell3_003_005.npy',
-                    'cell3_003_006.npy',
-                    ],
-                'e': [
-                    'data_20120417_cell3_003_e.npy',
-                ],
-                'f': [
-                    'data_20120417_cell3_003_f.npy',
-                ],
-                's': [
-                    'data_20120417_cell3_003_s.npy',
+                    'data_20120627_cell2_002_s.npy',
                 ],
             },
         ]
@@ -194,13 +173,12 @@ class data_processing(object):
             corr_f[d['id']] = np.concatenate(corr_f[d['id']]).squeeze()
             raw_f[d['id']] = np.concatenate(raw_f[d['id']]).squeeze()
             time_f[d['id']] = np.concatenate(time_f[d['id']]).squeeze()
-            if self.use_df_f:
-                for idx in range(self.df_f_window, len(corr_f[d['id']])):
-                    event_start = idx - self.df_f_window
-                    df_mean = corr_f[d['id']][event_start:idx]
-                    df_f[d['id']] += [(
-                        corr_f[d['id']][idx] - df_mean) / df_mean]
-                df_f[d['id']] = np.concatenate(df_f[d['id']]).squeeze()
+
+            for idx in range(self.df_f_window, len(corr_f[d['id']])):
+                event_start = idx - self.df_f_window
+                df_mean = corr_f[d['id']][event_start:idx]
+                df_f[d['id']] += [(corr_f[d['id']][idx] - df_mean) / df_mean]
+            df_f[d['id']] = np.concatenate(df_f[d['id']]).squeeze()
 
             # Here's where it gets funky
             time_f[d['id']] = np.asarray([
@@ -221,7 +199,8 @@ class data_processing(object):
             first_event = np.sum(
                 [spikes[d['id']][x] for x in range(0, e_end)])
             selected_spikes[d['id']] = np.concatenate(
-                ([first_event],
+                (
+                    [first_event],
                     np.asarray(selected_spikes[d['id']]).squeeze()))
 
             # If self.use_df_f, trim spikes
@@ -253,9 +232,9 @@ class data_processing(object):
         num_images = len(cat_images)
         num_labels = len(cat_labels)
         assert num_images == num_labels, 'Different numbers of ims/labs'
-        import ipdb;ipdb.set_trace()
+
         if self.binarize_spikes:
-            cat_labels[cat_labels > 1] = 1
+            cat_labels[cat_labels > 1] = 0
 
         # Cut into distinct events -- start with reshape for this
         num_events = int(num_images / self.timepoints)
@@ -268,8 +247,8 @@ class data_processing(object):
             self.timepoints,
             im_shape[1],
             im_shape[2],
-            im_shape[3]).astype(np.float32)
-        cat_labels = cat_labels.reshape(num_events, -1).astype(np.int64)
+            im_shape[3])
+        cat_labels = cat_labels.reshape(num_events, -1)
 
         # Split into train/test
         cat_labels = np.expand_dims(cat_labels.sum(-1), axis=-1)
@@ -281,6 +260,7 @@ class data_processing(object):
 
         # Fix imbalance with repetitions if requested
         if self.fix_imbalance:
+
             # Train repeat
             spike_idx = train_labels > 0
             num_spikes = spike_idx.sum()

@@ -168,9 +168,10 @@ def main(
 
     # Prepare data loaders on the cpu
     if all(isinstance(i, list) for i in config.data_augmentations):
-        config.data_augmentations = py_utils.flatten_list(
-            config.data_augmentations,
-            log)
+        if config.data_augmentations:
+            config.data_augmentations = py_utils.flatten_list(
+                config.data_augmentations,
+                log)
     if load_and_evaluate_ckpt is not None:
         config.epochs = 1
         config.shuffle = False
@@ -266,7 +267,7 @@ def main(
             # Check the shapes of labels and scores
             if len(train_scores.get_shape()) != len(train_labels.get_shape()):
                 train_shape = train_scores.get_shape().as_list()
-                label_shape = train_labels.get_shape().as_list() 
+                label_shape = train_labels.get_shape().as_list()
                 if len(
                     train_shape) == 2 and len(
                         label_shape) == 1 and train_shape[-1] == 1:
@@ -344,7 +345,7 @@ def main(
             # Check the shapes of labels and scores
             if len(val_scores.get_shape()) != len(val_labels.get_shape()):
                 val_shape = val_scores.get_shape().as_list()
-                val_label_shape = val_labels.get_shape().as_list()      
+                val_label_shape = val_labels.get_shape().as_list()
                 if len(
                     val_shape) == 2 and len(
                         val_label_shape) == 1 and val_shape[-1] == 1:

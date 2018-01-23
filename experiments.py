@@ -212,7 +212,7 @@ class experiments():
         exp = {
             'experiment_name': [model_folder],
             'lr': [5e-3, 1e-3, 5e-4, 1e-4],
-            'loss_function': ['pearson', 'l2'],
+            'loss_function': ['cce'],
             'optimizer': ['nadam'],
             'model_struct': [
                 os.path.join(model_folder, 'gru1d_1'),
@@ -258,8 +258,8 @@ class experiments():
         model_folder = 'crcns_2d'
         exp = {
             'experiment_name': [model_folder],
-            'lr': [3e-4],
-            'loss_function': ['l2', 'pearson'],
+            'lr': [1e-5],
+            'loss_function': ['cce'],
             'optimizer': ['nadam'],
             'model_struct': [
                 # os.path.join(model_folder, 'sepgru2d'),
@@ -275,11 +275,13 @@ class experiments():
         exp['save_weights'] = True
         exp['data_augmentations'] = [
             [
+                # None
+                # 'resize'
                 # 'calculate_rate_time_crop',
                 'left_right',
                 # 'random_time_crop',
                 'random_crop',
-                'up_down',
+                'up_down'
                 # 'rotate'
             ]
         ]

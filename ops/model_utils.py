@@ -68,13 +68,21 @@ class model_class(object):
                         test_shape[1:3])):
                     self.mean = np.mean(np.mean(self.mean, axis=0), axis=0)
                     log.info(
-                        'Mismatch between saved mean and input data.' +
+                        'Mismatch between saved mean and input data. ' +
                         'Using channel means instead.')
                 if len(self.mean.shape) == 4:
                     # For ST models, combine across time
                     data -= self.mean.mean(0)
                 else:
-                    data -= (np.expand_dims(self.mean, axis=0)).astype(np.float32)
+                    if not np.all(
+                            self.mean.shape == data.get_shape().as_list()):
+                        log.info(
+                            'Reducing mean to scalar because of ' +
+                            'dimension mismatch.')
+                        data -= self.mean.mean()
+                    else:
+                        data -= (np.expand_dims(
+                            self.mean, axis=0)).astype(np.float32)
         else:
             log.debug('Empty mean tensor. No mean adjustment.')
             # log.debug('Failed to mean-center data.')
@@ -103,11 +111,12 @@ class model_class(object):
 
         # Correct output neurons if needed
         if 'weights' in output_structure[-1].keys():
+            pass
             output_neurons = output_structure[-1]['weights'][0]
             size_check = output_neurons != self.output_size
             fc_check = output_structure[-1]['layers'][0] == 'fc'
             if size_check and fc_check:
-                output_structure[-1]['weights'][0] = self.output_size
+                # output_structure[-1]['weights'][0] = self.output_size  # KILL
                 log.warning('Adjusted output neurons from %s to %s.' % (
                     output_neurons,
                     self.output_size))

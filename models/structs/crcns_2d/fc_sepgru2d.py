@@ -19,3 +19,12 @@ layer_structure = [
     },
 ]
 
+output_structure = [
+    {
+        'flatten': [True],
+        'flatten_target': ['pre'],
+        'layers': ['fc'],
+        'weights': [2],
+        'names': ['fc3'],
+    }
+]

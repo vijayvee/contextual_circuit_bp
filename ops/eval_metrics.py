@@ -7,6 +7,15 @@ def metric_interpreter(metric, pred, labels):
         return class_accuracy(
             pred=pred,
             labels=labels)
+    elif metric == 'argmax_softmax_accuracy':
+        final_dim = len(pred.get_shape()) - 1
+        proc_pred = tf.cast(
+            tf.argmax(tf.nn.softmax(pred, dim=-1), axis=final_dim),
+            tf.float32)
+        return tf.reduce_mean(
+            tf.cast(
+                tf.equal(
+                    proc_pred, labels), tf.float32))
     elif metric == 'mean':
         return mean_score(
             pred=pred,
@@ -29,7 +38,7 @@ def metric_interpreter(metric, pred, labels):
             labels=labels)
     elif metric == 'sigmoid_pearson':
         return pearson_summary_score(
-            pred=tf.nn.sigmoid(pred),
+            pred=tf.round(tf.nn.sigmoid(pred)),
             labels=labels)
     elif metric == 'round_pearson':
         return pearson_summary_score(

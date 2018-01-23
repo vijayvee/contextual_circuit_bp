@@ -30,7 +30,8 @@ def auxilliary_variables():
         'separable': False,  # Need C++ implementation.
         'recurrent_nl': tf.nn.selu,  # tf.nn.leakyrelu, tf.nn.relu, tf.nn.selu
         'gate_nl': tf.nn.sigmoid,
-        'normal_initializer': False
+        'normal_initializer': False,
+        'gate_filter': 1
     }
 # TODO: Regularization on the activations
 
@@ -96,8 +97,8 @@ class ContextualCircuit(object):
             self.u_shape = [self.SRF, self.SRF, self.k, 1]
             self.p_shape = [self.SSN_ext, self.SSN_ext, self.k, self.k]
             self.t_shape = [self.SSF_ext, self.SSF_ext, self.k, self.k]
-        self.i_shape = self.q_shape
-        self.o_shape = self.q_shape
+        self.i_shape = [self.gate_filter, self.gate_filter, self.k, self.k]
+        self.o_shape = [self.gate_filter, self.gate_filter, self.k, self.k]
         self.bias_shape = [1, 1, 1, self.k]
 
         if self.association_field:

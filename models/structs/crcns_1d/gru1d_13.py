@@ -23,11 +23,7 @@ output_structure = [
         'flatten': [True],
         'flatten_target': ['pre'],
         'layers': ['fc'],
-        'weights': [1],
+        'weights': [2],
         'names': ['fc3'],
-        'activation': ['sigmoid'],
-        'activation_target': ['post'],
-        'squeeze': [True],
-        'squeeze_target': ['post']
     }
 ]
