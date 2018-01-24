@@ -258,19 +258,21 @@ class experiments():
         model_folder = 'crcns_2d'
         exp = {
             'experiment_name': [model_folder],
-            'lr': [1e-5],
+            'lr': [1e-3],
             'loss_function': ['cce'],
             'optimizer': ['nadam'],
             'model_struct': [
                 # os.path.join(model_folder, 'sepgru2d'),
                 os.path.join(model_folder, 'fc_sepgru2d'),
+                os.path.join(model_folder, 'big_fc_sepgru2d'),
+                # os.path.join(model_folder, 'fc_gru2d_complex'),
             ],
             'dataset': ['crcns_2d']
         }
         exp = self.add_globals(exp)  # Add globals to the experiment'
-        exp['epochs'] = 50
-        exp['validation_iters'] = 200
-        exp['num_validation_evals'] = 225
+        exp['epochs'] = 500
+        exp['validation_iters'] = 500
+        exp['num_validation_evals'] = 107  # 225
         exp['batch_size'] = 16  # Train/val batch size.
         exp['save_weights'] = True
         exp['data_augmentations'] = [
@@ -280,6 +282,7 @@ class experiments():
                 # 'calculate_rate_time_crop',
                 'left_right',
                 # 'random_time_crop',
+                # 'center_crop',
                 'random_crop',
                 'up_down'
                 # 'rotate'

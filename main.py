@@ -332,7 +332,7 @@ def main(
             scope.reuse_variables()
             val_model = model_utils.model_class(
                 mean=train_means_image,  # Normalize with train data
-                training=True,  # False,
+                training=False,  # False,
                 output_size=dataset_module.output_size)
             val_scores, _ = val_model.build(  # Ignore summary
                 data=val_images,

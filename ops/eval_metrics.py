@@ -12,6 +12,7 @@ def metric_interpreter(metric, pred, labels):
         proc_pred = tf.cast(
             tf.argmax(tf.nn.softmax(pred, dim=-1), axis=final_dim),
             tf.float32)
+        labels = tf.cast(labels, tf.float32)
         return tf.reduce_mean(
             tf.cast(
                 tf.equal(

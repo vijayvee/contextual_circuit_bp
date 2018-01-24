@@ -1697,7 +1697,7 @@ def sepgru2d_layer(
         name,
         in_channels=None,
         filter_size=3,
-        gate_filter_size=3,
+        gate_filter_size=1,
         aux=None):
     """2D separable GRU convolutional layer."""
     def sepgru_condition(

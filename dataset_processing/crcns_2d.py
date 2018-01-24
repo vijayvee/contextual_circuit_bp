@@ -14,7 +14,7 @@ class data_processing(object):
         self.timepoints = 10  # Data is 100hz
         self.output_size = [1, 1]
         self.im_size = [self.timepoints, 256, 256, 1]
-        self.model_input_image_size = [224, 224, 1]
+        self.model_input_image_size = [200, 200, 1]
         self.default_loss_function = 'sigmoid_logits'
         self.score_metric = 'argmax_softmax_accuracy'
         self.fix_imbalance = True
@@ -253,9 +253,6 @@ class data_processing(object):
         num_images = len(cat_images)
         num_labels = len(cat_labels)
         assert num_images == num_labels, 'Different numbers of ims/labs'
-        import ipdb;ipdb.set_trace()
-        if self.binarize_spikes:
-            cat_labels[cat_labels > 1] = 1
 
         # Cut into distinct events -- start with reshape for this
         num_events = int(num_images / self.timepoints)
@@ -274,6 +271,9 @@ class data_processing(object):
         # Split into train/test
         cat_labels = np.expand_dims(cat_labels.sum(-1), axis=-1)
         cv_split = np.round(num_events * self.train_prop).astype(int)
+
+        if self.binarize_spikes:
+            cat_labels[cat_labels > 1] = 1
         train_images = cat_images[:cv_split]
         test_images = cat_images[cv_split:]
         train_labels = cat_labels[:cv_split]

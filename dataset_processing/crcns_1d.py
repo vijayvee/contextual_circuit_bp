@@ -243,10 +243,6 @@ class data_processing(object):
         num_labels = len(cat_labels)
         assert num_images == num_labels, 'Different numbers of ims/labs'
 
-        import ipdb;ipdb.set_trace()
-        if self.binarize_spikes:
-            cat_labels[cat_labels > 1] = 1
-
         # Turn data into events  -- to start just reshape
         num_events = int(num_images / self.timepoints)
         total_events = num_events * self.timepoints
@@ -260,6 +256,9 @@ class data_processing(object):
         cat_labels = np.expand_dims(
             cat_labels.sum(-1), axis=-1).astype(np.int64)
         cv_split = np.round(num_events * self.train_prop).astype(int)
+
+        if self.binarize_spikes:
+            cat_labels[cat_labels > 1] = 1
         train_images = cat_images[:cv_split]
         test_images = cat_images[cv_split:]
         train_labels = cat_labels[:cv_split]

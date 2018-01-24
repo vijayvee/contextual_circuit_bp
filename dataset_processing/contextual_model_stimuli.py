@@ -14,7 +14,7 @@ class data_processing(object):
         self.name = 'contextual_model_stimuli'
         self.figure_name = 'f3a'
         self.config = Config()
-        self.output_size = [10,1]
+        self.output_size = [10, 1]
         self.im_size = (51, 51, 10)
         self.model_input_image_size = [51, 51, 10]
         self.default_loss_function = 'pearson'
