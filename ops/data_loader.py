@@ -281,8 +281,10 @@ def image_augmentations(
                         maxval=1,
                         dtype=tf.float32),
                     0.5),
-                true_fn=lambda: tf.concat([selected_image, padded_image], axis=0),
-                false_fn=lambda: tf.concat([padded_image, selected_image], axis=0)
+                true_fn=lambda: tf.concat(
+                    [selected_image, padded_image], axis=0),
+                false_fn=lambda: tf.concat(
+                    [padded_image, selected_image], axis=0)
             )
             image.set_shape(im_shape)
 
@@ -346,6 +348,13 @@ def read_and_decode(
     image = tf.reshape(image, tf_reader_settings['image']['reshape'])
     if tf_reader_settings['label']['reshape'] is not None:
         label = tf.reshape(label, tf_reader_settings['label']['reshape'])
+
+    if image.dtype == tf.float64:
+        print 'Forcing float64 image to float32.'
+        image = tf.cast(image, tf.float32)
+    if label.dtype == tf.float64:
+        print 'Forcing float64 label to float32.'
+        label = tf.cast(label, tf.float32)
 
     # Preprocess images and heatmaps
     if len(model_input_image_size) == 3:

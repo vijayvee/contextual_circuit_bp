@@ -236,7 +236,7 @@ class experiments():
                 os.path.join(model_folder, 'gru1d_19'),
                 os.path.join(model_folder, 'gru1d_20'),
             ],
-            'dataset': ['crcns_1d']
+            'dataset': ['crcns_1d_2nd']
         }
         exp = self.add_globals(exp)  # Add globals to the experiment'
         exp['epochs'] = 100
@@ -258,16 +258,16 @@ class experiments():
         model_folder = 'crcns_2d'
         exp = {
             'experiment_name': [model_folder],
-            'lr': [1e-3],
-            'loss_function': ['cce'],
+            'lr': [3e-4],
+            'loss_function': ['cce@cce'],
             'optimizer': ['nadam'],
             'model_struct': [
                 # os.path.join(model_folder, 'sepgru2d'),
-                os.path.join(model_folder, 'fc_sepgru2d'),
+                # os.path.join(model_folder, 'fc_sepgru2d'),
                 os.path.join(model_folder, 'big_fc_sepgru2d'),
                 # os.path.join(model_folder, 'fc_gru2d_complex'),
             ],
-            'dataset': ['crcns_2d']
+            'dataset': ['crcns_2d_2nd']
         }
         exp = self.add_globals(exp)  # Add globals to the experiment'
         exp['epochs'] = 500

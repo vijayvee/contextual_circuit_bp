@@ -265,21 +265,24 @@ def main(
             print_model_architecture(model_summary)
 
             # Check the shapes of labels and scores
-            if len(train_scores.get_shape()) != len(train_labels.get_shape()):
-                train_shape = train_scores.get_shape().as_list()
-                label_shape = train_labels.get_shape().as_list()
+            if not isinstance(train_scores, list):
                 if len(
-                    train_shape) == 2 and len(
-                        label_shape) == 1 and train_shape[-1] == 1:
-                    train_labels = tf.expand_dims(train_labels, axis=-1)
-                elif len(
-                    train_shape) == 2 and len(
-                        label_shape) == 1 and train_shape[-1] == 1:
-                    train_scores = tf.expand_dims(train_scores, axis=-1)
+                        train_scores.get_shape()) != len(
+                            train_labels.get_shape()):
+                    train_shape = train_scores.get_shape().as_list()
+                    label_shape = train_labels.get_shape().as_list()
+                    if len(
+                        train_shape) == 2 and len(
+                            label_shape) == 1 and train_shape[-1] == 1:
+                        train_labels = tf.expand_dims(train_labels, axis=-1)
+                    elif len(
+                        train_shape) == 2 and len(
+                            label_shape) == 1 and train_shape[-1] == 1:
+                        train_scores = tf.expand_dims(train_scores, axis=-1)
 
             # Prepare the loss function
             train_loss, _ = loss_utils.loss_interpreter(
-                logits=train_scores,
+                logits=train_scores,  # TODO
                 labels=train_labels,
                 loss_type=config.loss_function,
                 weights=config.loss_weights,
@@ -302,7 +305,7 @@ def main(
             # Add a score for the training set
             train_accuracy = eval_metrics.metric_interpreter(
                 metric=dataset_module.score_metric,  # TODO: Attach to exp cnfg
-                pred=train_scores,
+                pred=train_scores,  # TODO
                 labels=train_labels)
 
             # Add aux scores if requested
@@ -312,7 +315,7 @@ def main(
                     train_aux[m] = eval_metrics.metric_interpreter(
                         metric=m,
                         pred=train_scores,
-                        labels=train_labels)
+                        labels=train_labels)[0]  # TODO: Fix for multiloss
 
             # Prepare tensorboard summaries
             if len(train_images.get_shape()) == 4:
@@ -320,12 +323,13 @@ def main(
             if len(train_labels.get_shape()) > 2:
                 tf_fun.image_summaries(
                     train_labels,
-                    tag='Training targets')
+                    tag='Training_targets')
                 tf_fun.image_summaries(
                     train_scores,
-                    tag='Training predictions')
-            tf.summary.scalar('training loss', train_loss)
-            tf.summary.scalar('training accuracy', train_accuracy)
+                    tag='Training_predictions')
+            tf.summary.scalar('training_loss', train_loss)
+            for tidx, ta in enumerate(train_accuracy):
+                tf.summary.scalar('training_accuracy_%s' % tidx, ta)
             log.info('Added training summaries.')
 
             # Validation model
@@ -343,17 +347,18 @@ def main(
             log.info('Built validation model.')
 
             # Check the shapes of labels and scores
-            if len(val_scores.get_shape()) != len(val_labels.get_shape()):
-                val_shape = val_scores.get_shape().as_list()
-                val_label_shape = val_labels.get_shape().as_list()
-                if len(
-                    val_shape) == 2 and len(
-                        val_label_shape) == 1 and val_shape[-1] == 1:
-                    val_labels = tf.expand_dims(val_labels, axis=-1)
-                if len(
-                    val_shape) == 2 and len(
-                        val_label_shape) == 1 and val_shape[-1] == 1:
-                    val_scores = tf.expand_dims(val_scores, axis=-1)
+            if not isinstance(train_scores, list):
+                if len(val_scores.get_shape()) != len(val_labels.get_shape()):
+                    val_shape = val_scores.get_shape().as_list()
+                    val_label_shape = val_labels.get_shape().as_list()
+                    if len(
+                        val_shape) == 2 and len(
+                            val_label_shape) == 1 and val_shape[-1] == 1:
+                        val_labels = tf.expand_dims(val_labels, axis=-1)
+                    if len(
+                        val_shape) == 2 and len(
+                            val_label_shape) == 1 and val_shape[-1] == 1:
+                        val_scores = tf.expand_dims(val_scores, axis=-1)
             val_loss, _ = loss_utils.loss_interpreter(
                 logits=val_scores,
                 labels=val_labels,
@@ -363,7 +368,7 @@ def main(
 
             # Add a score for the validation set
             val_accuracy = eval_metrics.metric_interpreter(
-                metric=dataset_module.score_metric,
+                metric=dataset_module.score_metric,  # TODO
                 pred=val_scores,
                 labels=val_labels)
 
@@ -374,7 +379,7 @@ def main(
                     val_aux[m] = eval_metrics.metric_interpreter(
                         metric=m,
                         pred=val_scores,
-                        labels=val_labels)
+                        labels=val_labels)[0]  # TODO: Fix for multiloss
 
             # Prepare tensorboard summaries
             if len(val_images.get_shape()) == 4:
@@ -382,12 +387,13 @@ def main(
             if len(val_labels.get_shape()) > 2:
                 tf_fun.image_summaries(
                     val_labels,
-                    tag='Validation targets')
+                    tag='Validation_targets')
                 tf_fun.image_summaries(
                     val_scores,
-                    tag='Validation predictions')
-            tf.summary.scalar('validation loss', val_loss)
-            tf.summary.scalar('validation accuracy', val_accuracy)
+                    tag='Validation_predictions')
+            tf.summary.scalar('validation_loss', val_loss)
+            for vidx, va in enumerate(val_accuracy):
+                tf.summary.scalar('validation_accuracy_%s' % vidx, va)
             log.info('Added validation summaries.')
 
     # Set up summaries and saver
@@ -412,7 +418,6 @@ def main(
     # Create dictionaries of important training and validation information
     train_dict = {
         'train_loss': train_loss,
-        'train_accuracy': train_accuracy,
         'train_images': train_images,
         'train_labels': train_labels,
         'train_op': train_op,
@@ -420,11 +425,13 @@ def main(
     }
     val_dict = {
         'val_loss': val_loss,
-        'val_accuracy': val_accuracy,
         'val_images': val_images,
         'val_labels': val_labels,
         'val_scores': val_scores,
     }
+    for tidx, (ta, va) in enumerate(zip(train_accuracy, val_accuracy)):
+        train_dict['train_accuracy_%s' % tidx] = ta
+        val_dict['val_accuracy_%s' % tidx] = va
 
     if load_and_evaluate_ckpt is not None:
         # Remove the train operation and add a ckpt pointer

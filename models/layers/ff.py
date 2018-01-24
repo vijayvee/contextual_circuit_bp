@@ -421,6 +421,24 @@ class ff(object):
             name=name)
         return context, act
 
+    def multi_fc(
+            self,
+            context,
+            act,
+            in_channels,
+            out_channels,
+            filter_size,
+            name,
+            it_dict):
+        """Add multiple fully-connected layers."""
+        context, act = multi_fc_layer(
+            self=context,
+            bottom=act,
+            in_channels=in_channels,
+            out_channels=out_channels,
+            name=name)
+        return context, act
+
     def sparse_pool(
             self,
             context,
@@ -806,41 +824,6 @@ def conv_layer(
             name=name)
         conv = tf.nn.conv2d(bottom, filt, stride, padding=padding)
         bias = tf.nn.bias_add(conv, conv_biases)
-        return self, bias
-
-
-def conv1d_layer(
-        self,
-        bottom,
-        out_channels,
-        name,
-        in_channels=None,
-        filter_size=3,
-        stride=1,
-        padding='SAME'):
-    """1D convolutional layer."""
-    with tf.variable_scope(name):
-        if in_channels is None:
-            in_channels = int(bottom.get_shape()[-1])
-        weight_init = [
-            [filter_size] + [in_channels, 1],
-            tf.contrib.layers.xavier_initializer_conv2d(uniform=False)]
-        bias_init = tf.truncated_normal([1], .0, .001)
-        self, filters = get_var(
-            self=self,
-            initial_value=weight_init,
-            name=name,
-            idx=0,
-            var_name=name + "_filters")
-        self, biases = get_var(
-            self=self,
-            initial_value=bias_init,
-            name=name,
-            idx=1,
-            var_name=name + "_biases")
-        import ipdb;ipdb.set_trace()
-        conv = tf.nn.conv1d(bottom, filters, stride, padding=padding)
-        bias = tf.nn.bias_add(conv, biases)
         return self, bias
 
 
@@ -2931,6 +2914,24 @@ def fc_layer(self, bottom, out_channels, name, in_channels=None):
         fc = tf.nn.bias_add(tf.matmul(x, weights), biases)
 
         return self, fc
+
+
+def multi_fc_layer(self, bottom, out_channels, name, in_channels=None):
+    """Fully connected layer."""
+    with tf.variable_scope(name):
+        if in_channels is None:
+            in_channels = int(bottom.get_shape()[-1])
+        fcs = []
+        for oc in out_channels:
+            self, weights, biases = get_fc_var(
+                self=self,
+                in_size=in_channels,
+                out_size=out_channels,
+                name=name)
+
+            x = tf.reshape(bottom, [-1, in_channels])
+            fcs += [tf.nn.bias_add(tf.matmul(x, weights), biases)]
+        return self, fcs
 
 
 def sparse_pool_layer(

@@ -4,29 +4,26 @@ import tensorflow as tf
 from config import Config
 from ops import tf_fun
 from tqdm import tqdm
-import cPickle as pickle
 
 
 class data_processing(object):
     def __init__(self):
-        self.name = 'crcns_1d'
+        self.name = 'crcns_2d_2nd'
         self.config = Config()
         self.file_extension = '.csv'
         self.timepoints = 10  # Data is 100hz
-        self.output_size = [1, 1]
-        self.im_size = [self.timepoints, 1]
-        self.model_input_image_size = [self.timepoints, 1]
+        self.output_size = [1, 2]
+        self.im_size = [self.timepoints, 256, 256, 1]
+        self.model_input_image_size = [200, 200, 1]
         self.default_loss_function = 'sigmoid_logits'
         self.score_metric = 'argmax_softmax_accuracy'
         self.fix_imbalance = True
-        self.preprocess = [None]
+        self.preprocess = ['resize']
         self.train_prop = 0.80
         self.binarize_spikes = True
         self.df_f_window = 10
         self.use_df_f = False
-        self.save_pickle = True
         self.shuffle = True
-        self.pickle_name = 'cell_3_dff.p'
 
         # CRCNS data pointers
         self.crcns_dataset = os.path.join(
@@ -38,16 +35,15 @@ class data_processing(object):
         # CC-BP dataset vars
         self.folds = {
             'train': 'train',
-            'test': 'test'}
+            'test': 'test'
+        }
         self.targets = {
-            'image': tf_fun.float_feature,
-            'label': tf_fun.float_feature
+            'image': tf_fun.bytes_feature,
+            'label': tf_fun.int64_feature
         }
         self.tf_dict = {
-            'image': tf_fun.fixed_len_feature(
-                length=self.im_size,
-                dtype='float'),
-            'label': tf_fun.fixed_len_feature(dtype='float')
+            'image': tf_fun.fixed_len_feature(dtype='string'),
+            'label': tf_fun.fixed_len_feature(dtype='int64')
         }
         self.tf_reader = {
             'image': {
@@ -55,8 +51,8 @@ class data_processing(object):
                 'reshape': self.im_size
             },
             'label': {
-                'dtype': tf.float32,
-                'reshape': None
+                'dtype': tf.int64,
+                'reshape': self.output_size
             }
         }
 
@@ -66,28 +62,74 @@ class data_processing(object):
             self.exp_name)
         cell_data = [
             {
-                'id': 3,
-                'name': '20120417_cell3',
+                'id': 0,
+                'cell_id': 1,
+                'name': '20120416_cell1',
                 'images': [
-                    'cell3_001_001.npy',
-                    'cell3_001_002.npy',
-                    'cell3_001_003.npy',
-                    'cell3_001_004.npy',
-                    'cell3_001_005.npy',
-                    'cell3_001_006.npy',
+                    'cell1_001_001.npy',
+                    'cell1_001_002.npy',
+                    'cell1_001_003.npy',
+                    'cell1_001_004.npy',
+                    'cell1_001_005.npy',
+                    'cell1_001_006.npy',
                     ],
                 'e': [
-                    'data_20120417_cell3_001_e.npy',
+                    'data_20120416_cell1_001_e.npy',
                 ],
                 'f': [
-                    'data_20120417_cell3_001_f.npy',
+                    'data_20120416_cell1_001_f.npy',
                 ],
                 's': [
-                    'data_20120417_cell3_001_s.npy',
+                    'data_20120416_cell1_001_s.npy',
+                ],
+            },
+            # {
+            #     'id': 1,
+            #     'cell_id': 1,
+            #     'name': '20120416_cell1',
+            #     'images': [
+            #         'cell1_002_001.npy',
+            #         'cell1_002_002.npy',
+            #         'cell1_002_003.npy',
+            #         'cell1_002_004.npy',
+            #         'cell1_002_005.npy',
+            #         # 'cell1_002_006.npy',
+            #         ],
+            #     'e': [
+            #         'data_20120416_cell1_002_e.npy',
+            #     ],
+            #     'f': [
+            #         'data_20120416_cell1_002_f.npy',
+            #     ],
+            #     's': [
+            #         'data_20120416_cell1_002_s.npy',
+            #     ],
+            # },
+            {
+                'id': 2,
+                'cell_id': 1,
+                'name': '20120417_cell1',
+                'images': [
+                    'cell1_002_001.npy',
+                    'cell1_002_002.npy',
+                    'cell1_002_003.npy',
+                    'cell1_002_004.npy',
+                    'cell1_002_005.npy',
+                    'cell1_002_006.npy',
+                    ],
+                'e': [
+                    'data_20120417_cell1_002_e.npy',
+                ],
+                'f': [
+                    'data_20120417_cell1_002_f.npy',
+                ],
+                's': [
+                    'data_20120417_cell1_002_s.npy',
                 ],
             },
             {
-                'id': 4,
+                'id': 3,
+                'cell_id': 2,
                 'name': '20120417_cell3',
                 'images': [
                     'cell3_002_001.npy',
@@ -108,7 +150,8 @@ class data_processing(object):
                 ],
             },
             {
-                'id': 5,
+                'id': 4,
+                'cell_id': 2,
                 'name': '20120417_cell3',
                 'images': [
                     'cell3_003_001.npy',
@@ -128,13 +171,80 @@ class data_processing(object):
                     'data_20120417_cell3_003_s.npy',
                 ],
             },
+            {
+                'id': 5,
+                'cell_id': 3,
+                'name': '20120417_cell4',
+                'images': [
+                    'cell4_001_001.npy',
+                    'cell4_001_002.npy',
+                    'cell4_001_003.npy',
+                    'cell4_001_004.npy',
+                    'cell4_001_005.npy',
+                    'cell4_001_006.npy',
+                    ],
+                'e': [
+                    'data_20120417_cell4_001_e.npy',
+                ],
+                'f': [
+                    'data_20120417_cell4_001_f.npy',
+                ],
+                's': [
+                    'data_20120417_cell4_001_s.npy',
+                ],
+            },
+            {
+                'id': 6,
+                'cell_id': 3,
+                'name': '20120417_cell4',
+                'images': [
+                    'cell4_002_001.npy',
+                    'cell4_002_002.npy',
+                    'cell4_002_003.npy',
+                    'cell4_002_004.npy',
+                    'cell4_002_005.npy',
+                    'cell4_002_006.npy',
+                    ],
+                'e': [
+                    'data_20120417_cell4_002_e.npy',
+                ],
+                'f': [
+                    'data_20120417_cell4_002_f.npy',
+                ],
+                's': [
+                    'data_20120417_cell4_002_s.npy',
+                ],
+            },
+            {
+                'id': 7,
+                'cell_id': 3,
+                'name': '20120417_cell4',
+                'images': [
+                    'cell4_003_001.npy',
+                    'cell4_003_002.npy',
+                    'cell4_003_003.npy',
+                    'cell4_003_004.npy',
+                    'cell4_003_005.npy',
+                    'cell4_003_006.npy',
+                    ],
+                'e': [
+                    'data_20120417_cell4_003_e.npy',
+                ],
+                'f': [
+                    'data_20120417_cell4_003_f.npy',
+                ],
+                's': [
+                    'data_20120417_cell4_003_s.npy',
+                ],
+            },
         ]
 
-        ss = {}
+        images, ss = {}, {}
         spikes, time_e = {}, {}
-        corr_f, raw_f, time_f, df_f = {}, {}, {}, {}
+        corr_f, raw_f, time_f, df_f, cell_ids = {}, {}, {}, {}, {}
         selected_spikes = {}
         for d in cell_data:
+            images[d['id']] = []
             spikes[d['id']] = []
             time_e[d['id']] = []
             corr_f[d['id']] = []
@@ -142,6 +252,27 @@ class data_processing(object):
             time_f[d['id']] = []
             ss[d['id']] = []
             df_f[d['id']] = []
+            cell_ids[d['id']] = []
+
+            # Load images
+            for ims in tqdm(
+                    d['images'],
+                    total=len(d['images']),
+                    desc='Images of cell %s' % d['id']):
+                images[d['id']] += [np.load(
+                    os.path.join(
+                        img_dir,
+                        'raw_data',
+                        'cell_npy',
+                        d['name'],
+                        ims)
+                    )]
+            images[d['id']] = np.concatenate(images[d['id']], axis=0)
+
+            # Repeat cell ids
+            cell_ids[d['id']] = (
+                np.ones(
+                    (len(images[d['id']]))) * d['cell_id']).astype(np.int64)
 
             # Load e
             for e in tqdm(
@@ -234,31 +365,44 @@ class data_processing(object):
         # For each cell being processed:
         #    files = images
         #    labels = selected_spikes
-        if self.use_df_f:
-            cat_images = np.concatenate([v for v in df_f.values()])
-        else:
-            cat_images = np.concatenate([v for v in corr_f.values()])
+        cat_images = np.concatenate([v for v in images.values()])
+        if len(cat_images.shape) == 3:
+            cat_images = np.expand_dims(cat_images, axis=-1)
+
+        # Add the cell_id
         cat_labels = np.concatenate([v for v in selected_spikes.values()])
+        cat_ids = np.concatenate([v for v in cell_ids.values()])
+
         num_images = len(cat_images)
         num_labels = len(cat_labels)
         assert num_images == num_labels, 'Different numbers of ims/labs'
 
-        # Turn data into events  -- to start just reshape
+        # Cut into distinct events -- start with reshape for this
         num_events = int(num_images / self.timepoints)
         total_events = num_events * self.timepoints
         cat_images = cat_images[:total_events]
         cat_labels = cat_labels[:total_events]
-        cat_images = cat_images.reshape(num_events, -1)
-        cat_labels = cat_labels.reshape(num_events, -1)
-        cat_images = np.expand_dims(cat_images, axis=-1).astype(np.float32)
+        cat_ids = cat_ids[:total_events]
+        im_shape = cat_images.shape
+        cat_images = cat_images.reshape(
+            num_events,
+            self.timepoints,
+            im_shape[1],
+            im_shape[2],
+            im_shape[3]).astype(np.float32)
+        cat_labels = cat_labels.reshape(num_events, -1).astype(np.int64)
+        cat_ids = cat_ids.reshape(num_events, -1).astype(np.int64)
 
         # Split into train/test
-        cat_labels = np.expand_dims(
-            cat_labels.sum(-1), axis=-1).astype(np.int64)
+        cat_labels = np.expand_dims(cat_labels.sum(-1), axis=-1)
+        cat_ids = np.expand_dims(cat_ids[:, 0], axis=-1)
         cv_split = np.round(num_events * self.train_prop).astype(int)
 
+        # Combine cat_labels and cat_ids
+        cat_labels = np.concatenate((cat_labels, cat_ids), axis=-1)
+
         if self.binarize_spikes:
-            cat_labels[cat_labels > 1] = 1
+            cat_labels[cat_labels[:, 0] > 1, 0] = 1
         train_images = cat_images[:cv_split]
         test_images = cat_images[cv_split:]
         train_labels = cat_labels[:cv_split]
@@ -266,7 +410,8 @@ class data_processing(object):
 
         # Fix imbalance with repetitions if requested
         if self.fix_imbalance:
-            spike_idx = train_labels > 0
+            # Train repeat
+            spike_idx = train_labels[:, 0] > 0
             num_spikes = spike_idx.sum()
             num_events = len(train_labels)
             num_neg = num_events - num_spikes
@@ -277,10 +422,10 @@ class data_processing(object):
             train_images = np.concatenate(
                 (train_images, rep_spike_images), axis=0)
             train_labels = np.concatenate(
-                (train_labels, rep_spike_labels[:, None]), axis=0)
+                (train_labels, rep_spike_labels), axis=0)
 
             # Validation repeat
-            spike_idx = test_labels > 0
+            spike_idx = test_labels[:, 0] > 0
             num_spikes = spike_idx.sum()
             num_events = len(test_labels)
             num_neg = num_events - num_spikes
@@ -291,20 +436,7 @@ class data_processing(object):
             test_images = np.concatenate(
                 (test_images, rep_spike_images), axis=0)
             test_labels = np.concatenate(
-                (test_labels, rep_spike_labels[:, None]), axis=0)
-
-        # Save a separate pickle if requested
-        if self.save_pickle:
-            data = [
-                {
-                    'calcium': train_images.squeeze().tolist(),
-                    'fps': 60.
-                }
-            ]
-            f = open('%s' % self.pickle_name, 'wb')
-            pickle.dump(data, f, protocol=pickle.HIGHEST_PROTOCOL)
-            f.close()
-            np.savez(self.pickle_name, **data[0])
+                (test_labels, rep_spike_labels), axis=0)
 
         if self.shuffle:
             rand_order = np.random.permutation(len(train_images))
