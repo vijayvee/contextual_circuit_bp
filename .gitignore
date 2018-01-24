@@ -1,4 +1,6 @@
 *.pyc
+*.npz
+*.p
 db_dumps/
 db/credentials.py
 # ALLEN_*
