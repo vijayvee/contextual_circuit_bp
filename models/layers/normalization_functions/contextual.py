@@ -266,16 +266,6 @@ class ContextualCircuit(object):
 
         # Association field is fully learnable
         if self.association_field and 'P' not in self.lesions:
-            mask_array = np.ones_like(p_array[:, :, 0, 0])[:, :, None, None]
-            mask_array[p_array[:, :, 0, 0] == 0] = 0.
-            setattr(
-                self,
-                'association_mask',
-                tf.get_variable(
-                    name='association_mask',
-                    dtype=self.dtype,
-                    initializer=mask_array.astype(np.float32),
-                    trainable=False))
             setattr(
                 self,
                 self.weight_dict['P']['r']['weight'],
@@ -284,8 +274,7 @@ class ContextualCircuit(object):
                     dtype=self.dtype,
                     initializer=initialization.xavier_initializer(
                         shape=self.p_shape,
-                        uniform=self.normal_initializer,
-                        mask=mask_array),
+                        uniform=self.normal_initializer),
                     trainable=True))
         else:
             setattr(
@@ -476,7 +465,7 @@ class ContextualCircuit(object):
         if weights is None:
             weights = self[weight_key]
         w_shape = [int(w) for w in weights.get_shape()]
-        if len(w_shape) > 1 and int(w_shape[-2]) > 1: 
+        if len(w_shape) > 1 and int(w_shape[-2]) > 1:
             # Full convolutions
             activities = tf.nn.conv2d(
                 data,
@@ -583,7 +572,7 @@ class ContextualCircuit(object):
         # Circuit output
         if self.association_field:
             # Ensure that CRF for association field is masked
-            p_weights = self.association_mask * self[
+            p_weights = self[
                 self.weight_dict['P']['r']['weight']]
             if self.nonnegative_association:
                 p_weights = tf.nn.relu(p_weights)  # Force excitatory conns

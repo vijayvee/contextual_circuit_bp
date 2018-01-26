@@ -106,7 +106,7 @@ class experiments():
             'experiment_name': [model_folder],
             'lr': [3e-4],
             'loss_function': ['pearson'],
-            'optimizer': ['adam'],
+            'optimizer': ['adam'],  #, 'momentum','sgd'],
             # 'q_t': [1e-3, 1e-1],
             # 'p_t': [1e-2, 1e-1, 1],
             # 't_t': [1e-2, 1e-1, 1],
@@ -114,8 +114,8 @@ class experiments():
             'model_struct': [
                 # os.path.join(
                 #     model_folder, 'context_conv2d'),
-                os.path.join(
-                    model_folder, 'context_association_conv2d'),
+                #os.path.join(
+                #    model_folder, 'context_association_conv2d'),
                 # os.path.join(
                 #     model_folder, 'context_association_l1_conv2d'),
                 # os.path.join(
@@ -124,16 +124,18 @@ class experiments():
                 #     model_folder, 'context_association_full_hole_conv2d'),
                 # os.path.join(
                 #     model_folder, 'context_association_crf_hole_conv2d'),
-                os.path.join(
-                    model_folder, 'context_association_l1_full_full_conv2d'),
+                #os.path.join(
+                #    model_folder, 'context_association_l1_full_full_conv2d'),
                 # os.path.join(
                 #     model_folder, 'context_association_l1_full_hole_conv2d'),
+                os.path.join(
+                    model_folder, 'context_association_full_full_conv2d_single_conv'),
                 # os.path.join(
                 #     model_folder, 'context_association_l1_crf_hole_conv2d'),
-                os.path.join(
-                    model_folder, 'conv2d'),
+                #os.path.join(
+                #    model_folder, 'conv2d'),
             ],
-            'dataset': ['BSDS500']
+            'dataset': ['BSDS500_2']
         }
         exp = self.add_globals(exp)  # Add globals to the experiment'
         exp['data_augmentations'] = [[
@@ -236,7 +238,7 @@ class experiments():
                 os.path.join(model_folder, 'gru1d_19'),
                 os.path.join(model_folder, 'gru1d_20'),
             ],
-            'dataset': ['crcns_1d_2nd']
+            'dataset': ['crcns_1d']
         }
         exp = self.add_globals(exp)  # Add globals to the experiment'
         exp['epochs'] = 100
@@ -258,21 +260,19 @@ class experiments():
         model_folder = 'crcns_2d'
         exp = {
             'experiment_name': [model_folder],
-            'lr': [3e-4],
-            'loss_function': ['cce@cce'],
+            'lr': [1e-5],
+            'loss_function': ['cce'],
             'optimizer': ['nadam'],
             'model_struct': [
                 # os.path.join(model_folder, 'sepgru2d'),
-                # os.path.join(model_folder, 'fc_sepgru2d'),
-                os.path.join(model_folder, 'big_fc_sepgru2d'),
-                # os.path.join(model_folder, 'fc_gru2d_complex'),
+                os.path.join(model_folder, 'fc_sepgru2d'),
             ],
-            'dataset': ['crcns_2d_2nd']
+            'dataset': ['crcns_2d']
         }
         exp = self.add_globals(exp)  # Add globals to the experiment'
-        exp['epochs'] = 500
-        exp['validation_iters'] = 500
-        exp['num_validation_evals'] = 107  # 225
+        exp['epochs'] = 50
+        exp['validation_iters'] = 200
+        exp['num_validation_evals'] = 225
         exp['batch_size'] = 16  # Train/val batch size.
         exp['save_weights'] = True
         exp['data_augmentations'] = [
@@ -282,7 +282,6 @@ class experiments():
                 # 'calculate_rate_time_crop',
                 'left_right',
                 # 'random_time_crop',
-                # 'center_crop',
                 'random_crop',
                 'up_down'
                 # 'rotate'

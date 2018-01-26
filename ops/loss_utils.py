@@ -60,31 +60,6 @@ def loss_interpreter(
         loss_type = dataset_module.default_loss_function
     if isinstance(weights, dict):
         weights = derive_weights(weights)
-    if '@' in loss_type:
-        # Temporary approach for multi-loss models
-        # TODO use a similar approach as eval_metrics
-        loss_types = loss_type.split('@')
-        split_labels = tf.split(labels, len(loss_types), axis=-1)
-        loss_list = []
-        for idx, (loss_type, logit) in enumerate(zip(loss_types, logits)):
-            if loss_type == 'cce':
-                logit = tf.cast(logit, tf.float32)
-                labels = tf.squeeze(tf.cast(labels, tf.int64))
-                loss_list += [cce(
-                    logits=logit,
-                    labels=split_labels[idx],
-                    weights=weights)]
-            elif loss_type == 'tf_log_poisson':
-                logit = tf.cast(logit, tf.float32)
-                labels = tf.cast(labels, tf.float32)
-                loss_list += [tf_log_poisson(
-                    logits=logit,
-                    labels=split_labels[idx],
-                    weights=weights)]
-            else:
-                raise NotImplementedError
-        return tf.add_n(loss_list)
-
     if loss_type == 'cce':
         logits = tf.cast(logits, tf.float32)
         labels = tf.squeeze(tf.cast(labels, tf.int64))
@@ -358,4 +333,3 @@ def sigmoid_ce(logits, labels, weights, force_dtype=tf.float32):
     sig_loss *= weights
     sig_loss = tf.reduce_mean(sig_loss)
     return sig_loss, sig_loss
-

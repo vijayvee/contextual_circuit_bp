@@ -492,7 +492,7 @@ class ContextualCircuit(object):
         if weights is None:
             weights = self[weight_key]
         w_shape = [int(w) for w in weights.get_shape()]
-        if len(w_shape) > 1 and int(w_shape[-2]) > 1: 
+        if len(w_shape) > 1 and int(w_shape[-2]) > 1:
             # Full convolutions
             activities = tf.nn.conv2d(
                 data,
@@ -562,6 +562,13 @@ class ContextualCircuit(object):
         U = self.conv_2d_op(
             data=self.apply_tuning(O, 'U'),
             weight_key=self.weight_dict['U']['r']['weight']
+        )
+        tf.nn.separable_conv2d(
+            input=O,
+            depthwise_filter=self[self.weight_dict['U']['r']['weight']],
+            pointwise_filter=self[self.weight_dict['U']['r']['tuning']],
+            strides=self.strides,
+            padding=self.padding
         )
         T = self.conv_2d_op(
             data=self.apply_tuning(O, 'T'),

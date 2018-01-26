@@ -68,6 +68,9 @@ def package_parameters(parameter_dict, log):
     keys_sorted = sorted(parameter_dict)
     values = list(it.product(*(parameter_dict[key] for key in keys_sorted)))
     combos = tuple({k: v for k, v in zip(keys_sorted, row)} for row in values)
+    for c in combos:
+        if c['optimizer'] != 'adam':
+            c['lr'] = 5e-5
     log.info('Derived %s combinations.' % len(combos))
     return list(combos)
 

@@ -68,21 +68,21 @@ def fitgaussian(data):
     errorfunction = lambda p: np.ravel(gaussian(*p)(*np.indices(data.shape)) - data)
     p, success = sp.optimize.leastsq(errorfunction, params)
     return p
-        
+
 
 def peakdet(v, delta, x = None):
     """
     Converted from MATLAB script at http://billauer.co.il/peakdet.html
-    
+
     Returns two arrays
-    
+
     function [maxtab, mintab]=peakdet(v, delta, x)
     %PEAKDET Detect peaks in a vector
     %        [MAXTAB, MINTAB] = PEAKDET(V, DELTA) finds the local
     %        maxima and minima ("peaks") in the vector V.
     %        MAXTAB and MINTAB consists of two columns. Column 1
     %        contains indices in V, and column 2 the found values.
-    %      
+    %
     %        With [MAXTAB, MINTAB] = PEAKDET(V, DELTA, X) the indices
     %        in MAXTAB and MINTAB are replaced with the corresponding
     %        X-values.
@@ -90,33 +90,33 @@ def peakdet(v, delta, x = None):
     %        A point is considered a maximum peak if it has the maximal
     %        value, and was preceded (to the left) by a value lower by
     %        DELTA.
-    
+
     % Eli Billauer, 3.4.05 (Explicitly not copyrighted).
     % This function is released to the public domain; Any use is allowed.
-    
+
     """
     maxtab = []
     mintab = []
-       
+
     if x is None:
         x = arange(len(v))
-    
+
     v = asarray(v)
-    
+
     if len(v) != len(x):
         sys.exit('Input vectors v and x must have same length')
-    
+
     if not isscalar(delta):
         sys.exit('Input argument delta must be a scalar')
-    
+
     if delta <= 0:
         sys.exit('Input argument delta must be positive')
-    
+
     mn, mx = Inf, -Inf
     mnpos, mxpos = NaN, NaN
-    
+
     lookformax = True
-    
+
     for i in arange(len(v)):
         this = v[i]
         if this > mx:
@@ -125,7 +125,7 @@ def peakdet(v, delta, x = None):
         if this < mn:
             mn = this
             mnpos = x[i]
-        
+
         if lookformax:
             if this < mx-delta:
                 maxtab.append((mxpos, mx))
@@ -164,6 +164,28 @@ def save_mosaic(
     plt.savefig(output)
     plt.savefig(output.split('.')[0] + '.pdf')
 
+def view_mosaic(
+        maps,
+        title='Mosaic',
+        rc=None,
+        cc=None):
+    from matplotlib import gridspec
+    if rc is None:
+        rc = np.ceil(np.sqrt(len(maps))).astype(int)
+        cc = np.ceil(np.sqrt(len(maps))).astype(int)
+    f = plt.figure(figsize=(10, 10))
+    plt.suptitle(title, fontsize=20)
+    gs1 = gridspec.GridSpec(rc, cc)
+    gs1.update(wspace=0.01, hspace=0.01)  # set the spacing between axes.
+    for idx, im in enumerate(maps):
+        ax1 = plt.subplot(gs1[idx])
+        plt.axis('off')
+        ax1.set_xticklabels([])
+        ax1.set_yticklabels([])
+        ax1.set_aspect('equal')
+        ax1.imshow(im.squeeze(), interpolation='nearest')
+    plt.show()
+    plt.close(f)
 
 def plot_fits(
         experiment='760_cells_2017_11_04_16_29_09',
@@ -367,7 +389,7 @@ def plot_fits(
         data_dir = os.path.join(output_dir, 'data', target_model)
         py_utils.make_dir(data_dir)
         sys.path.append(os.path.join('models', 'structs', sel_model['experiment_name']))
-        model_dict = __import__(target_model) 
+        model_dict = __import__(target_model)
         if hasattr(model_dict, 'output_structure'):
             # Use specified output layer
             output_structure = model_dict.output_structure
@@ -484,8 +506,8 @@ def plot_fits(
         all_grads = np.asarray(all_grads)
         all_preds = np.asarray(all_preds).reshape(-1, 1)
         import ipdb;ipdb.set_trace()
-       
-    
+
+
         # res_f = all_responses.reshape(ne * h * w, k)
         # res_g = res_grads.reshape(ne, rh * rw)
         # i_cov = np.cov(res_i.transpose())
@@ -501,11 +523,11 @@ def plot_fits(
         # swid = rh * rw
         # Msz = np.dot(np.dot(slen, swid), ne)  # Size of full stimulus matrix
         # rowlen = 1830  # np.dot(swid, ne) # Length of a single row of stimulus matrix
-        
+
         # Compute raw mean and covariance
         # RawMu = np.mean(res_i, 0).T
         # RawCov = np.dot(res_i.T, res_i) / (slen-1.) - (RawMu*np.vstack(RawMu)*slen) / (slen-1.)
-        
+
         # Compute spike-triggered mean and covariance
         # iisp = np.nonzero((sp > 0.))
         # spvec = sp[iisp]
@@ -558,4 +580,3 @@ if __name__ == '__main__':
         help='Access the pnode DB.')
     args = parser.parse_args()
     plot_fits(**vars(args))
-
