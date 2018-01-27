@@ -6,7 +6,7 @@ layer_structure = [
         'weights': [32],
         'names': ['conv1'],
         'filter_size': [11],
-        'normalization': ['contextual'],
+        'normalization': ['contextual_ff'],
         'normalization_target': ['post'],
         'normalization_aux': {
             'timesteps': 3,

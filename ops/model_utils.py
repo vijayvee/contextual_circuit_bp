@@ -273,6 +273,7 @@ def norm_op(self, it_dict, act, layer_summary, norm_mod, eRFs, target):
                 weights,
                 layer_name=it_dict['names'][0])
             # TODO: Attach activities too.
+        #import ipdb; ipdb.set_trace()
         self = attach_regularizations(
             self,
             weights,
@@ -336,6 +337,7 @@ def attach_regularizations(
         side=None,
         a_or_w='weights'):
     """Attach regularizations. TODO combine this and other reg. interface."""
+    #import ipdb; ipdb.set_trace()
     if it_dict is not None and 'regularization_type' in it_dict:
         # Regularization of model layers
         target = it_dict['regularization_target'][0]

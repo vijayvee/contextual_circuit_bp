@@ -324,7 +324,7 @@ def main(
                     train_scores,
                     tag='Training predictions')
             tf.summary.scalar('training loss', train_loss)
-            tf.summary.scalar('training accuracy', train_accuracy)
+            tf.summary.scalar('training accuracy', train_accuracy[0])
             log.info('Added training summaries.')
 
             # Validation model
@@ -386,7 +386,7 @@ def main(
                     val_scores,
                     tag='Validation predictions')
             tf.summary.scalar('validation loss', val_loss)
-            tf.summary.scalar('validation accuracy', val_accuracy)
+            tf.summary.scalar('validation accuracy', val_accuracy[0])
             log.info('Added validation summaries.')
 
     # Set up summaries and saver
