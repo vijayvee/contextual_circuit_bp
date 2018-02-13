@@ -250,7 +250,7 @@ class ContextualCircuit(object):
         # weakly tuned summation: pooling in h, w dimensions
         #############################################
         p_array = np.ones(self.p_shape)
-        p_array[
+        """p_array[
             self.SSN // 2 - py_utils.ifloor(
                 self.SRF / 2.0):self.SSN // 2 + py_utils.iceil(
                 self.SRF / 2.0),
@@ -258,7 +258,7 @@ class ContextualCircuit(object):
                 self.SRF / 2.0):self.SSN // 2 + py_utils.iceil(
                 self.SRF / 2.0),
             :,  # exclude CRF!
-            :] = 0.0
+            :] = 0.0"""
         p_array = p_array / p_array.sum()
         if 'P' in self.lesions:
             print 'Lesioning near eCRF.'
@@ -289,7 +289,7 @@ class ContextualCircuit(object):
         # weakly tuned suppression: pooling in h, w dimensions
         ###############################################
         t_array = np.ones(self.t_shape)
-        t_array[
+        """t_array[
             self.SSF // 2 - py_utils.ifloor(
                 self.SSN / 2.0):self.SSF // 2 + py_utils.iceil(
                 self.SSN / 2.0),
@@ -297,7 +297,7 @@ class ContextualCircuit(object):
                 self.SSN / 2.0):self.SSF // 2 + py_utils.iceil(
                 self.SSN / 2.0),
             :,  # exclude near surround!
-            :] = 0.0
+            :] = 0.0"""
         t_array = t_array / t_array.sum()
         if 'T' in self.lesions:
             print 'Lesioning Far eCRF.'
@@ -472,7 +472,7 @@ class ContextualCircuit(object):
                 weights,
                 self.strides,
                 padding=self.padding)
-        elif len(w_shape) > 1 and int(w_shape[-2]) == 1:
+        elif len(w_shape) > 1 and int(w_shape[-2]) == 1:    #Code never enters this condition block
             # Separable spacial
             d = int(data.get_shape()[-1])
             split_data = tf.split(data, d, axis=3)
@@ -541,6 +541,12 @@ class ContextualCircuit(object):
             weight_key=self.weight_dict['T']['r']['weight']
         )
 
+        """T = tf.nn.separable_conv2d(input = O,
+                            depthwise_filter = self[self.weight_dict['T']['r']['weight']],
+                            pointwise_filter = self[self.weight_dict['T']['r']['tuning']],
+                            strides = self.strides,
+                            padding = self.padding)"""
+
         # Gates
         I_update_input = self.conv_2d_op(
             data=self.X,
@@ -586,10 +592,20 @@ class ContextualCircuit(object):
                 data=self.apply_tuning(I, 'P'),
                 weight_key=self.weight_dict['P']['r']['weight']
             )
+            """P = tf.nn.separable_conv2d(input = I,
+                                depthwise_filter = self[self.weight_dict['P']['r']['weight']],
+                                pointwise_filter = self[self.weight_dict['P']['r']['tuning']],
+                                strides = self.strides,
+                                padding = self.padding)"""
         Q = self.conv_2d_op(
             data=self.apply_tuning(I, 'Q'),
             weight_key=self.weight_dict['Q']['r']['weight']
         )
+        """Q = tf.nn.separable_conv2d(input = I,
+                            depthwise_filter = self[self.weight_dict['Q']['r']['weight']],
+                            pointwise_filter = self[self.weight_dict['Q']['r']['tuning']],
+                            strides = self.strides,
+                            padding = self.padding)"""
         O_update_input = self.conv_2d_op(
             data=self.X,
             weight_key=self.weight_dict['O']['f']['weight']

@@ -153,6 +153,26 @@ class ff(object):
             filter_size=filter_size)
         return context, act
 
+    def alexnet_conv(
+            self,
+            context,
+            act,
+            in_channels,
+            out_channels,
+            filter_size,
+            name,
+            it_dict):
+        """Add a 2D convolution layer."""
+        context, act = alexnet_conv_layer(
+            self=context,
+            bottom=act,
+            in_channels=in_channels,
+            out_channels=out_channels,
+            name=name,
+            filter_size=filter_size,
+            aux=it_dict)
+        return context, act
+
     def conv3d(
             self,
             context,
@@ -826,6 +846,53 @@ def conv_layer(
         bias = tf.nn.bias_add(conv, conv_biases)
         return self, bias
 
+def alexnet_conv_layer(
+        self,
+        bottom,
+        out_channels,
+        name,
+        in_channels=None,
+        filter_size=3,
+        stride=[1, 1, 1, 1],
+        padding='SAME',
+        aux=None):
+    """2D convolutional layer."""
+    assert aux is not None, 'Pass the location of alexnet weights.'
+    assert 'alexnet_npy' in aux.keys(), 'Pass an alexnet_npy key.'
+    train_alexnet, init_bias = True, False
+    if 'trainable' in aux.keys():
+        train_alexnet = aux['trainable']
+    if 'init_bias' in aux.keys():
+        init_bias = aux['init_bias']
+    alexnet_weights = np.load(aux['alexnet_npy']).item()
+    alexnet_key = aux['alexnet_layer']
+    alexnet_filter, alexnet_bias = alexnet_weights[alexnet_key]
+    with tf.variable_scope(name):
+        if in_channels is None:
+            in_channels = int(bottom.get_shape()[-1])
+        assert out_channels == alexnet_filter.shape[-1],\
+            'Set weights = %s.' % alexnet_filter.shape[-1]
+        if in_channels < alexnet_filter.shape[-2] and in_channels == 1:
+            alexnet_filter = np.mean(alexnet_filter, axis=2, keepdims=True)
+        elif in_channels < alexnet_filter.shape[-2]:
+            raise RuntimeError('Input features = %s, Alexnet features = %s' % (
+                in_channels, alexnet_filter.shape[-2]))
+        filters = tf.get_variable(
+            name=name + "_filters",
+            initializer=alexnet_filter,
+            trainable=train_alexnet)
+        self.var_dict[(name, 0)] = filters
+        if init_bias:
+            alexnet_bias = tf.truncated_normal([out_channels], .0, .001)
+        self, biases = get_var(
+            self=self,
+            initial_value=alexnet_bias,
+            name=name,
+            idx=1,
+            var_name=name + "_biases")
+        conv = tf.nn.conv2d(bottom, filters, stride, padding=padding)
+        bias = tf.nn.bias_add(conv, biases)
+        return self, bias
 
 def conv1d_layer(
         self,

@@ -94,11 +94,10 @@ class ContextualCircuit(object):
             self.p_shape = [self.SSN_ext, self.SSN_ext, 1, 1]
             self.t_shape = [self.SSF_ext, self.SSF_ext, 1, 1]
         else:
-            #Choose small value of channel_multiplier
-            self.q_shape = [self.SRF, self.SRF, self.k, self.k/8]
+            self.q_shape = [self.SRF, self.SRF, self.k, self.k]
             self.u_shape = [self.SRF, self.SRF, self.k, 1]
-            self.p_shape = [self.SSN_ext, self.SSN_ext, self.k, self.k/8]
-            self.t_shape = [self.SSF_ext, self.SSF_ext, self.k, self.k/8]
+            self.p_shape = [self.SSN_ext, self.SSN_ext, self.k, self.k]
+            self.t_shape = [self.SSF_ext, self.SSF_ext, self.k, self.k]
         self.i_shape = [self.gate_filter, self.gate_filter, self.k, self.k]
         self.o_shape = [self.gate_filter, self.gate_filter, self.k, self.k]
         self.bias_shape = [1, 1, 1, self.k]
@@ -106,11 +105,11 @@ class ContextualCircuit(object):
         self.tuning_params = ['Q', 'P', 'T']  # Learned connectivity
         if self.association_field:
             self.p_shape = [self.SSF_ext, self.SSF_ext, self.k, self.k]  # T
-            #self.tuning_params.pop(self.tuning_params.index('P'))
-#        if self.full_far_eCRF:
-#            self.tuning_params.pop(self.tuning_params.index('T'))
+            self.tuning_params.pop(self.tuning_params.index('P'))
+        else:
+            self.tuning_params = ['Q', 'P', 'T']
 
-        self.tuning_shape = [1, 1, (self.k/8)*self.k, self.k]
+        self.tuning_shape = [1, 1, self.k, self.k]
 
         # Nonlinearities and initializations
         self.u_nl = tf.identity
@@ -138,24 +137,21 @@ class ContextualCircuit(object):
                 'r': {
                     'weight': 't_r',
                     'activity': 'T_r',
-                    'tuning': 't_t',
-            #        'tuning': 's_t_t'
+                    'tuning': 't_t'
                     }
                 },
             'P': {
                 'r': {
                     'weight': 'p_r',
                     'activity': 'P_r',
-                    'tuning': 'p_t',
-             #       'tuning': 's_p_t'
+                    'tuning': 'p_t'
                     }
                 },
             'Q': {
                 'r': {
                     'weight': 'q_r',
                     'activity': 'Q_r',
-                    'tuning': 'q_t',
-              #      'tuning': 's_q_t'
+                    'tuning': 'q_t'
                     }
                 },
             'I': {
@@ -257,6 +253,21 @@ class ContextualCircuit(object):
         # weakly tuned summation: pooling in h, w dimensions
         #############################################
         p_array = np.ones(self.p_shape)
+        #Try removing CRF punching
+        if self.exclude_CRF:
+            # Punch out the CRF
+            p_array[
+                self.SSN // 2 - py_utils.ifloor(
+                    self.SRF / 2.0):self.SSF // 2 + py_utils.iceil(
+                    self.SSN / 2.0),
+                self.SSN // 2 - py_utils.ifloor(
+                    self.SRF / 2.0):self.SSF // 2 + py_utils.iceil(
+                    self.SSN / 2.0),
+                :,  # exclude CRF!
+                :] = 0.0
+
+
+
         p_array = p_array / p_array.sum()
 
         if 'P' in self.lesions:
@@ -288,11 +299,25 @@ class ContextualCircuit(object):
         # weakly tuned suppression: pooling in h, w dimensions
         ###############################################
         t_array = np.ones(self.t_shape)
+        #Try without punching CRF
+        if self.exclude_CRF:
+            # Punch out the CRF
+            t_array[
+                self.SSF // 2 - py_utils.ifloor(
+                    self.SSN / 2.0):self.SSF // 2 + py_utils.iceil(
+                    self.SSN / 2.0),
+                self.SSF // 2 - py_utils.ifloor(
+                    self.SSN / 2.0):self.SSF // 2 + py_utils.iceil(
+                    self.SSN / 2.0),
+                :,  # exclude near surround!
+                :] = 0.0
+
         t_array = t_array / t_array.sum()
         if 'T' in self.lesions:
             print 'Lesioning Far eCRF.'
             t_array = np.zeros_like(t_array).astype(np.float32)
 
+        #Always set full_far_eCRF to True/initialize with Xavier
         if self.full_far_eCRF:
             setattr(
                 self,
@@ -301,7 +326,7 @@ class ContextualCircuit(object):
                     name=self.weight_dict['T']['r']['weight'],
                     dtype=self.dtype,
                     initializer=initialization.xavier_initializer(
-                        shape=self.t_shape,
+                        shape=self.p_shape,
                         uniform=self.normal_initializer),
                     trainable=True))
         else:
@@ -338,7 +363,7 @@ class ContextualCircuit(object):
                         shape=self.tuning_shape,
                         uniform=self.normal_initializer,
                         mask=None)))
-        if True:
+        if not self.association_field:
             # Need a tuning tensor for near surround
             if 'P' in self.lesions:
                 print 'Lesioning near eCRF connectivity.'
@@ -363,7 +388,10 @@ class ContextualCircuit(object):
                             shape=self.tuning_shape,
                             uniform=self.normal_initializer,
                             mask=None)))
-        if True:
+
+        #Again, full_far_eCRF should be set to True for now
+        import ipdb; ipdb.set_trace()
+        if not self.full_far_eCRF:
             # Need a tuning tensor for near surround
             if 'T' in self.lesions:
                 print 'Lesioning far eCRF connectivity.'
@@ -376,18 +404,18 @@ class ContextualCircuit(object):
                         trainable=False,
                         initializer=np.zeros(
                             self.tuning_shape).astype(np.float32)))
-            else:
-                setattr(
-                    self,
-                    self.weight_dict['T']['r']['tuning'],
-                    tf.get_variable(
-                        name=self.weight_dict['T']['r']['tuning'],
-                        dtype=self.dtype,
-                        trainable=True,
-                        initializer=initialization.xavier_initializer(
-                            shape=self.tuning_shape,
-                            uniform=self.normal_initializer,
-                            mask=None)))
+        else:
+            setattr(
+                self,
+                self.weight_dict['T']['r']['tuning'],
+                tf.get_variable(
+                    name=self.weight_dict['T']['r']['tuning'],
+                    dtype=self.dtype,
+                    trainable=True,
+                    initializer=initialization.xavier_initializer(
+                        shape=self.tuning_shape,
+                        uniform=self.normal_initializer,
+                        mask=None)))
 
         # Input
         setattr(
@@ -465,23 +493,6 @@ class ContextualCircuit(object):
         self.gamma = tf.get_variable(name='gamma', initializer=w_array)
         self.delta = tf.get_variable(name='delta', initializer=w_array)
 
-    def separable_conv_2d_op(self, data, depth_weight_key, point_weight_key, out_key=None):
-        """Separable 2D convolutions for applying tuning more efficiently"""
-        depthwise_filter = self[depth_weight_key]
-        pointwise_filter = self[point_weight_key]
-        activities = tf.nn.separable_conv2d(input = data,
-                                            depthwise_filter = depthwise_filter,
-                                            pointwise_filter = pointwise_filter,
-                                            strides = self.strides,
-                                            padding = self.padding)
-        activities = self.tuning_nl(activities)
-        if out_key is not None:
-            setattr(self,
-                    out_key,
-                    activities)
-        return activities
-
-
     def conv_2d_op(self, data, weight_key, out_key=None, weights=None):
         """2D convolutions, lesion, return or assign activity as attribute."""
         if weights is None:
@@ -552,23 +563,15 @@ class ContextualCircuit(object):
         # sig_tau is O forget gate
         # tau is O input gate
         """
-        # Connectivity convolutions
-        #No tuning for U, same as applying conv2d directly
-        U = self.conv_2d_op(
-            data = O,
-            weight_key = self.weight_dict['U']['r']['weight']
-        )
 
-#	if self.full_far_eCRF:
-#            T = self.conv_2d_op(
-#                data = O,
-#                weight_key = self.weight_dict['T']['r']['weight']
-#            )
-#        else:
-	T = self.separable_conv_2d_op(
-		data = O,
-                depth_weight_key = self.weight_dict['T']['r']['weight'],
-                point_weight_key = self.weight_dict['T']['r']['tuning']
+        # Connectivity convolutions
+        U = self.conv_2d_op(
+            data=self.apply_tuning(O, 'U'),
+            weight_key=self.weight_dict['U']['r']['weight']
+        )
+        T = self.conv_2d_op(
+            data=self.apply_tuning(O, 'T'),
+            weight_key=self.weight_dict['T']['r']['weight']
         )
 
         # Gates
@@ -611,15 +614,13 @@ class ContextualCircuit(object):
                 weights=p_weights
             )
         else:
-            self.separable_conv_2d_op(
-                data = I,
-                depth_weight_key = self.weight_dict['P']['r']['weight'],
-                point_weight_key = self.weight_dict['P']['r']['tuning']
+            P = self.conv_2d_op(
+                data=self.apply_tuning(I, 'P'),
+                weight_key=self.weight_dict['P']['r']['weight']
             )
-        Q = self.separable_conv_2d_op(
-            data = I,
-            depth_weight_key = self.weight_dict['Q']['r']['weight'],
-            point_weight_key = self.weight_dict['Q']['r']['tuning']
+        Q = self.conv_2d_op(
+            data=self.apply_tuning(I, 'Q'),
+            weight_key=self.weight_dict['Q']['r']['weight']
         )
         O_update_input = self.conv_2d_op(
             data=self.X,

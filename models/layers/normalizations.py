@@ -6,7 +6,7 @@ from models.layers.normalization_functions import div_norm
 from models.layers.normalization_functions import layer_norm
 from models.layers.normalization_functions import contextual
 from models.layers.normalization_functions import contextual_ff
-
+from models.layers.normalization_functions import contextual_ff_loop
 
 class normalizations(object):
     """Wrapper class for activation functions."""
@@ -142,6 +142,21 @@ class normalizations(object):
         self.update_params(aux)
         self.set_RFs(layer=layer, eRF=eRF)
         contextual_layer = contextual.ContextualCircuit(
+            X=x,
+            timesteps=self.timesteps,
+            SRF=self.SRF,
+            SSN=self.SSN,
+            SSF=self.SSF,
+            strides=self.strides,
+            padding=self.padding,
+            aux=aux)
+        return contextual_layer.build()
+
+    def contextual_ff_loop(self, x, layer, eRF, aux):
+        """Contextual model from paper with frozen U & eCRFs."""
+        self.update_params(aux)
+        self.set_RFs(layer=layer, eRF=eRF)
+        contextual_layer = contextual_ff_loop.ContextualCircuit(
             X=x,
             timesteps=self.timesteps,
             SRF=self.SRF,

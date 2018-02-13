@@ -104,7 +104,7 @@ class experiments():
         model_folder = 'contours'
         exp = {
             'experiment_name': [model_folder],
-            'lr': [3e-4],
+            'lr': [1e-3],
             'loss_function': ['pearson'],
             'optimizer': ['adam'],  #, 'momentum','sgd'],
             # 'q_t': [1e-3, 1e-1],
