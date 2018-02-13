@@ -250,15 +250,6 @@ class ContextualCircuit(object):
         # weakly tuned summation: pooling in h, w dimensions
         #############################################
         p_array = np.ones(self.p_shape)
-        """p_array[
-            self.SSN // 2 - py_utils.ifloor(
-                self.SRF / 2.0):self.SSN // 2 + py_utils.iceil(
-                self.SRF / 2.0),
-            self.SSN // 2 - py_utils.ifloor(
-                self.SRF / 2.0):self.SSN // 2 + py_utils.iceil(
-                self.SRF / 2.0),
-            :,  # exclude CRF!
-            :] = 0.0"""
         p_array = p_array / p_array.sum()
         if 'P' in self.lesions:
             print 'Lesioning near eCRF.'
@@ -289,15 +280,6 @@ class ContextualCircuit(object):
         # weakly tuned suppression: pooling in h, w dimensions
         ###############################################
         t_array = np.ones(self.t_shape)
-        """t_array[
-            self.SSF // 2 - py_utils.ifloor(
-                self.SSN / 2.0):self.SSF // 2 + py_utils.iceil(
-                self.SSN / 2.0),
-            self.SSF // 2 - py_utils.ifloor(
-                self.SSN / 2.0):self.SSF // 2 + py_utils.iceil(
-                self.SSN / 2.0),
-            :,  # exclude near surround!
-            :] = 0.0"""
         t_array = t_array / t_array.sum()
         if 'T' in self.lesions:
             print 'Lesioning Far eCRF.'
