@@ -346,7 +346,7 @@ def read_and_decode(
     image = tf.reshape(image, tf_reader_settings['image']['reshape'])
     if tf_reader_settings['label']['reshape'] is not None:
         label = tf.reshape(label, tf_reader_settings['label']['reshape'])
-    
+
     if image.dtype == tf.float64:
         image = tf.cast(image,tf.float32)
 
@@ -410,6 +410,7 @@ def read_and_decode(
                 image = tf.stack(
                     images,
                     axis=0)
+    
     if image.dtype != tf.float32:
         image = tf.cast(image, tf.float32)
     return image, label

@@ -58,7 +58,7 @@ def process_DB_exps(experiment_name, log, config):
 
 def get_data_pointers(dataset, base_dir, cv, log):
     """Get data file pointers."""
-    data_pointer = os.path.join(base_dir, '%s_%s.tfrecords' % (dataset, cv))
+    data_pointer = os.path.join(base_dir, '%s_%s_f32.tfrecords' % (dataset, cv))
     data_means = os.path.join(base_dir, '%s_%s_means.npy' % (dataset, cv))
     log.info(
         'Using %s tfrecords: %s' % (

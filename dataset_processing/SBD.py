@@ -1,6 +1,7 @@
 import os
 import numpy as np
 import tensorflow as tf
+from tqdm import tqdm
 from glob import glob
 from config import Config
 from ops import tf_fun
@@ -21,7 +22,7 @@ class data_processing(object):
         self.config = Config()
         self.im_size = [375, 500, 3]
         self.lab_size = (500,375) #Opposite to convention, opencv standards
-        self.model_input_image_size = [150, 240, 3]  # [107, 160, 3]
+        self.model_input_image_size = [375, 500, 3] #[150, 240, 3]  # [107, 160, 3]
         self.output_size = [375, 500, 1]
         self.label_size = self.output_size
         self.default_loss_function = 'pearson'
@@ -46,7 +47,7 @@ class data_processing(object):
         }
         self.tf_reader = {
             'image': {
-                'dtype': tf.float64,
+                'dtype': tf.float32,
                 'reshape': self.im_size
             },
             'label': {
@@ -99,7 +100,7 @@ class data_processing(object):
                 self.processed_images)
             py_utils.make_dir(proc_image_dir)
             all_images = []
-            for im in images[0:10]:
+            for im in tqdm(images,total=len(images),desc='Storing %s labels and images for %s'%(self.name,k)):
                 it_label = im.split(os.path.sep)[-1]
                 it_label_path = '%s%s' % (im.split('.')[0], self.lab_extension)
                 it_label_path = it_label_path.replace(

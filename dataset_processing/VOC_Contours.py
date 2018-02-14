@@ -26,22 +26,27 @@ def load_label(mat_path):
     all_labels[all_labels>0] = 1
     return all_labels
 
-def get_label_image(image_path, mat_path, output_size=(400,400)):
+def get_label_image(image_path, mat_path, output_size=(500,375)):
     img = load_image(image_path)
     mat = load_label(mat_path)
     mat = mat*255.
-    img = cv2.resize(img, output_size)
-    mat = cv2.resize(mat, output_size)
-    mat[mat>0] = 1.
+    if not np.all(img.shape[0:2] == (output_size[1],output_size[0])):
+        img = cv2.resize(img, output_size)
+        mat = cv2.resize(mat, output_size)
+    img = img.astype(np.float32)
+    mat = mat.astype(np.float32)
     if img.max()>1.:
         img = img/255.
+    mat[mat>0] = 1.
     return img, mat
 
 def main():
     import sys
     img_path = sys.argv[1]
-    mat_path = sys.argv[1].replace('images','groundTruth').split('.')[0] + '.mat'
+    mat_path = sys.argv[1].replace('images','groundTruth').replace('jpg','mat')
     img, mat = get_label_image(img_path,mat_path)
+    print img.shape, img.dtype
+    print mat.shape, mat.dtype
     plt.subplot(1,2,1); plt.imshow(img); plt.subplot(1,2,2); plt.imshow(mat); plt.show()
 
 if __name__=="__main__":
