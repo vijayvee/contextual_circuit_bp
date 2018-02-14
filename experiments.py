@@ -103,8 +103,8 @@ class experiments():
         """Each key in experiment_dict must be manually added to the schema."""
         model_folder = 'contours'
         exp = {
-            'experiment_name': [model_folder],
-            'lr': [1e-3],
+        'experiment_name': [model_folder],
+            'lr': [3e-4],
             'loss_function': ['pearson'],
             'optimizer': ['adam'],  #, 'momentum','sgd'],
             # 'q_t': [1e-3, 1e-1],
@@ -135,21 +135,21 @@ class experiments():
                 #os.path.join(
                 #    model_folder, 'conv2d'),
             ],
-            'dataset': ['BSDS500_2']
+            'dataset': ['SBD']
         }
         exp = self.add_globals(exp)  # Add globals to the experiment'
         exp['data_augmentations'] = [[
-            'random_crop_image_label',
+            #'random_crop_image_label',
             # 'lr_flip_image_label',
             # 'ud_flip_image_label'
             ]]
         # exp['val_augmentations'] = [['center_crop_image_label']]
-        exp['batch_size'] = 10  # Train/val batch size.
-        exp['epochs'] = 1000
+        exp['batch_size'] = 5  # Train/val batch size.
+        exp['epochs'] = 300
         exp['save_weights'] = True
         exp['validation_iters'] = 500
         exp['num_validation_evals'] = 10
-        exp['resize_output'] = [[150, 240]]
+        #exp['resize_output'] = [[150, 240]]
         return exp
 
     def ALLEN_random_cells_103(self):
