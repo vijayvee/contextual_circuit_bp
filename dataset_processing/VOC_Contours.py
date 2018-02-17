@@ -13,7 +13,10 @@ def load_image(image_path):
     img = cv2.cvtColor(img,cv2.COLOR_BGR2RGB)
     return img
 
-def load_label(mat_path):
+def crop_center(img, output_size):
+
+
+def load_label_SBD(mat_path):
     mat = loadmat(mat_path)
     all_labels = []
     bounds = mat['GTcls'][0,0][0]
@@ -26,13 +29,13 @@ def load_label(mat_path):
     all_labels[all_labels>0] = 1
     return all_labels
 
-def get_label_image(image_path, mat_path, output_size=(500,375)):
+def get_label_image(image_path, mat_path, output_size=(320,480)):
     img = load_image(image_path)
-    mat = load_label(mat_path)
+    mat = load_label_SBD(mat_path)
     mat = mat*255.
-    if not np.all(img.shape[0:2] == (output_size[1],output_size[0])):
-        img = cv2.resize(img, output_size)
-        mat = cv2.resize(mat, output_size)
+    if not np.all(img.shape[0:2] == output_size):
+        img = crop_center(img, output_size=output_size)
+        mat = crop_center(mat, output_size=output_size)
     img = img.astype(np.float32)
     mat = mat.astype(np.float32)
     if img.max()>1.:
