@@ -17,15 +17,15 @@ layer_structure = [
             'exclude_CRF': False,
             'regularization_targets': {  # Modulate sparsity
                 'q_t': {
-                   'regularization_type': 'l1',
+                   'regularization_type': 'orthogonal',
                    'regularization_strength': 0.01
                 },
                 't_t': {
-                    'regularization_type': 'l1',
+                    'regularization_type': 'orthogonal',
                     'regularization_strength': 0.5
                 },
                 'p_t': {
-                    'regularization_type': 'l1',
+                    'regularization_type': 'orthogonal',
                     'regularization_strength': 1.
                     },
                 }

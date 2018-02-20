@@ -296,13 +296,14 @@ class ContextualCircuit(object):
             setattr(
                 self,
                 self.weight_dict['P']['r']['weight'],
-                tf.get_variable(
-                    name=self.weight_dict['P']['r']['weight'],
+                self.symmetric_weights(tf.get_variable(
+                #tf.get_variable(
+                    name=self.weight_dict['P']['r']['weight']+'_non_symm',
                     dtype=self.dtype,
                     initializer=initialization.xavier_initializer(
                         shape=self.p_shape,
                         uniform=self.normal_initializer),
-                    trainable=True))
+                    trainable=True),self.weight_dict['P']['r']['weight']))
         else:
             setattr(
                 self,
@@ -597,7 +598,9 @@ class ContextualCircuit(object):
                 self.weight_dict['P']['r']['weight']]
             if self.nonnegative_association:
                 p_weights = tf.nn.relu(p_weights)  # Force excitatory conns
-            P = self.conv_2d_op(
+            g = tf.get_default_graph()
+            with g.gradient_override_map({"Conv2D": "SymmetricConv"}):
+                P = self.conv_2d_op(
                     data=I,
                     weight_key=self.weight_dict['P']['r']['weight'],
                     weights=p_weights

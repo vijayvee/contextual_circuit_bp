@@ -17,7 +17,7 @@ def get_conn_mat(weight_key):
     """Function that computes the connectivity matrix for conv1 kernels"""
     norm_pr = get_p_r(weight_key)
     conn_mat = norm_pr.max(2,keepdims=True).max(-1,keepdims=True)
-    return conn_mat
+    return norm_pr,conn_mat
 
 def get_conv1(weight_key):
     conv1 = np.load(weight_key)

@@ -12,7 +12,7 @@ from VOC_Contours import *
 class data_processing(object):
     def __init__(self):
         self.name = 'SBD'
-        self.orig_name = 'SBD'
+        self.orig_name = 'SBD_test_'
         self.im_extension = '.jpg'
         self.lab_extension = '.mat'
         self.images_dir = 'images'
