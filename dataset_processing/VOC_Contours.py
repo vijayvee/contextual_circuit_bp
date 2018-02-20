@@ -10,18 +10,23 @@ from scipy.io import loadmat
 from scipy import misc
 
 def load_image(image_path, out_size=(321,481)):
-    img = misc.imread(image_path)
-    if img.shape[1]<img.shape[0]:
-        img = img.transpose(1,0,2)
-    if not np.all(img.shape[0:2]==out_size):
-        if img.shape[0]<out_size[0] or img.shape[1]<out_size[1]:
-            return -1
-        h,w = img.shape[0:2]
-        h_,w_ = out_size
-        h_diff, w_diff = h-h_, w-w_
-        h_sub, w_sub = h_diff/2, w_diff/2
-        new_img = img[h_sub:-(h_sub+h_diff%2),w_sub:-(w_sub+w_diff%2),:]
-        return new_img
+    try:
+        img = misc.imread(image_path)
+        if img.shape[1]<img.shape[0]:
+            img = img.transpose(1,0,2)
+        if not np.all(img.shape[0:2]==out_size):
+            if img.shape[0]<out_size[0] or img.shape[1]<out_size[1]:
+                print image_path," invalid dimensions ",img.shape
+                return -1
+            h,w = img.shape[0:2]
+            h_,w_ = out_size
+            h_diff, w_diff = h-h_, w-w_
+            h_sub, w_sub = h_diff/2, w_diff/2
+            new_img = img[h_sub:h-(h_sub+h_diff%2),w_sub:w-(w_sub+w_diff%2),:]
+            return new_img
+    except IOError:
+        print image_path," not found"
+        return -1
 
 def load_label_SBD_resize(mat_path, out_size=(321,481)):
     mat = loadmat(mat_path)
@@ -41,7 +46,7 @@ def load_label_SBD_resize(mat_path, out_size=(321,481)):
     h_, w_ = out_size
     h_diff, w_diff = h-h_, w-w_
     h_sub, w_sub = h_diff/2, w_diff/2
-    new_label = all_labels[h_sub:-(h_sub+h_diff%2),w_sub:-(w_sub+w_diff%2)]
+    new_label = all_labels[h_sub:h-(h_sub+h_diff%2),w_sub:w-(w_sub+w_diff%2)]
     all_labels[all_labels>0] = 1
     new_label[new_label>0] = 1
     return all_labels, new_label

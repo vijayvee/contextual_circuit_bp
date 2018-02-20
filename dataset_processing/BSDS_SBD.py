@@ -12,7 +12,7 @@ from VOC_Contours import *
 class data_processing(object):
     def __init__(self):
         self.name = 'BSDS_SBD'
-        self.dataset_roots = ['BSDS500', 'SBD']
+        self.dataset_roots = ['SBD'] #['BSDS500', 'SBD']
         self.orig_name = 'BSDS_SBD'
         self.im_extension = '.jpg'
         self.lab_extension = '.mat'
@@ -182,9 +182,8 @@ class data_processing(object):
             label_vec = []
             file_vec = []
             fold = k
-            # New label dir
+            # New label dir, image dir
             proc_dir, proc_image_dir = self.create_label_image_dirs(images[0], fold) #Create new directories for images and labels
-            # New image dir
             for im in tqdm(images,total=len(images),desc='Storing %s labels and images for %s'%(self.name,k)):
                 it_label = im.split(os.path.sep)[-1] #Get image name
                 it_label_path = im.replace(self.im_extension, self.lab_extension)
