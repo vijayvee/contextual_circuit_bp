@@ -135,17 +135,17 @@ class experiments():
                 #os.path.join(
                 #    model_folder, 'conv2d'),
             ],
-            'dataset': ['SBD']
+            'dataset': ['BSDS500_2']
         }
         exp = self.add_globals(exp)  # Add globals to the experiment'
         exp['data_augmentations'] = [[
-            #'random_crop_image_label',
+            'random_crop_image_label',
             # 'lr_flip_image_label',
             # 'ud_flip_image_label'
             ]]
         # exp['val_augmentations'] = [['center_crop_image_label']]
-        exp['batch_size'] = 5  # Train/val batch size.
-        exp['epochs'] = 300
+        exp['batch_size'] = 10  # Train/val batch size.
+        exp['epochs'] = 600
         exp['save_weights'] = True
         exp['validation_iters'] = 500
         exp['num_validation_evals'] = 10

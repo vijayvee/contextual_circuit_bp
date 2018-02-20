@@ -7,14 +7,44 @@ import matplotlib.pyplot as plt
 import pickle
 import numpy as np
 from scipy.io import loadmat
+from scipy import misc
 
-def load_image(image_path):
-    img = cv2.imread(image_path)
-    img = cv2.cvtColor(img,cv2.COLOR_BGR2RGB)
-    return img
+def load_image(image_path, out_size=(321,481)):
+    img = misc.imread(image_path)
+    if img.shape[1]<img.shape[0]:
+        img = img.transpose(1,0,2)
+    if not np.all(img.shape[0:2]==out_size):
+        if img.shape[0]<out_size[0] or img.shape[1]<out_size[1]:
+            return -1
+        h,w = img.shape[0:2]
+        h_,w_ = out_size
+        h_diff, w_diff = h-h_, w-w_
+        h_sub, w_sub = h_diff/2, w_diff/2
+        new_img = img[h_sub:-(h_sub+h_diff%2),w_sub:-(w_sub+w_diff%2),:]
+        return new_img
 
-def crop_center(img, output_size):
-
+def load_label_SBD_resize(mat_path, out_size=(321,481)):
+    mat = loadmat(mat_path)
+    all_labels = []
+    bounds = mat['GTcls'][0,0][0]
+    for i in range(20): #Number of classes in VOC is 20
+        cls_bound = bounds[i][0].toarray() #Extract binary contour map for class i
+        if cls_bound.sum()>0: #Contour exists, array with zeros and ones
+            all_labels.append(cls_bound*(i+1))
+    all_labels = np.array(all_labels)
+    all_labels = all_labels.sum(axis=0)
+    #Shift from portrait to landscape
+    if all_labels.shape[1] < all_labels.shape[0]:
+        all_labels = all_labels.transpose(1,0)
+    #Cropping the center of size (321, 481) for SBD
+    h, w = all_labels.shape
+    h_, w_ = out_size
+    h_diff, w_diff = h-h_, w-w_
+    h_sub, w_sub = h_diff/2, w_diff/2
+    new_label = all_labels[h_sub:-(h_sub+h_diff%2),w_sub:-(w_sub+w_diff%2)]
+    all_labels[all_labels>0] = 1
+    new_label[new_label>0] = 1
+    return all_labels, new_label
 
 def load_label_SBD(mat_path):
     mat = loadmat(mat_path)
@@ -27,15 +57,14 @@ def load_label_SBD(mat_path):
     all_labels = np.array(all_labels)
     all_labels = all_labels.sum(axis=0)
     all_labels[all_labels>0] = 1
-    return all_labels
 
-def get_label_image(image_path, mat_path, output_size=(320,480)):
-    img = load_image(image_path)
-    mat = load_label_SBD(mat_path)
-    mat = mat*255.
-    if not np.all(img.shape[0:2] == output_size):
-        img = crop_center(img, output_size=output_size)
-        mat = crop_center(mat, output_size=output_size)
+def get_label_image(image_path, mat_path, output_size=(321,481)):
+    img = load_image(image_path,out_size=output_size)
+    if type(img)==int:
+        return -1,-1
+    mat_,mat_rsz = load_label_SBD_resize(mat_path,out_size=output_size)
+    mat = mat_rsz*255.
+    assert img.shape[0:2] == mat.shape, 'Different shape for image and label'
     img = img.astype(np.float32)
     mat = mat.astype(np.float32)
     if img.max()>1.:
