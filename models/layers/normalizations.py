@@ -7,6 +7,7 @@ from models.layers.normalization_functions import layer_norm
 from models.layers.normalization_functions import contextual
 from models.layers.normalization_functions import contextual_ff
 from models.layers.normalization_functions import contextual_ff_loop
+from models.layers.normalization_functions import contextual_single_ecrf_additive_interactions
 
 class normalizations(object):
     """Wrapper class for activation functions."""
@@ -21,6 +22,7 @@ class normalizations(object):
 
     def __init__(self, kwargs=None):
         """Global variables for normalization functions."""
+
         self.timesteps = 3
         self.scale_CRF = True
         self.bias_CRF = True
@@ -142,6 +144,21 @@ class normalizations(object):
         self.update_params(aux)
         self.set_RFs(layer=layer, eRF=eRF)
         contextual_layer = contextual.ContextualCircuit(
+            X=x,
+            timesteps=self.timesteps,
+            SRF=self.SRF,
+            SSN=self.SSN,
+            SSF=self.SSF,
+            strides=self.strides,
+            padding=self.padding,
+            aux=aux)
+        return contextual_layer.build()
+
+    def contextual_single_ecrf_additive_interactions(self, x, layer, eRF, aux):
+        """Contextual model from paper with frozen U & eCRFs."""
+        self.update_params(aux)
+        self.set_RFs(layer=layer, eRF=eRF)
+        contextual_layer = contextual_single_ecrf_additive_interactions.ContextualCircuit(
             X=x,
             timesteps=self.timesteps,
             SRF=self.SRF,

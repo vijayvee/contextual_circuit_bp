@@ -60,7 +60,7 @@ def data_to_tfrecords(
         zip(
             files.iteritems(),
             labels.iteritems())):
-        it_ds_name = '%s_%s_f32.tfrecords' % (ds_name, fk)
+        it_ds_name = '%s_%s.tfrecords' % (ds_name, fk)
         with tf.python_io.TFRecordWriter(it_ds_name) as tfrecord_writer:
             image_count = 0
             means = np.zeros((im_size))

@@ -149,7 +149,7 @@ class experiments():
         exp['save_weights'] = True
         exp['validation_iters'] = 500
         exp['num_validation_evals'] = 10
-        #exp['resize_output'] = [[150, 240]]
+        exp['resize_output'] = [[150, 240]]
         return exp
 
     def ALLEN_random_cells_103(self):

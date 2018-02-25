@@ -12,7 +12,7 @@ from VOC_Contours import *
 class data_processing(object):
     def __init__(self):
         self.name = 'BSDS_SBD'
-        self.dataset_roots = ['SBD'] #['BSDS500', 'SBD']
+        self.dataset_roots = ['BSDS500', 'SBD']
         self.orig_name = 'BSDS_SBD'
         self.im_extension = '.jpg'
         self.lab_extension = '.mat'
@@ -24,7 +24,7 @@ class data_processing(object):
         self.im_size = [321, 481, 3]
         self.sum_imgs = np.zeros(self.im_size)
         self.lab_size = (321,481) #Opposite to convention, opencv standards
-        self.model_input_image_size = [321, 481, 3] #[150, 240, 3]  # [107, 160, 3]
+        self.model_input_image_size = [150, 240, 3] #[321, 481, 3] #[150, 240, 3]  # [107, 160, 3]
         self.output_size = [321, 481, 1]
         self.label_size = self.output_size
         self.default_loss_function = 'pearson'
@@ -122,7 +122,7 @@ class data_processing(object):
                 # Process labels
                 ip_lab = lab.item()[1].astype(np.float32)
                 if k=='train':
-                    self.sum_imgs += im_data
+                    self.sum_imgs += (im_data*255.)
                 if transpose_labels:
                     ip_lab = np.swapaxes(ip_lab, 0, 1)
                 it_im_name = '%s_%s' % (idx, it_label)
@@ -144,7 +144,7 @@ class data_processing(object):
                     ip_lab = np.swapaxes(ip_lab, 0, 1)
                 mean_labs += [ip_lab]
             if k=='train':
-                self.sum_imgs += im_data
+                self.sum_imgs += (im_data*255.)
             mean_lab = np.asarray(mean_labs).mean(0)
             out_lab = os.path.join(
                 proc_dir, '%s.npy' % it_label.split('.')[0])
@@ -161,6 +161,8 @@ class data_processing(object):
         im_data, ip_lab = get_label_image(im, it_label_path, output_size=self.lab_size)
         if type(im_data) == int:
             return label_vec, file_vec
+        if k=='train':
+            self.sum_imgs += (im_data*255.)
         ip_lab = ip_lab.astype(np.float32)
         it_im_name = im.split(os.path.sep)[-1]
         it_lab_name = '%s.npy' % it_im_name.split('.')[0]

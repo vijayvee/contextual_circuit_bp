@@ -8,7 +8,7 @@ layer_structure = [
         'alexnet_layer': 'conv1_gabors',
         'names': ['conv1'],
         'filter_size': [11],
-        'normalization': ['contextual'],
+        'normalization': ['contextual_single_ecrf_additive_interactions'],
         'normalization_target': ['post'],
         'normalization_aux': {
             'timesteps': 3,
@@ -20,10 +20,11 @@ layer_structure = [
                    'regularization_type': 'orthogonal',
                    'regularization_strength': 0.01
                 },
-                't_t': {
-                    'regularization_type': 'orthogonal',
-                    'regularization_strength': 0.5
-                },
+                #no t_t for contextual_single_ecrf
+                #'t_t': {
+                #    'regularization_type': 'orthogonal',
+                #    'regularization_strength': 0.5
+                #},
                 'p_t': {
                     'regularization_type': 'orthogonal',
                     'regularization_strength': 1.
