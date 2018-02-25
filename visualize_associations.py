@@ -4,6 +4,7 @@ import numpy as np
 import tensorflow as tf
 from matplotlib import pyplot as plt
 from matplotlib import gridspec
+import matplotlib as mpl
 
 def get_p_r(weight_key):
     """Function to get P_r, the association field weight matrix"""
@@ -71,28 +72,89 @@ def plot_conn_conv(i,j,norm_pr):
     plt.close()
 
 def plot_connectivity_matrix(i,j,norm_pr,conv1_norm):
-     for ii in range(i+1):
-         for jj in range(j+1):
-             if ii+jj==0:
-                 continue
-             if ii==0:
-                 #Plotting conv kernels on the first row
-                 plt.subplot(i+1,j+1,(ii*i)+(jj+ii)+1)
-                 plt.imshow(conv1_norm[jj-1,:,:,:])
-                 plt.axis('off')
-                 continue
-             if jj==0:
-                 #Plotting conv kernels on the first column
-                 plt.subplot(i+1,j+1,(ii*i)+(jj+ii)+1)
-                 plt.imshow(conv1_norm[ii-1,:,:,:])
-                 plt.axis('off')
-                 continue
-             #Plotting association field kernels
-             plt.subplot(i+1,j+1,((ii)*(i))+(jj+ii)+1)
-             plt.imshow(norm_pr[ii-1,jj-1,:,:])
-             plt.axis('off')
-     plt.show()
-     plt.close()
+    fig, ax = plt.subplots()
+    #plt.colorbar()
+    for ii in range(i+1):
+        for jj in range(j+1):
+            if ii+jj==0:
+                continue
+            if ii==0:
+                #Plotting conv kernels on the first row
+                plt.subplot(i+1,j+1,(ii*i)+(jj+ii)+1)
+                plt.imshow(conv1_norm[jj-1,:,:,:])
+                plt.axis('off')
+                continue
+            if jj==0:
+                #Plotting conv kernels on the first column
+                plt.subplot(i+1,j+1,(ii*i)+(jj+ii)+1)
+                plt.imshow(conv1_norm[ii-1,:,:,:])
+                plt.axis('off')
+                continue
+            #Plotting association field kernels
+            plt.subplot(i+1,j+1,((ii)*(i))+(jj+ii)+1)
+            plt.imshow(norm_pr[ii-1,jj-1,:,:],cmap=cmap)
+            plt.axis('off')
+    plt.subplots_adjust(wspace=1, hspace=0, right=0.8)
+    cb_ax=fig.add_axes([0.85, 0.15, 0.05, 0.7])
+    plt.colorbar(cax=cb_ax)
+    plt.show()
+    plt.close()
+
+def rectify_pr(weight_key):
+    p_r = np.load(weight_key)
+    p_r_rev = p_r.transpose(2,3,0,1)
+    pr_pos = np.maximum(p_r_rev, 0)
+    pr_neg = np.minimum(p_r_rev, 0)
+    pr_neg = pr_neg*-1.
+    pr_pos_min = pr_pos.min(2,keepdims=True).min(3,keepdims=True)
+    pr_pos_max = pr_pos.max(2,keepdims=True).max(3,keepdims=True)
+    pr_neg_min = pr_neg.min(2,keepdims=True).min(3,keepdims=True)
+    pr_neg_max = pr_neg.max(2,keepdims=True).max(3,keepdims=True)
+    pr_pos_norm = (pr_pos-pr_pos_min)/(pr_pos_max-pr_pos_min)
+    pr_neg_norm = (pr_neg-pr_neg_min)/(pr_neg_max-pr_neg_min)
+    pr_neg_norm = pr_neg_norm*-1.
+    pr_norm = pr_pos_norm + pr_neg_norm
+    print pr_norm.max(), pr_norm.min()
+    return pr_norm
+
+
+def plot_connectivity_matrix(i,j,norm_pr,conv1_norm,out_file):
+    fig, ax = plt.subplots()
+    gs1 = gridspec.GridSpec(i, j)
+    gs1.update(wspace=0.0, hspace=0.1)
+    for ii in tqdm(range(i),desc='I'):
+        for jj in tqdm(range(j),desc='J'):
+            if ii<=jj and ii!=0 and ii!=jj:
+               continue
+            if ii+jj==0:
+               continue
+            if ii==0:
+     #Plotting conv kernels on the first row
+                plt.subplot(gs1[ii,jj])
+                plt.imshow(conv1_norm[jj-1,:,:,:])
+                plt.axis('off')
+                continue
+            if jj==0:
+                   #Plotting conv kernels on the first column
+                   plt.subplot(gs1[ii,jj])
+                   plt.imshow(conv1_norm[ii-1,:,:,:])
+                   plt.axis('off')
+                   continue
+               #Plotting association field kernels
+               #plt.subplot(i+1,j+1,((ii)*(i))+(jj+ii)+1)
+               plt.subplot(gs1[ii,jj])
+               plt.imshow(norm_pr[ii-1,jj-1,:,:],vmin=-1,vmax=1,cmap=plt.get_cmap('RdBu_r'))
+               plt.axis('off')
+       plt.subplots_adjust(right=0.8)
+       #fig.subplots_adjust(wspace=0.1)
+       cb_ax=fig.add_axes([0.85, 0.15, 0.015, 0.5])
+       plt.colorbar(cax=cb_ax)
+       #plt.tight_layout()
+       plt.show()
+       #plt.savefig('%s.pdf'%(out_file),bbox_inches='tight')
+       plt.close()
+
+
 
 def plot_conv_kernels(i,j,conv1_norm):
     for ii in range(i):
