@@ -410,7 +410,7 @@ def read_and_decode(
                 image = tf.stack(
                     images,
                     axis=0)
-    
+
     if image.dtype != tf.float32:
         image = tf.cast(image, tf.float32)
     return image, label

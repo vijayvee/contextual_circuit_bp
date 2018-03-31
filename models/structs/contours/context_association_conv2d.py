@@ -9,14 +9,7 @@ layer_structure = [
         'activation': ['selu'],
         'activation_target': ['post'],
     },
-    # {
-    #     'layers': ['conv'],
-    #     'weights': [32],
-    #     'names': ['conv2'],
-    #     'filter_size': [5],
-    #     'activation': ['selu'],
-    #     'activation_target': ['post'],
-    # },
+    
     {
         'layers': ['pool'],
         'weights': [None],

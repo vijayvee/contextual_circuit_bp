@@ -83,7 +83,7 @@ def data_to_tfrecords(
                             it_l, label_size, reshape=False).astype(np.float32)
                         it_l = preprocess_image(it_l, preprocess, label_size)
                 else:
-                    image = it_f
+                    it_l = np.array(it_l)
                 data_dict = {
                     'image': encode_tf(targets['image'], image),
                     'label': encode_tf(targets['label'], it_l)
